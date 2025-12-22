@@ -97,10 +97,8 @@ async function fetchItemsNames() {
  *  - If state.items is an array -> returns an array (possibly empty)
  *  - If state.items is a single root node -> returns a node or null if nothing matches
  */
-async function fetchSWEItems() {
-    await fetchItems();
-
-    if (!state.items) return Array.isArray(state.items) ? [] : null;
+function getFilteredSWEItems(root) {
+    if (!root) return Array.isArray(root) ? [] : null;
 
     function filterNode(node) {
         if (!node) return null;
@@ -110,7 +108,7 @@ async function fetchSWEItems() {
             const arr = node
                 .map((child) => filterNode(child))
                 .filter((c) => c !== null);
-            return arr;
+            return arr.length > 0 ? arr : null; // Return null if array empty to signal pruning
         }
 
         // Recurse into children if present
@@ -121,40 +119,54 @@ async function fetchSWEItems() {
                 .filter((c) => c !== null);
         }
 
-        const expects = Boolean(node.expect_software_effort);
-        const descendantFlag = Boolean(
-            node.has_descendant_expecting_software_effort,
-        );
+        // Logic Customization: 
+        // We want to show nodes that HAVE EFFORTS (hasSoftwareEffort) 
+        // OR contain them (containsSoftwareEffort => handled by child check)
+        // The previous logic used 'expect_software_effort' which was from the mocked data structure but 
+        // our new `api.js` structure uses `hasSoftwareEffort`.
+
+        // Let's adapt to our current API mock structure:
+        const isRelevant = node.hasSoftwareEffort === true;
+        const hasRelevantChild = filteredChildren.length > 0;
 
         // Include this node if it matches or any child matched
-        const includeNode =
-            expects || descendantFlag || filteredChildren.length > 0;
-
-        if (!includeNode) return null;
+        if (!isRelevant && !hasRelevantChild) return null;
 
         // Preserve original node shape but set `children` to the filtered list (if any)
-        // Use shallow copy to avoid mutating original state data
         const copy = { ...node };
 
-        // If there were filtered children, set them; otherwise remove children to keep structure tidy
         if (filteredChildren.length > 0) {
             copy.children = filteredChildren;
         } else {
-            // Ensure `children` is either undefined or an empty array depending on original structure.
-            // Prefer to remove the key entirely to avoid empty arrays where not needed:
-            delete copy.children;
+            // Leaf node in this view (relevant, no relevant children)
+            copy.children = [];
         }
 
         return copy;
     }
 
-    // Return the same top-level type as state.items
-    if (Array.isArray(state.items)) {
-        return filterNode(state.items);
+    if (Array.isArray(root)) {
+        return root.map(filterNode).filter(n => n !== null);
     } else {
-        return filterNode(state.items);
+        return filterNode(root);
     }
 }
+
+/**
+ * fetchSWEItems
+ * Preserved for backward compat if needed, but uses the internal helper.
+ */
+async function fetchSWEItems() {
+    await fetchItems();
+    return getFilteredSWEItems(state.items);
+}
+
+// Synchronous getter for UI comp
+function getSWEItems() {
+    return getFilteredSWEItems(state.items);
+}
+
+// ... existing code ...
 
 function findByOrgId(orgId, node = state.items) {
     if (!node) return null;
@@ -287,6 +299,7 @@ export function useProgramCatalogStore() {
         fetchItems,
         fetchItemsNames,
         fetchSWEItems,
+        getSWEItems, // Exposed
         findByOrgId,
         findByOrgName,
         getOrgPathByID,
