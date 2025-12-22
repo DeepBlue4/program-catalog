@@ -107,14 +107,41 @@ const handleDelete = (effort) => {
     showDeleteModal.value = true;
 };
 
-const confirmDelete = () => {
+const notification = ref({ show: false, message: '', type: 'success' }); // type: success, error
+let notificationTimeout;
+
+const showNotification = (message, type = 'success') => {
+    notification.value = { show: true, message, type };
+    if (notificationTimeout) clearTimeout(notificationTimeout);
+    notificationTimeout = setTimeout(() => {
+        notification.value.show = false;
+    }, 3000);
+};
+
+// Import API
+import { CompassAPIService } from '../services/api';
+
+const confirmDelete = async () => {
     if (itemToDelete.value) {
         const index = props.efforts.findIndex(e => e.id === itemToDelete.value.id);
         if (index !== -1) {
+            // Optimistic update
+            const deletedItem = props.efforts[index];
             props.efforts.splice(index, 1);
-            if (selectedEffortId.value === itemToDelete.value.id) {
-                selectedEffortId.value = null; 
-                isFormDirty.value = false;
+            
+            // API Call
+            const res = await CompassAPIService.updateSoftwareEffortsForNode(props.programId, props.efforts);
+            
+            if (res.success) {
+                showNotification(`Deleted '${deletedItem.name}' successfully.`);
+                if (selectedEffortId.value === itemToDelete.value.id) {
+                    selectedEffortId.value = null; 
+                    isFormDirty.value = false;
+                }
+            } else {
+                // Revert
+                props.efforts.splice(index, 0, deletedItem);
+                showNotification('Failed to delete effort. Please try again.', 'error');
             }
         }
     }
@@ -123,22 +150,47 @@ const confirmDelete = () => {
     showModal.value = false; 
 };
 
-const saveEffort = (effortData) => {
+const saveEffort = async (effortData) => {
+    // Clone to prepare for API
+    const newEffortsList = [...props.efforts];
+    let isNew = false;
+    let oldItem = null;
+    let index = -1;
+
     if (effortData.id) {
         // Update existing
-        const index = props.efforts.findIndex(e => e.id === effortData.id);
+        index = newEffortsList.findIndex(e => e.id === effortData.id);
         if (index !== -1) {
-             Object.assign(props.efforts[index], effortData);
+             oldItem = { ...newEffortsList[index] };
+             Object.assign(newEffortsList[index], effortData);
         }
     } else {
         // Create new
+        isNew = true;
         const newId = `EFF-${props.programId}-${Date.now()}`;
         const newEffort = { ...effortData, id: newId };
-        props.efforts.push(newEffort);
-        selectedEffortId.value = newId;
+        newEffortsList.push(newEffort);
+        effortData.id = newId; // Update so form has ID
     }
-    showModal.value = false;
-    isFormDirty.value = false;
+
+    // Call API with new list
+    const res = await CompassAPIService.updateSoftwareEffortsForNode(props.programId, newEffortsList);
+
+    if (res.success) {
+         // Apply changes to prop (mutable array)
+         if (isNew) {
+             props.efforts.push(newEffortsList[newEffortsList.length - 1]);
+             selectedEffortId.value = effortData.id;
+         } else if (index !== -1) {
+             Object.assign(props.efforts[index], effortData);
+         }
+         
+         showNotification(isNew ? 'Effort created successfully.' : 'Changes saved successfully.');
+         showModal.value = false;
+         isFormDirty.value = false;
+    } else {
+         showNotification('Failed to save changes. Please try again.', 'error');
+    }
 };
 
 const handleBack = () => {
@@ -157,6 +209,21 @@ defineExpose({
     confirmNavigation
 });
 
+const effortFormRef = ref(null);
+
+const handleRevertRequest = () => {
+    // Show confirmation
+    pendingConfirm.value = () => {
+        if (effortFormRef.value) {
+            effortFormRef.value.resetForm();
+            isFormDirty.value = false;
+            showNotification('Changes discarded.');
+        }
+    };
+    showUnsavedChangesModal.value = true;
+};
+
+// ... existing logic ...
 </script>
 
 <template>
@@ -197,12 +264,14 @@ defineExpose({
         <main class="detail-panel m3-card elevated">
             <div v-if="selectedEffort" class="detail-content-wrapper">
                  <SoftwareEffortForm
+                    ref="effortFormRef"
                     :effort="selectedEffort"
                     :available-parents="efforts"
                     :is-edit="true"
                     @save="saveEffort"
                     @delete="handleDelete"
                     @dirty-change="handleDirtyChange"
+                    @revert="handleRevertRequest"
                  />
             </div>
             
@@ -246,10 +315,56 @@ defineExpose({
         @confirm="confirmDelete"
         @cancel="showDeleteModal = false"
     />
+
+    <!-- Notification Toast -->
+    <transition name="toast-slide">
+        <div v-if="notification.show" class="notification-toast" :class="notification.type">
+            <i class="fas" :class="notification.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'"></i>
+            <span>{{ notification.message }}</span>
+        </div>
+    </transition>
   </div>
 </template>
 
 <style scoped>
+/* Notification Toast */
+.notification-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--md-sys-color-inverse-surface);
+    color: var(--md-sys-color-inverse-on-surface);
+    padding: 12px 24px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    z-index: 2000;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 300px;
+    justify-content: center;
+}
+
+.notification-toast.error {
+    background: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
+}
+
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast-slide-enter-from,
+.toast-slide-leave-to {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+}
+
+/* Existing styles */
 .efforts-view {
   padding: 1rem;
   height: 100%;

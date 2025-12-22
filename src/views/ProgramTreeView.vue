@@ -62,6 +62,17 @@ watch(() => route.query.program_id, (newId) => {
 const handleNodeClick = (nodeData) => {
     selectNode(nodeData);
 };
+
+const chartRef = ref(null);
+
+const handleReset = () => {
+    // Clear selection state
+    selectNode(null);
+    // Call OrgChart reset
+    if (chartRef.value) {
+        chartRef.value.resetView();
+    }
+};
 </script>
 
 <template>
@@ -82,8 +93,13 @@ const handleNodeClick = (nodeData) => {
                 Software Efforts
             </button>
         </div>
+        <div class="v-divider"></div>
+        <button class="icon-btn" @click="handleReset" title="Reset View">
+            <i class="fas fa-sync-alt"></i>
+        </button>
     </div>
     <OrgChart 
+        ref="chartRef"
         v-if="chartData" 
         :data="chartData" 
         :selected-id="selectedNode?.value" 
@@ -157,6 +173,30 @@ const handleNodeClick = (nodeData) => {
 
 .toggle-group button:hover:not(.active) {
     background: rgba(0,0,0,0.05);
+}
+
+.v-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--md-sys-color-outline-variant);
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--md-sys-color-primary);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    background: var(--md-sys-color-surface-container-high);
 }
 
 .empty-state {

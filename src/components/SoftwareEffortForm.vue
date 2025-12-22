@@ -172,6 +172,22 @@ const fromArray = (arr) => {
     if (typeof arr === 'string') return arr;
     return arr.join(', ');
 };
+// Expose resetForm to parent
+const resetForm = () => {
+    formData.value = JSON.parse(initialState.value);
+};
+
+defineExpose({
+    resetForm
+});
+
+const handleCancel = () => {
+    if (props.isEdit) {
+        emit('revert');
+    } else {
+        emit('cancel');
+    }
+};
 </script>
 
 <template>
@@ -185,7 +201,16 @@ const fromArray = (arr) => {
             </div>
             
              <div class="form-actions-top">
-                <button @click="$emit('cancel')" class="btn-outlined">Cancel</button>
+                <!-- Cancel / Discard Button -->
+                <!-- Show if creating (always) OR if updating AND dirty -->
+                <button 
+                    v-if="!isEdit || (isEdit && isDirty)"
+                    @click="handleCancel" 
+                    class="btn-outlined"
+                >
+                    {{ isEdit ? 'Discard Changes' : 'Cancel' }}
+                </button>
+                
                 <button v-if="isEdit" @click="$emit('delete', formData)" class="btn-text danger" title="Delete">
                     Delete
                 </button>

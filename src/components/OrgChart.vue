@@ -268,6 +268,23 @@ watch(() => props.selectedId, (newId) => {
 // ECharts 'tree' doesn't have a persistent 'selected' state for nodes out of the box easily without re-rendering or using 'emphasis' which is hover.
 // For now we rely on the side panel for selection confirmation.
 
+const resetView = () => {
+    // Clear manual expansion state to revert to data defaults
+    collapsedState.value.clear();
+    // Re-sync with initial data props
+    syncState(props.data);
+    // Force chart update
+    updateChart();
+    // Reset zoom/pan if possible (ECharts instance method)
+    chartInstance?.dispatchAction({
+        type: 'restore'
+    });
+};
+
+defineExpose({
+    resetView
+});
+
 onMounted(() => {
   initChart();
   window.addEventListener('resize', handleResize);
