@@ -33,9 +33,7 @@ onUnmounted(() => {
 <template>
   <div class="user-menu" ref="menuRef">
     <button class="menu-trigger" @click.stop="toggleMenu">
-      <div class="avatar">
-        {{ user.name.charAt(0) }}
-      </div>
+      <i class="fas fa-user-circle trigger-icon"></i>
     </button>
 
     <div v-if="isOpen" class="menu-dropdown m3-card elevated">
@@ -82,10 +80,18 @@ onUnmounted(() => {
   padding: 4px;
   border-radius: 50%;
   transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .menu-trigger:hover {
   background: var(--md-sys-color-surface-container-high);
+}
+
+.trigger-icon {
+  font-size: 36px;
+  color: var(--md-sys-color-primary);
 }
 
 .avatar {

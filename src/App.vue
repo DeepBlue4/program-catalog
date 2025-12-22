@@ -97,7 +97,6 @@ const handleBreadcrumbClick = (crumb) => {
     <header class="top-bar m3-elevation-1">
       <div class="header-left">
           <div class="logo-area">
-              <span class="logo-icon"><i class="fas fa-plane"></i></span>
               <h1 class="app-title">Program Catalog</h1>
           </div>
           
