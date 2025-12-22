@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useProgramCatalogStore } from '../store/programCatalogStore'; // Import store
 
 const props = defineProps({
   effort: {
@@ -61,6 +62,15 @@ const tabs = [
     { id: 'location', label: 'Work Locations', icon: 'fas fa-map-marker-alt' },
 ];
 
+const store = useProgramCatalogStore();
+const allEffortCandidates = ref([]); // Global list of efforts
+const linkSearchQuery = ref('');
+
+// Load all efforts from catalog for linking
+onMounted(async () => {
+    allEffortCandidates.value = await store.getAllSoftwareEfforts();
+});
+
 // Clone to avoid mutating prop directly
 const formData = ref(JSON.parse(JSON.stringify(props.effort)));
 const initialState = ref(JSON.stringify(props.effort));
@@ -93,11 +103,43 @@ const validParents = computed(() => {
     return props.availableParents.filter(p => p.id !== formData.value.id);
 });
 
-// Linked efforts: exclude self
-const validLinked = computed(() => {
-     if (!props.isEdit) return props.availableParents;
-     return props.availableParents.filter(p => p.id !== formData.value.id);
+// Filtered Candidates for Linking
+const filteredLinkCandidates = computed(() => {
+    const query = linkSearchQuery.value.toLowerCase().trim();
+    return allEffortCandidates.value.filter(e => {
+        // Exclude self (if editing)
+        if (formData.value.id && e.id === formData.value.id) return false;
+        
+        // Exclude already linked
+        if (formData.value.linked_software_efforts && formData.value.linked_software_efforts.includes(e.id)) return false;
+
+        // Apply Search
+        if (!query) return false; // Hide if no query to prevent overwhelming list
+        
+        return (e.name && e.name.toLowerCase().includes(query)) || 
+               (e._programName && e._programName.toLowerCase().includes(query));
+    }).slice(0, 10);
 });
+
+// Objects for currently linked IDs
+const linkedEffortObjects = computed(() => {
+    if (!formData.value.linked_software_efforts) return [];
+    return formData.value.linked_software_efforts.map(id => {
+        return allEffortCandidates.value.find(e => e.id === id) || { id, name: 'Unknown/External Effort', _programName: 'Unknown' };
+    });
+});
+
+const addLink = (effort) => {
+    if (!formData.value.linked_software_efforts) formData.value.linked_software_efforts = [];
+    if (!formData.value.linked_software_efforts.includes(effort.id)) {
+        formData.value.linked_software_efforts.push(effort.id);
+        linkSearchQuery.value = ''; // Reset search
+    }
+};
+
+const removeLink = (id) => {
+    formData.value.linked_software_efforts = formData.value.linked_software_efforts.filter(lid => lid !== id);
+};
 
 // Inheritance Resolution Logic
 const effortMap = computed(() => {
@@ -259,13 +301,47 @@ const handleCancel = () => {
                 <h3>General Configuration</h3>
                 <div class="field-section">
                     <label class="section-label">Linked Efforts</label>
-                    <div class="help-text">Select other efforts related to this one.</div>
-                    <div class="multi-select-grid">
-                        <label v-for="opt in validLinked" :key="opt.id" class="checkbox-clean">
-                            <input type="checkbox" :value="opt.id" v-model="formData.linked_software_efforts">
-                            <span>{{ opt.name }}</span>
-                        </label>
-                         <div v-if="validLinked.length === 0" class="empty-msg">No other efforts available to link.</div>
+                    <div class="help-text">Search and select other efforts to link across the entire catalog.</div>
+                    
+                    <div class="link-manager">
+                        <!-- Search Box -->
+                        <div class="link-search-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input 
+                                v-model="linkSearchQuery" 
+                                type="text" 
+                                class="clean-input with-icon" 
+                                placeholder="Search efforts by name or program..."
+                            >
+                            
+                            <!-- Dropdown Results -->
+                            <div v-if="filteredLinkCandidates.length > 0" class="search-dropdown m3-card elevated">
+                                <div 
+                                    v-for="cand in filteredLinkCandidates" 
+                                    :key="cand.id" 
+                                    class="dropdown-item" 
+                                    @click="addLink(cand)"
+                                >
+                                    <div class="item-main">{{ cand.name }}</div>
+                                    <div class="item-sub">{{ cand._programName }} &bull; {{ cand.type }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selected Chips -->
+                        <div class="linked-chips-container">
+                            <div v-for="link in linkedEffortObjects" :key="link.id" class="link-chip">
+                                <span class="chip-icon"><i class="fas fa-link"></i></span>
+                                <div class="chip-info">
+                                    <div class="chip-label">{{ link.name }}</div>
+                                    <div class="chip-meta">{{ link._programName || 'Unknown Program' }}</div>
+                                </div>
+                                <button class="chip-remove" @click.stop="removeLink(link.id)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div v-if="linkedEffortObjects.length === 0" class="empty-msg">No linked efforts.</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -827,27 +903,126 @@ const handleCancel = () => {
     cursor: not-allowed;
 }
 
-/* Multi-select */
-.multi-select-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-    padding: 1rem;
-    background: var(--md-sys-color-surface-container-lowest);
+/* Link Manager Styles */
+.link-search-wrapper {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.with-icon {
+    padding-left: 36px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--md-sys-color-secondary);
+    font-size: 14px;
+}
+
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--md-sys-color-surface-container-low);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10;
     border-radius: 8px;
+    margin-top: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     border: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.help-text {
-    font-size: 12px;
+.dropdown-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.item-main {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+}
+
+.item-sub {
+    font-size: 11px;
     color: var(--md-sys-color-secondary);
-    margin-bottom: 0.5rem;
+}
+
+.linked-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.link-chip {
+    display: flex;
+    align-items: center;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    padding: 6px 12px;
+    border-radius: 16px;
+    gap: 8px;
+    max-width: 100%;
+}
+
+.chip-icon {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.chip-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.chip-label {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.chip-meta {
+    font-size: 10px;
+    opacity: 0.8;
+}
+
+.chip-remove {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+    transition: 0.2s;
+}
+
+.chip-remove:hover {
+    background: rgba(0,0,0,0.1);
+    opacity: 1;
 }
 
 .empty-msg {
-    font-style: italic;
-    color: var(--md-sys-color-outline);
     font-size: 13px;
+    color: var(--md-sys-color-secondary);
+    font-style: italic;
+    padding: 0.5rem 0;
 }
 
 .fade-in {

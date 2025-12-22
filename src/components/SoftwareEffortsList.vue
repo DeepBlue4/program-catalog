@@ -284,13 +284,15 @@ const handleRevertRequest = () => {
 
     <!-- Modal Overlay -->
     <div v-if="showModal" class="modal-overlay">
-        <SoftwareEffortForm 
-            :effort="editingEffort || undefined" 
-            :available-parents="efforts"
-            :is-edit="!!editingEffort && !!editingEffort.id"
-            @save="saveEffort"
-            @cancel="showModal = false"
-        />
+        <div class="modal-card m3-card elevated">
+            <SoftwareEffortForm 
+                :effort="editingEffort || undefined" 
+                :available-parents="efforts"
+                :is-edit="!!editingEffort && !!editingEffort.id"
+                @save="saveEffort"
+                @cancel="showModal = false"
+            />
+        </div>
     </div>
 
     <!-- Unsaved Changes Confirmation -->
@@ -569,5 +571,15 @@ const handleRevertRequest = () => {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+}
+
+.modal-card {
+    width: 1000px;
+    max-width: 90vw;
+    height: 85vh;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 </style>

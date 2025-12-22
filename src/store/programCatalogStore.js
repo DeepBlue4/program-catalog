@@ -293,6 +293,47 @@ async function getOrgPathByID(orgId) {
     return findPath(state.items, orgId, []);
 }
 
+/**
+     * getAllSoftwareEfforts
+     *
+     * Flattens the hierarchy to find ALL software efforts across all programs.
+     * Returns an array of efforts augmented with program context.
+     */
+async function getAllSoftwareEfforts() {
+    await fetchItems();
+    if (!state.items) return [];
+
+    const allEfforts = [];
+
+    function traverse(node) {
+        if (!node) return;
+
+        if (Array.isArray(node)) {
+            for (const child of node) traverse(child);
+            return;
+        }
+
+        // Collect efforts from this node
+        if (node.softwareEfforts && Array.isArray(node.softwareEfforts)) {
+            node.softwareEfforts.forEach(eff => {
+                // Return a shallow copy with program name added for detailed selection context
+                allEfforts.push({
+                    ...eff,
+                    _programName: node.name,
+                    _fullLabel: `${node.name} > ${eff.name} (${eff.type})`
+                });
+            });
+        }
+
+        if (node.children) {
+            for (const child of node.children) traverse(child);
+        }
+    }
+
+    traverse(state.items);
+    return allEfforts;
+}
+
 export function useProgramCatalogStore() {
     return {
         state,
@@ -303,5 +344,6 @@ export function useProgramCatalogStore() {
         findByOrgId,
         findByOrgName,
         getOrgPathByID,
+        getAllSoftwareEfforts,
     };
 }
