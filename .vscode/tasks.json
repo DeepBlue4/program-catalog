@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "dev",
+            "group": "build",
+            "problemMatcher": [],
+            "label": "npm: dev",
+            "detail": "vite",
+            "isBackground": true,
+            "presentation": {
+                "group": "vite"
+            }
+        },
+        {
+            "label": "Open in Browser",
+            "type": "shell",
+            "command": "start http://localhost:5173",
+            "windows": {
+                "command": "start http://localhost:5173"
+            },
+            "group": "none",
+            "problemMatcher": []
+        }
+    ]
+}

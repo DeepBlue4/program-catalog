@@ -1,0 +1,226 @@
+<script setup>
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import * as echarts from 'echarts';
+
+const props = defineProps({
+  data: {
+    type: Object,
+    required: true
+  },
+  selectedId: {
+      type: Number,
+      default: null
+  }
+});
+
+const emit = defineEmits(['node-click']);
+
+const chartRef = ref(null);
+let chartInstance = null;
+
+const initChart = () => {
+  if (!chartRef.value) return;
+  
+  chartInstance = echarts.init(chartRef.value, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+  });
+
+  chartInstance.on('click', (params) => {
+    if (params.componentType === 'series') {
+        emit('node-click', params.data);
+    }
+  });
+
+  updateChart();
+};
+
+const updateChart = () => {
+  if (!chartInstance) return;
+
+  // We need to resolve CSS variables to hex for Canvas if necessary, 
+  // but ECharts works best with explicit hex for performance or complex strokes.
+  // We'll hardcode the tokens mapped to the CSS vars for the chart specifically to ensure exact match.
+  
+  const colors = {
+      primary: '#005AC1',
+      tertiary: '#755B00',
+      tertiaryContainer: '#FFDF90',
+      neutral: '#575E71',
+      surface: '#FEF7FF'
+  };
+
+  const option = {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      triggerOn: 'mousemove',
+      backgroundColor: colors.surface,
+      borderColor: '#C4C7C5',
+      textStyle: {
+          color: '#1D1B20'
+      },
+      extraCssText: 'box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15); border-radius: 8px;',
+      formatter: (params) => {
+          const d = params.data;
+          let status = 'Neutral Program';
+          let color = colors.neutral;
+          
+          if (d.hasSoftwareEffort) {
+              status = 'Software Effort Active';
+              color = colors.tertiary;
+          } else if (d.containsSoftwareEffort) {
+              status = 'Parent of Effort';
+              color = colors.primary;
+          }
+          
+          return `
+            <div style="font-weight: 500; font-size: 14px; margin-bottom: 4px;">${d.name}</div>
+            <div style="font-size: 12px; color: ${color}; margin-bottom: 4px; font-weight: 500;">● ${status}</div>
+            <div style="font-size: 11px; color: ${colors.neutral};">ID: ${d.value}</div>
+          `;
+      }
+    },
+    series: [
+      {
+        type: 'tree',
+        data: [props.data],
+        top: '10%',
+        left: '10%',
+        bottom: '10%',
+        right: '20%',
+        symbolSize: 12,
+        symbol: 'circle',
+        orient: 'horizontal',
+        
+        label: {
+          position: 'left',
+          verticalAlign: 'middle',
+          align: 'right',
+          fontSize: 13,
+          fontFamily: 'Roboto, sans-serif',
+          color: colors.neutral,
+          offset: [-8, 0]
+        },
+        
+        leaves: {
+          label: {
+            position: 'right',
+            verticalAlign: 'middle',
+            align: 'left',
+            offset: [8, 0]
+          }
+        },
+
+        emphasis: {
+          focus: 'descendant',
+          itemStyle: {
+              shadowBlur: 10,
+              shadowColor: 'rgba(0, 0, 0, 0.2)'
+          }
+        },
+        
+        expandAndCollapse: true,
+        animationDuration: 550,
+        animationDurationUpdate: 750,
+        
+        // Neutral Style Default
+        itemStyle: {
+            color: colors.primary,
+            borderColor: colors.primary,
+            borderWidth: 0
+        },
+        
+        lineStyle: {
+            color: '#C4C7C5', // Outline Variant
+            width: 1.5,
+            curveness: 0.5
+        }
+      }
+    ]
+  };
+
+  // Pre-process data to inject styles
+  const recursiveStyle = (node) => {
+      const newNode = { ...node };
+      
+      // M3 Style Mapping
+      if (newNode.hasSoftwareEffort) {
+          // Tertiary Color for Effort
+          newNode.itemStyle = {
+              color: colors.tertiaryContainer,
+              borderColor: colors.tertiary,
+              borderWidth: 2
+          };
+      } else if (newNode.containsSoftwareEffort) {
+          // Primary with Stroke
+          newNode.itemStyle = {
+              color: colors.surface, // Hollow-ish look or lighter
+              borderColor: colors.primary,
+              borderWidth: 3
+          };
+      } else {
+          // Standard Filled Primary Dot
+           newNode.itemStyle = {
+              color: colors.primary, 
+              borderColor: colors.primary
+          };
+      }
+
+      // Apply Selection Highlight
+      if (props.selectedId && newNode.value == props.selectedId) {
+          newNode.itemStyle.shadowBlur = 10;
+          newNode.itemStyle.shadowColor = '#FF0000'; // Distinct highlight
+          newNode.itemStyle.borderColor = '#FF0000';
+          newNode.itemStyle.borderWidth = 3;
+          // Ensure it pops visual (scale if possible, but symbolSize is global in this config usually)
+          newNode.symbolSize = 18; 
+      }
+      
+      if (newNode.children) {
+          newNode.children = newNode.children.map(child => recursiveStyle(child));
+      }
+      return newNode;
+  };
+
+  option.series[0].data = [recursiveStyle(props.data)];
+
+  chartInstance.setOption(option);
+};
+
+const handleResize = () => {
+  chartInstance?.resize();
+};
+
+watch(() => props.data, () => {
+  updateChart();
+}, { deep: true });
+
+watch(() => props.selectedId, () => {
+    updateChart();
+});
+
+// React to selection changes (optional: visually highlight selected node differently if needed)
+// ECharts 'tree' doesn't have a persistent 'selected' state for nodes out of the box easily without re-rendering or using 'emphasis' which is hover.
+// For now we rely on the side panel for selection confirmation.
+
+onMounted(() => {
+  initChart();
+  window.addEventListener('resize', handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+  chartInstance?.dispose();
+});
+</script>
+
+<template>
+  <div ref="chartRef" class="w-full h-full min-h-[500px]"></div>
+</template>
+
+<style scoped>
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.min-h-\[500px\] { min-height: 500px; }
+</style>
