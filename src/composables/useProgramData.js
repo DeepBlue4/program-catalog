@@ -34,6 +34,21 @@ export function useProgramData() {
         if (nodes.children) {
             flattenNodes(nodes.children, acc);
         }
+
+        // Include Software Efforts for Search
+        if (nodes.softwareEfforts && nodes.softwareEfforts.length > 0) {
+            nodes.softwareEfforts.forEach(effort => {
+                acc.push({
+                    name: effort.name,
+                    value: effort.id,
+                    type: 'Software Effort',
+                    isSoftwareEffort: true,
+                    parentId: nodes.program_id || nodes.value,
+                    programName: nodes.name
+                });
+            });
+        }
+
         return acc;
     };
 

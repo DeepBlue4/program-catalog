@@ -16,7 +16,14 @@ const { allNodes, selectedNode, chartData, selectNode } = useProgramData();
 const isDashboard = computed(() => route.name === 'ProgramTree' || route.path === '/');
 
 const handleNodeSelect = (node) => {
-    if (route.name === 'ProgramEfforts') {
+    if (node.isSoftwareEffort) {
+        // Navigate to ProgramEfforts with selection
+        router.push({ 
+            name: 'ProgramEfforts', 
+            params: { programId: node.parentId },
+            query: { softwareeffort_id: node.value }
+        });
+    } else if (route.name === 'ProgramEfforts') {
         router.push({ name: 'ProgramEfforts', params: { programId: node.value } });
     } else {
         selectNode(node);

@@ -59,6 +59,26 @@ const handleNavigation = (to, from, next) => {
     }
 };
 
+// Deep Linking Logic
+const checkDeepLink = () => {
+    const targetId = route.query.softwareeffort_id;
+    if (targetId && effortsList.value) {
+        effortsList.value.selectEffort(targetId);
+    }
+};
+
+// Watch query for changes (same program, different effort)
+watch(() => route.query.softwareeffort_id, (newVal) => {
+    if (newVal && effortsList.value) {
+        effortsList.value.selectEffort(newVal);
+    }
+});
+
+// Wait for list to be mounted/updated
+watch(effortsList, (val) => {
+    if (val) checkDeepLink();
+});
+
 onBeforeRouteLeave(handleNavigation);
 onBeforeRouteUpdate(handleNavigation);
 </script>
@@ -69,6 +89,7 @@ onBeforeRouteUpdate(handleNavigation);
           <SoftwareEffortsList 
             ref="effortsList"
             :key="currentProgram.value"
+            :program="currentProgram"
             :program-name="currentProgram.name" 
             :program-id="currentProgram.value" 
             :efforts="currentProgram.softwareEfforts"

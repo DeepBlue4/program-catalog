@@ -4,9 +4,12 @@ import SoftwareEffortForm from './SoftwareEffortForm.vue';
 import SoftwareEffortTreeItem from './SoftwareEffortTreeItem.vue';
 import ConfirmationModal from './ConfirmationModal.vue';
 
+// ... (previous imports)
+
 const props = defineProps({
   programName: { type: String, required: true },
   programId: { type: [String, Number], required: true },
+  program: { type: Object, default: () => ({}) }, // Full program details
   efforts: { type: Array, default: () => [] }
 });
 
@@ -206,7 +209,10 @@ const confirmNavigation = (onConfirm, onCancel) => {
 // Expose checks to parent view
 defineExpose({
     isFormDirty,
-    confirmNavigation
+    confirmNavigation,
+    selectEffort: (id) => {
+        selectedEffortId.value = id;
+    }
 });
 
 const effortFormRef = ref(null);
@@ -223,25 +229,36 @@ const handleRevertRequest = () => {
     showUnsavedChangesModal.value = true;
 };
 
-// ... existing logic ...
+const showInfoModal = ref(false);
+
+// ... (previous code) ...
+
 </script>
 
 <template>
   <div class="efforts-view">
     <div class="header-section">
       <div class="actions-row">
-          <button class="btn-outlined" @click="handleBack">
-            <i class="fas fa-arrow-left"></i> Back to Catalog
-          </button>
-          <button class="btn-filled" @click="handleCreate">
-              <i class="fas fa-plus"></i> New Effort
-          </button>
+          <div class="left-actions">
+              <button class="btn-outlined" @click="handleBack">
+                <i class="fas fa-arrow-left"></i> Back to Catalog
+              </button>
+          </div>
+          <div class="right-actions">
+              <button class="btn-icon-tonal" @click="showInfoModal = true" title="Program Information">
+                  <i class="fas fa-info-circle"></i>
+              </button>
+              <button class="btn-filled" @click="handleCreate">
+                  <i class="fas fa-plus"></i> New Effort
+              </button>
+          </div>
       </div>
       <div class="title-block">
           <h2 class="page-title">Software Efforts <span class="program-ref">- {{ programName }}</span></h2>
       </div>
     </div>
 
+    <!-- ... (Master Detail Container) ... -->
     <div class="master-detail-container">
         <!-- Sidebar: Hierarchical Tree -->
         <div class="tree-sidebar m3-card outlined">
@@ -282,7 +299,70 @@ const handleRevertRequest = () => {
         </main>
     </div>
 
-    <!-- Modal Overlay -->
+    <!-- Program Info Modal -->
+    <div v-if="showInfoModal" class="modal-overlay" @click.self="showInfoModal = false">
+        <div class="info-modal-card m3-card elevated">
+            <div class="info-header">
+                <div class="header-text">
+                    <span class="overline">Program Details</span>
+                    <h2>{{ programName }}</h2>
+                </div>
+                <button class="btn-icon" @click="showInfoModal = false">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="info-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Program ID</label>
+                        <div class="value code">{{ program.value || programId }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label>Program Leader</label>
+                        <div class="value">{{ program.programLeader || 'N/A' }}</div>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Chief Engineer</label>
+                        <div class="value">{{ program.chiefEngineer || 'N/A' }}</div>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Program Value</label>
+                        <div class="value">{{ program.programValue || 'N/A' }}</div>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Primary Location</label>
+                        <div class="value">{{ program.primaryLocation || 'N/A' }}</div>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Type</label>
+                        <div class="value">{{ program.primaryType || 'N/A' }}</div>
+                    </div>
+                </div>
+                
+                <div class="info-stats m3-card outlined">
+                    <div class="stat">
+                        <span class="stat-num">{{ efforts.length }}</span>
+                        <span class="stat-label">Software Efforts</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-num">{{ efforts.filter(e => e.status === 'Active').length }}</span>
+                        <span class="stat-label">Active</span>
+                    </div>
+                </div>
+            </div>
+            <div class="info-footer">
+                <button class="btn-filled" @click="showInfoModal = false">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ... (Other Modals) ... -->
+    <!-- Modal Overlay (Edit/Create) -->
     <div v-if="showModal" class="modal-overlay">
         <div class="modal-card m3-card elevated">
             <SoftwareEffortForm 
@@ -571,6 +651,148 @@ const handleRevertRequest = () => {
     align-items: center;
     justify-content: center;
     z-index: 1000;
+}
+
+/* Actions */
+.right-actions, .left-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.btn-icon-tonal {
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: filter 0.2s;
+}
+
+.btn-icon-tonal:hover {
+    filter: brightness(0.95);
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 8px;
+    border-radius: 50%;
+}
+
+.btn-icon:hover {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+/* Info Modal */
+.info-modal-card {
+    width: 600px;
+    max-width: 90vw;
+    background: var(--md-sys-color-surface);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.info-header {
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.header-text h2 {
+    margin: 0;
+    font-size: 24px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.overline {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--md-sys-color-primary);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.info-body {
+    padding: 1.5rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.info-item label {
+    display: block;
+    font-size: 12px;
+    color: var(--md-sys-color-secondary);
+    margin-bottom: 4px;
+}
+
+.info-item .value {
+    font-size: 16px;
+    color: var(--md-sys-color-on-surface);
+    font-weight: 400;
+}
+
+.info-item .value.code {
+    font-family: monospace;
+    font-size: 14px;
+    background: var(--md-sys-color-surface-container-high);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.info-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 1rem;
+    background: var(--md-sys-color-surface-container-low);
+    border-radius: 12px;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-num {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--md-sys-color-primary);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--md-sys-color-secondary);
+    text-transform: uppercase;
+}
+
+.info-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    display: flex;
+    justify-content: flex-end;
+    background: var(--md-sys-color-surface-container-low);
 }
 
 .modal-card {
