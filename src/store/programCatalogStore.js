@@ -168,8 +168,8 @@ function findByOrgId(orgId, node = state.items) {
         return null;
     }
 
-    // Check if current node matches
-    if (node.program_id === orgId) {
+    // Check if current node matches (compare as strings to handle route params)
+    if (String(node.program_id) === String(orgId)) {
         return node;
     }
 
@@ -263,7 +263,7 @@ async function getOrgPathByID(orgId) {
         const pathSoFar = acc.concat(node);
 
         // If current node matches, return path including this node
-        if (node.program_id === targetId) {
+        if (String(node.program_id) === String(targetId)) {
             return pathSoFar;
         }
 

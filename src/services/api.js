@@ -242,26 +242,121 @@ export class CompassAPIService {
     // --- Mock Data Generators ---
 
     static generateMockHierarchy() {
-        const createNode = (id, name, type, children = []) => ({
-            program_id: id,
-            name,
-            type,
-            children,
-            expect_software_effort: Math.random() > 0.5,
-            has_descendant_expecting_software_effort: children.some(c => c.expect_software_effort || c.has_descendant_expecting_software_effort)
-        });
+        const effortTypes = ['System', 'Service', 'Component', 'Application', 'Library'];
+        const effortStatuses = ['Active', 'Maintenance', 'Plannned', 'Deprecated'];
+        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-        return [
-            createNode("root-1", "Space Division", "Division", [
-                createNode("prog-1", "Mars Mission", "Program", [
-                    createNode("team-1", "Avionics Team", "Team"),
-                    createNode("team-2", "Propulsion Team", "Team")
-                ]),
-                createNode("prog-2", "Satellite System", "Program")
-            ]),
-            createNode("root-2", "Defense Division", "Division", [
-                createNode("prog-3", "F-XX Fighter", "Program")
-            ])
-        ];
+        const createNode = (depth, parentName) => {
+            const id = Math.floor(Math.random() * 1000000);
+            let name;
+
+            if (depth === 0) name = "Boeing PGC";
+            else if (depth === 1) name = `${pick(['Space', 'Defense', 'Commercial', 'Global'])} Division`;
+            else if (depth === 2) name = `${pick(['X', 'Y', 'Z', 'Alpha', 'Beta'])} Program`;
+            else if (depth === 3) name = `${pick(['Avionics', 'Propulsion', 'Software', 'Logistics'])} Team`;
+            else name = `Unit ${Math.floor(Math.random() * 100)}`;
+
+            // Add unique suffix to avoid dupes in search
+            name = `${name} ${id.toString().slice(-4)}`;
+
+            // Program Properties
+            const programLeader = `Leader ${pick(['Smith', 'Johnson', 'Williams', 'Brown'])}`;
+            const chiefEngineer = `Eng. ${pick(['Davis', 'Miller', 'Wilson', 'Moore'])}`;
+            const primaryLocation = pick(['Seattle, WA', 'St. Louis, MO', 'Huntsville, AL', 'Arlington, VA']);
+            const primaryType = pick(['Production', 'Development', 'Sustainment', 'R&D']);
+            const programValue = `$${(Math.random() * 100 + 10).toFixed(1)}M`;
+
+            const isLeafCandidate = depth >= 3;
+            const softwareEfforts = [];
+
+            // Generate specific software efforts with hierarchy
+            if (isLeafCandidate && Math.random() > 0.3) {
+                // Create a root effort
+                const rootId = `EFF-${id}-root`;
+                softwareEfforts.push({
+                    id: rootId,
+                    name: `${name.split(' ')[0]} Platform`,
+                    type: 'System',
+                    status: 'Active',
+                    description: 'Main platform system.',
+                    parent: null,
+                    inherit_statement_of_work_profile: false,
+                    local_statement_of_work_profile: { description: 'Governing SOW for the entire platform lifecycle.' },
+                    inherit_technical_points_of_contact: false,
+                    local_technical_points_of_contact: { names: 'Chief Architect: Jane Doe' },
+                    inherit_developer_setup: false,
+                    local_developer_setup: { details: 'See Wiki: /platform-setup' },
+                    inherit_work_location: false,
+                    local_work_location: { location: primaryLocation },
+                    children: [],
+                    linked_software_efforts: []
+                });
+
+                // Create 1-2 Child efforts
+                const numChildren = Math.floor(Math.random() * 2) + 1;
+                for (let c = 0; c < numChildren; c++) {
+                    const childId = `EFF-${id}-child-${c}`;
+                    softwareEfforts.push({
+                        id: childId,
+                        name: `${pick(['Auth', 'Data', 'UI', 'Network'])} Service`,
+                        type: 'Service',
+                        status: 'Active',
+                        description: 'Core service handling business logic.',
+                        parent: rootId,
+                        inherit_statement_of_work_profile: true,
+                        inherit_technical_points_of_contact: true,
+                        inherit_developer_setup: true,
+                        inherit_work_location: true,
+                        children: [],
+                        linked_software_efforts: []
+                    });
+                }
+            }
+
+            const hasSoftwareEffort = softwareEfforts.length > 0;
+
+            // Use program_id to match expected backend schema if possible, but UI might rely on value/id.
+            // The previous logic used 'value' as ID. The store uses 'program_id'.
+            // Accessor helpers try both. We'll set both to be safe.
+            const node = {
+                name: name,
+                value: id,
+                program_id: id,
+                hasSoftwareEffort: hasSoftwareEffort,
+                containsSoftwareEffort: false, // Calculated later
+                softwareEfforts: softwareEfforts,
+                programLeader,
+                chiefEngineer,
+                primaryLocation,
+                primaryType,
+                programValue,
+                children: [],
+                collapsed: depth > 1
+            };
+
+            if (depth < 4) {
+                const numChildren = Math.floor(Math.random() * 3) + 1; // 1-3 children
+                for (let i = 0; i < numChildren; i++) {
+                    node.children.push(createNode(depth + 1, name));
+                }
+            }
+            return node;
+        };
+
+        const calculateStatuses = (node) => {
+            let childHasEffort = false;
+            if (node.children && node.children.length > 0) {
+                node.children.forEach(child => {
+                    const childResult = calculateStatuses(child);
+                    if (childResult) childHasEffort = true;
+                });
+            }
+            node.containsSoftwareEffort = childHasEffort;
+            return node.hasSoftwareEffort || node.containsSoftwareEffort;
+        };
+
+        const root = createNode(0, null);
+        calculateStatuses(root);
+        return root; // Return single object
     }
 }

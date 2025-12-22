@@ -28,15 +28,43 @@ const initChart = () => {
 
   chartInstance.on('click', (params) => {
     if (params.componentType === 'series') {
+        const nodeValue = params.data.value;
+        const currentCollapsed = collapsedState.value.get(nodeValue);
+        
+        // Toggle collapsed state
+        collapsedState.value.set(nodeValue, !currentCollapsed);
+        
+        // Trigger update to reflect expansion/collapse
+        updateChart();
+
+        // Emit selection (so parent knows to select it)
         emit('node-click', params.data);
     }
   });
 
+  // Initial Sync
+  syncState(props.data);
   updateChart();
+};
+
+const collapsedState = ref(new Map());
+
+const syncState = (node) => {
+    if (!node) return;
+    // Only set if not already present to preserve user interaction
+    if (!collapsedState.value.has(node.value)) {
+        collapsedState.value.set(node.value, node.collapsed);
+    }
+    if (node.children) {
+        node.children.forEach(syncState);
+    }
 };
 
 const updateChart = () => {
   if (!chartInstance) return;
+
+  // Sync state ensures we have entries for all nodes
+  syncState(props.data);
 
   // We need to resolve CSS variables to hex for Canvas if necessary, 
   // but ECharts works best with explicit hex for performance or complex strokes.
@@ -120,7 +148,8 @@ const updateChart = () => {
           }
         },
         
-        expandAndCollapse: true,
+        // Disable internal expansion management to prevent conflicts
+        expandAndCollapse: false,
         animationDuration: 550,
         animationDurationUpdate: 750,
         
@@ -170,13 +199,18 @@ const updateChart = () => {
       // Apply Selection Highlight
       if (props.selectedId && newNode.value == props.selectedId) {
           newNode.itemStyle.shadowBlur = 10;
-          newNode.itemStyle.shadowColor = '#FF0000'; // Distinct highlight
-          newNode.itemStyle.borderColor = '#FF0000';
+          newNode.itemStyle.shadowColor = '#2E7D32'; // Distinct highlight (Green)
+          newNode.itemStyle.borderColor = '#2E7D32';
           newNode.itemStyle.borderWidth = 3;
           // Ensure it pops visual (scale if possible, but symbolSize is global in this config usually)
           newNode.symbolSize = 18; 
       }
       
+      // Apply Managed Collapsed State
+      if (collapsedState.value.has(newNode.value)) {
+          newNode.collapsed = collapsedState.value.get(newNode.value);
+      }
+
       if (newNode.children) {
           newNode.children = newNode.children.map(child => recursiveStyle(child));
       }
@@ -192,11 +226,41 @@ const handleResize = () => {
   chartInstance?.resize();
 };
 
+const expandPathToNode = (targetId) => {
+    if (!targetId && targetId !== 0) return;
+
+    // Helper to find path
+    const findPath = (node, path = []) => {
+        if (node.value == targetId) return path;
+        
+        if (node.children) {
+            for (const child of node.children) {
+                const res = findPath(child, [...path, node.value]);
+                if (res) return res;
+            }
+        }
+        return null;
+    };
+
+    const pathToCheck = findPath(props.data);
+    if (pathToCheck) {
+        pathToCheck.forEach(id => {
+            collapsedState.value.set(id, false); // Expand parent
+        });
+    }
+};
+
 watch(() => props.data, () => {
+  // Reset state if data structure changes fundamentally (optional, but safer to sync)
+  // Or just sync new nodes
+  syncState(props.data);
+  // Ensure selection is visible if present
+  if (props.selectedId) expandPathToNode(props.selectedId);
   updateChart();
 }, { deep: true });
 
-watch(() => props.selectedId, () => {
+watch(() => props.selectedId, (newId) => {
+    if (newId) expandPathToNode(newId);
     updateChart();
 });
 
