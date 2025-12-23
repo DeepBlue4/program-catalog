@@ -123,7 +123,7 @@ const emit = defineEmits(['confirm', 'cancel']);
 }
 
 .btn-filled.danger {
-    background: var(--md-sys-color-error);
+    background: var(--md-sys-color-error, #B3261E);
     color: var(--md-sys-color-on-error);
 }
 

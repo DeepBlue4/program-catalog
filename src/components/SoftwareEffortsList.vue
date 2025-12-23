@@ -289,6 +289,7 @@ const showInfoModal = ref(false);
                     @delete="handleDelete"
                     @dirty-change="handleDirtyChange"
                     @revert="handleRevertRequest"
+                    @validation-error="(msg) => showNotification(msg, 'error')"
                  />
             </div>
             
@@ -371,6 +372,7 @@ const showInfoModal = ref(false);
                 :is-edit="!!editingEffort && !!editingEffort.id"
                 @save="saveEffort"
                 @cancel="showModal = false"
+                @validation-error="(msg) => showNotification(msg, 'error')"
             />
         </div>
     </div>
@@ -431,7 +433,7 @@ const showInfoModal = ref(false);
 }
 
 .notification-toast.error {
-    background: var(--md-sys-color-error);
+    background: var(--md-sys-color-error, #B3261E);
     color: var(--md-sys-color-on-error);
 }
 

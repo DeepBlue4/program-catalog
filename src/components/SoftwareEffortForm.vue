@@ -50,16 +50,16 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['save', 'cancel', 'delete', 'dirty-change']);
+const emit = defineEmits(['save', 'cancel', 'delete', 'dirty-change', 'revert', 'validation-error']);
 
 // Tabs
-const activeTab = ref('general');
+const activeTab = ref('sow');
 const tabs = [
-    { id: 'general', label: 'General & Links', icon: 'fas fa-link' },
-    { id: 'sow', label: 'Statement of Work', icon: 'fas fa-file-contract' },
-    { id: 'pocs', label: 'Point of Contacts', icon: 'fas fa-users' },
+    { id: 'sow', label: 'Statement of Work', icon: 'fas fa-file-contract', required: true },
+    { id: 'pocs', label: 'Point of Contacts', icon: 'fas fa-users', required: true },
     { id: 'dev', label: 'Developer Setup', icon: 'fas fa-laptop-code' },
     { id: 'location', label: 'Work Locations', icon: 'fas fa-map-marker-alt' },
+    { id: 'general', label: 'General & Links', icon: 'fas fa-link' },
 ];
 
 const store = useProgramCatalogStore();
@@ -196,8 +196,81 @@ const updateLocal = (section, field, value) => {
     formData.value[localKey][field] = value;
 };
 
+// Validation State
+const errors = ref({});
+
+const tabErrors = computed(() => {
+    const map = {};
+    if (errors.value.program_manager_email || errors.value.allow_non_us) map.sow = true;
+    if (errors.value.software_lead) map.pocs = true;
+    return map;
+});
+
+const validateEmail = (email) => {
+    return String(email)
+        .toLowerCase()
+        .match(
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        );
+};
+
+const validateForm = () => {
+    errors.value = {};
+    let isValid = true;
+
+    // Effort Name
+    if (!formData.value.name?.trim()) {
+        errors.value.name = 'Effort Name is required.';
+        isValid = false;
+    }
+
+    // Program Manager Email (SOW)
+    if (!formData.value.inherit_statement_of_work_profile) {
+        const email = formData.value.local_statement_of_work_profile?.program_manager_email;
+        if (!email) {
+            errors.value.program_manager_email = 'Program Manager Email is required.';
+            isValid = false;
+            // Auto switch tab if error found and not on tab
+            if (activeTab.value !== 'sow' && isValid === false) activeTab.value = 'sow'; 
+        } else if (!validateEmail(email)) {
+            errors.value.program_manager_email = 'Invalid email format.';
+            isValid = false;
+             if (activeTab.value !== 'sow') activeTab.value = 'sow';
+        }
+
+        // Allow Non-US (Must be boolean explicitly)
+        // Check if property exists and is not null/undefined. The requirement is a dropdown, so ensure it's selected.
+        const nonUs = formData.value.local_statement_of_work_profile?.allow_non_us;
+        if (nonUs === null || nonUs === undefined || nonUs === '') {
+             errors.value.allow_non_us = 'Please select a value.';
+             isValid = false;
+             if (activeTab.value !== 'sow') activeTab.value = 'sow';
+        }
+    }
+
+    // Software Lead (POCs)
+    if (!formData.value.inherit_technical_points_of_contact) {
+        const email = formData.value.local_technical_points_of_contact?.software_lead;
+         if (!email) {
+            errors.value.software_lead = 'Software Technical Lead Email is required.';
+            isValid = false;
+            if (activeTab.value !== 'pocs' && !errors.value.program_manager_email) activeTab.value = 'pocs';
+        } else if (!validateEmail(email)) {
+            errors.value.software_lead = 'Invalid email format.';
+             isValid = false;
+             if (activeTab.value !== 'pocs' && !errors.value.program_manager_email) activeTab.value = 'pocs';
+        }
+    }
+
+    return isValid;
+};
+
 const handleSave = () => {
-    if (!formData.value.name) return;
+    if (!validateForm()) {
+        const errorFields = Object.keys(errors.value).length;
+        emit('validation-error', `Please fix the ${errorFields} error${errorFields > 1 ? 's' : ''} in the form before saving.`);
+        return;
+    }
     emit('save', formData.value);
 };
 
@@ -285,11 +358,20 @@ const handleCancel = () => {
                 v-for="tab in tabs" 
                 :key="tab.id"
                 class="tab-btn"
-                :class="{ active: activeTab === tab.id }"
+                :class="{ 
+                    active: activeTab === tab.id,
+                    'has-error': tabErrors[tab.id]
+                }"
                 @click="activeTab = tab.id"
             >
-                <i :class="[tab.icon, 'tab-icon']"></i>
-                <span class="tab-label">{{ tab.label }}</span>
+                <div class="tab-icon-container">
+                    <i :class="[tab.icon, 'tab-icon']"></i>
+                    <span v-if="tabErrors[tab.id]" class="error-badge">!</span>
+                </div>
+                <div class="tab-info">
+                    <span class="tab-label">{{ tab.label }}</span>
+                    <span v-if="tab.required" class="required-tag">Required</span>
+                </div>
             </button>
         </nav>
 
@@ -378,13 +460,14 @@ const handleCancel = () => {
                             :disabled="formData.inherit_statement_of_work_profile"
                             type="text" class="clean-input" placeholder="e.g. Design, Implementation">
                     </div>
-                     <div class="field-group">
-                        <label>PM Email</label>
+                     <div class="field-group" :class="{ 'has-error': errors.program_manager_email }">
+                        <label>Program Manager Email <span class="required-star">*</span></label>
                         <input 
                              :value="sv('statement_of_work_profile', 'program_manager_email')"
                              @input="e => updateLocal('statement_of_work_profile', 'program_manager_email', e.target.value)"
                              :disabled="formData.inherit_statement_of_work_profile"
                              type="email" class="clean-input" placeholder="manager@example.com">
+                         <span v-if="errors.program_manager_email" class="error-msg">{{ errors.program_manager_email }}</span>
                     </div>
 
                      <div class="field-group">
@@ -406,23 +489,32 @@ const handleCancel = () => {
                         />
                     </div>
 
-                    <div class="field-group checkbox-row span-2">
-                         <label class="checkbox-clean" :class="{ disabled: formData.inherit_statement_of_work_profile }">
-                            <input 
-                                type="checkbox" 
-                                :checked="sv('statement_of_work_profile', 'allow_non_us')"
-                                @change="e => updateLocal('statement_of_work_profile', 'allow_non_us', e.target.checked)"
-                                :disabled="formData.inherit_statement_of_work_profile">
-                            <span>Allow Non-US Personnel</span>
-                        </label>
-                        <label class="checkbox-clean" :class="{ disabled: formData.inherit_statement_of_work_profile }">
-                            <input 
-                                type="checkbox" 
-                                :checked="sv('statement_of_work_profile', 'mission_critical')"
-                                @change="e => updateLocal('statement_of_work_profile', 'mission_critical', e.target.checked)"
-                                :disabled="formData.inherit_statement_of_work_profile">
-                            <span>Mission Critical</span>
-                        </label>
+                    <div class="field-group" :class="{ 'has-error': errors.allow_non_us }">
+                         <label>Allow Non-US Personnel <span class="required-star">*</span></label>
+                         <select 
+                            class="clean-select" 
+                            :value="sv('statement_of_work_profile', 'allow_non_us')"
+                            @change="e => updateLocal('statement_of_work_profile', 'allow_non_us', e.target.value === 'true')"
+                            :disabled="formData.inherit_statement_of_work_profile"
+                         >
+                            <option value="" disabled selected>Select...</option>
+                            <option :value="true">True</option>
+                            <option :value="false">False</option>
+                         </select>
+                         <span v-if="errors.allow_non_us" class="error-msg">{{ errors.allow_non_us }}</span>
+                    </div>
+
+                    <div class="field-group">
+                         <label>Mission Critical</label>
+                         <select 
+                            class="clean-select" 
+                            :value="sv('statement_of_work_profile', 'mission_critical')"
+                            @change="e => updateLocal('statement_of_work_profile', 'mission_critical', e.target.value === 'true')"
+                            :disabled="formData.inherit_statement_of_work_profile"
+                         >
+                            <option :value="true">True</option>
+                            <option :value="false">False</option>
+                         </select>
                     </div>
                 </div>
             </div>
@@ -442,13 +534,14 @@ const handleCancel = () => {
                 </div>
 
                 <div class="form-fields-grid" :class="{ 'is-inherited': formData.inherit_technical_points_of_contact }">
-                     <div class="field-group">
-                        <label>Software Lead</label>
+                     <div class="field-group" :class="{ 'has-error': errors.software_lead }">
+                        <label>Software Lead Email <span class="required-star">*</span></label>
                         <input 
                             :value="sv('technical_points_of_contact', 'software_lead')"
                             @input="e => updateLocal('technical_points_of_contact', 'software_lead', e.target.value)"
                             :disabled="formData.inherit_technical_points_of_contact"
-                            type="text" class="clean-input" placeholder="Name or Email">
+                            type="email" class="clean-input" placeholder="lead@example.com">
+                        <span v-if="errors.software_lead" class="error-msg">{{ errors.software_lead }}</span>
                     </div>
                      <div class="field-group">
                         <label>Security Focal</label>
@@ -1032,5 +1125,118 @@ const handleCancel = () => {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Validation Styles */
+.required-star {
+    color: var(--md-sys-color-error, #B3261E);
+    margin-left: 4px;
+    font-weight: bold;
+}
+
+.has-error label {
+    color: var(--md-sys-color-error, #B3261E);
+}
+
+.has-error input, .has-error select, .has-error textarea {
+    border-color: var(--md-sys-color-error, #B3261E) !important;
+}
+
+.error-msg {
+    font-size: 11px;
+    color: var(--md-sys-color-error, #B3261E);
+    margin-top: 4px;
+    display: block;
+}
+
+/* Clean Select (Dropdowns) */
+.clean-select {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--md-sys-color-outline);
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    font-size: 14px;
+    font-family: inherit;
+    transition: 0.2s;
+    box-sizing: border-box;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px top 50%;
+    background-size: 10px auto;
+    padding-right: 32px;
+}
+
+.clean-select:focus {
+    outline: none;
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+}
+
+/* Updated Tab UX */
+.tab-btn {
+    align-items: flex-start; /* Align for multi-line */
+    padding: 12px 16px;
+    gap: 12px;
+}
+
+.tab-icon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    padding-top: 2px;
+}
+
+.tab-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.required-tag {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--md-sys-color-error);
+    background: var(--md-sys-color-error-container);
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.tab-btn.has-error {
+    color: var(--md-sys-color-error, #B3261E);
+    background: var(--md-sys-color-error-container);
+}
+
+.tab-btn.has-error:hover {
+    background: var(--md-sys-color-error-container);
+}
+
+.tab-btn.has-error .tab-label, 
+.tab-btn.has-error .tab-icon {
+    color: var(--md-sys-color-error, #B3261E);
+}
+
+.error-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: #B3261E;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 </style>
