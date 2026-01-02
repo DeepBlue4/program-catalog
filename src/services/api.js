@@ -266,6 +266,15 @@ export class CompassAPIService {
             else if (depth === 3) name = `${pick(['Avionics', 'Propulsion', 'Software', 'Logistics', 'Mission', 'Ground'])} Team ${id.toString().slice(-3)}`;
             else name = `Unit ${Math.floor(Math.random() * 1000)}`;
 
+            // --- TEST OVERRIDE ---
+            // User Request: "Commercial Division 37" should be a neutral node high in the tree
+            // Force this specific name to verify logic
+            if (depth === 1 && Math.random() > 0.8) {
+                name = "Commercial Division 37";
+            }
+            const isTargetNeutral = name === "Commercial Division 37";
+            // ---------------------
+
             // Program Properties
             const programLeader = `Leader ${pick(['Smith', 'Johnson', 'Williams', 'Brown'])}`;
             const chiefEngineer = `Eng. ${pick(['Davis', 'Miller', 'Wilson', 'Moore'])}`;
@@ -277,7 +286,8 @@ export class CompassAPIService {
             const softwareEfforts = [];
 
             // Generate specific software efforts with hierarchy
-            if (isLeafCandidate && Math.random() > 0.3) {
+            // Exclude Commercial Division 37 explicitly
+            if (isLeafCandidate && !isTargetNeutral && Math.random() > 0.3) {
                 // Create a root effort
                 const rootId = `EFF-${id}-root`;
                 softwareEfforts.push({
@@ -326,7 +336,8 @@ export class CompassAPIService {
 
             // Recursive Children
             const children = [];
-            if (depth < MAX_DEPTH) {
+            // "Commercial Division 37" override: Do not generate children so it remains a pure neutral leaf high in the tree
+            if (depth < MAX_DEPTH && !isTargetNeutral) {
                 const numChildren = Math.floor(Math.random() * (MAX_CHILDREN - MIN_CHILDREN + 1)) + MIN_CHILDREN;
                 for (let i = 0; i < numChildren; i++) {
                     children.push(createNode(depth + 1, name));
