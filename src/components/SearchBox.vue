@@ -71,7 +71,7 @@ const handleBlur = () => {
                     {{ item.isSoftwareEffort ? 'Effort' : 'Program' }}
                  </span>
                  <span v-if="item.programName" class="item-context">{{ item.programName }}</span>
-                 <span class="item-id">#{{ item.value }}</span>
+                 <span class="item-id">ID: {{ item.value }}</span>
              </div>
         </div>
       </li>

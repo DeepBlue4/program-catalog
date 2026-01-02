@@ -28,9 +28,10 @@ export function useProgramData() {
 
         // Map to format expected by SearchBox (name, value)
         // Ensure we preserve all original props
+        const idValue = nodes.program_id || nodes.value || nodes.id;
         acc.push({
             ...nodes,
-            value: nodes.program_id, // Map program_id to value
+            value: idValue, // Robust ID mapping
             name: nodes.name // Ensure name is present
         });
 
@@ -46,7 +47,8 @@ export function useProgramData() {
                     value: effort.id,
                     type: 'Software Effort',
                     isSoftwareEffort: true,
-                    parentId: nodes.program_id || nodes.value,
+                    isSoftwareEffort: true,
+                    parentId: nodes.program_id || nodes.value || nodes.id,
                     programName: nodes.name
                 });
             });

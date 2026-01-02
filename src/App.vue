@@ -23,10 +23,18 @@ const handleNodeSelect = (node) => {
             params: { programId: node.parentId },
             query: { effort_id: node.value }
         });
-    } else if (route.name === 'ProgramEfforts') {
-        router.push({ name: 'ProgramEfforts', params: { programId: node.value } });
     } else {
+        // Always select the node to update global state
         selectNode(node);
+        
+        // If we are already on the efforts view, navigate to the new program's efforts
+        // This ensures deep linking works when switching programs via search
+        if (route.name === 'ProgramEfforts') {
+            router.push({ 
+                name: 'ProgramEfforts', 
+                params: { programId: node.value || node.program_id } 
+            });
+        }
     }
 };
 
