@@ -277,6 +277,6 @@ const handleReset = () => {
     position: absolute;
     bottom: 1rem;
     left: 1rem;
-    z-index: 10;
+    z-index: 100;
 }
 </style>
