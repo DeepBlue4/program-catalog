@@ -218,7 +218,7 @@ onUnmounted(() => {
                    <span class="tag" v-if="selectedNode.hasSoftwareEffort">Software Active</span>
                    <span class="tag neutral" v-else>Neutral</span>
                    
-                   <span class="tag parent" v-if="selectedNode.containsSoftwareEffort">Parent of Effort</span>
+                   <span class="tag parent" v-if="selectedNode.has_descendant_expecting_software_effort">Parent of Effort</span>
                </div>
            </div>
            

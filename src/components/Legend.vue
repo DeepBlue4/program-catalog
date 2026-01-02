@@ -6,11 +6,11 @@
     <h3 class="legend-title">Program Status Key</h3>
     <div class="legend-item">
       <span class="dot effort"></span>
-      <span class="label">Software Effort</span>
+      <span class="label">Program with Efforts</span>
     </div>
     <div class="legend-item">
       <span class="dot parent"></span>
-      <span class="label">Parent of Effort</span>
+      <span class="label">Parent Program</span>
     </div>
     <div class="legend-item">
       <span class="dot neutral"></span>
@@ -52,19 +52,23 @@
 
 /* Match OrgChart M3 Styles */
 .dot.effort {
-  background-color: var(--md-sys-color-tertiary-container);
-  border-color: var(--md-sys-color-tertiary);
+  /* Program with Efforts -> Blue Dot */
+  background-color: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
 }
 
 .dot.parent {
+  /* Parent -> Outlined Blue */
   background-color: var(--md-sys-color-surface);
   border-color: var(--md-sys-color-primary);
-  border-width: 3px;
+  border-width: 2px;
 }
 
 .dot.neutral {
-  background-color: var(--md-sys-color-primary);
-  border-color: var(--md-sys-color-primary); /* Filled */
+  /* Neutral -> Light Grey */
+  background-color: #E0E0E0;
+  border-color: #BDBDBD;
+  border-width: 1px;
 }
 
 .label {

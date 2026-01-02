@@ -49,14 +49,17 @@ const initChart = () => {
 
 const collapsedState = ref(new Map());
 
-const syncState = (node) => {
+const syncState = (node, depth = 0) => {
     if (!node) return;
     // Only set if not already present to preserve user interaction
     if (!collapsedState.value.has(node.value)) {
-        collapsedState.value.set(node.value, node.collapsed);
+        // Default logic: Root (depth 0) expanded, children (depth 1+) collapsed
+        // This shows Root + Level 1 nodes.
+        const defaultCollapsed = depth >= 1; 
+        collapsedState.value.set(node.value, node.collapsed !== undefined ? node.collapsed : defaultCollapsed);
     }
     if (node.children) {
-        node.children.forEach(syncState);
+        node.children.forEach(child => syncState(child, depth + 1));
     }
 };
 
@@ -96,10 +99,14 @@ const updateChart = () => {
           
           if (d.hasSoftwareEffort) {
               status = 'Software Effort Active';
-              color = colors.tertiary;
-          } else if (d.containsSoftwareEffort) {
+              color = colors.primary; // Blue
+          } else if (d.has_descendant_expecting_software_effort) {
               status = 'Parent of Effort';
+              // Keep Primary for text color as it's readable
               color = colors.primary;
+          } else {
+             // Neutral
+             color = colors.neutral; // Keep dark grey text for neutral status
           }
           
           return `
@@ -175,24 +182,25 @@ const updateChart = () => {
       
       // M3 Style Mapping
       if (newNode.hasSoftwareEffort) {
-          // Tertiary Color for Effort
+          // Program with Efforts -> Blue Dot (Primary)
           newNode.itemStyle = {
-              color: colors.tertiaryContainer,
-              borderColor: colors.tertiary,
+              color: colors.primary,
+              borderColor: colors.primary,
+              borderWidth: 0
+          };
+      } else if (newNode.has_descendant_expecting_software_effort) {
+          // Parent of Effort -> Outlined Blue Dot
+          newNode.itemStyle = {
+              color: colors.surface,
+              borderColor: colors.primary,
               borderWidth: 2
           };
-      } else if (newNode.containsSoftwareEffort) {
-          // Primary with Stroke
-          newNode.itemStyle = {
-              color: colors.surface, // Hollow-ish look or lighter
-              borderColor: colors.primary,
-              borderWidth: 3
-          };
       } else {
-          // Standard Filled Primary Dot
+          // Neutral Program -> Light Grey Dot
            newNode.itemStyle = {
-              color: colors.primary, 
-              borderColor: colors.primary
+              color: '#E0E0E0', 
+              borderColor: '#BDBDBD',
+              borderWidth: 1
           };
       }
 

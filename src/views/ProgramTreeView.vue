@@ -132,7 +132,9 @@ const handleReset = () => {
         <div v-else class="empty-state">
             No program data available.
         </div>
-        <Legend />
+        <div class="legend-wrapper">
+            <Legend />
+        </div>
     </div>
   </div>
 </template>
@@ -265,9 +267,16 @@ const handleReset = () => {
     color: var(--md-sys-color-outline);
 }
 
+.chart-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
 .legend-wrapper {
     position: absolute;
     bottom: 1rem;
     left: 1rem;
+    z-index: 10;
 }
 </style>

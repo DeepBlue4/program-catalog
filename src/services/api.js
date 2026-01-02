@@ -207,7 +207,7 @@ export class CompassAPIService {
                 success: true,
                 data: {
                     username: "testuser",
-                    email: "test.user@boeing.com",
+                    email: "test.user@company.com",
                     first_name: "Test",
                     last_name: "User",
                 },
@@ -227,10 +227,10 @@ export class CompassAPIService {
             return {
                 success: true,
                 data: [
-                    "jane.doe@boeing.com",
-                    "john.smith@boeing.com",
-                    "admin@boeing.com",
-                    "developer@boeing.com",
+                    "jane.doe@company.com",
+                    "john.smith@company.com",
+                    "admin@company.com",
+                    "developer@company.com",
                 ],
             };
         }
@@ -260,7 +260,7 @@ export class CompassAPIService {
             const id = Math.floor(Math.random() * 10000000); // Larger ID space
             let name;
 
-            if (depth === 0) name = "Boeing PGC";
+            if (depth === 0) name = "Company PGC";
             else if (depth === 1) name = `${pick(['Space', 'Defense', 'Commercial', 'Global'])} Division ${id.toString().slice(-2)}`;
             else if (depth === 2) name = `${pick(['X', 'Y', 'Z', 'Alpha', 'Beta', 'Gamma', 'Delta'])} Program ${id.toString().slice(-3)}`;
             else if (depth === 3) name = `${pick(['Avionics', 'Propulsion', 'Software', 'Logistics', 'Mission', 'Ground'])} Team ${id.toString().slice(-3)}`;
