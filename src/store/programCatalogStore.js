@@ -20,6 +20,7 @@ async function fetchItems() {
         if (!response.success) {
             state.error = "Could not connect to the backend";
         } else {
+            console.log('[Store] Items fetched, count:', response.data ? (Array.isArray(response.data) ? response.data.length : 1) : 0);
             state.items = response.data;
         }
     } catch (err) {

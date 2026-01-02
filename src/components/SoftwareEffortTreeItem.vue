@@ -32,7 +32,7 @@ const handleSelect = () => {
 };
 
 const hasChildren = computed(() => props.effort.children && props.effort.children.length > 0);
-const isSelected = computed(() => props.effort.id === props.selectedId);
+const isSelected = computed(() => String(props.effort.id) === String(props.selectedId));
 
 // Helper for status colors
 const getStatusLabel = (effort) => effort.status || 'Active';

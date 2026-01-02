@@ -9,7 +9,8 @@ const props = defineProps({
   programName: { type: String, required: true },
   programId: { type: [String, Number], required: true },
   program: { type: Object, default: () => ({}) }, // Full program details
-  efforts: { type: Array, default: () => [] }
+  efforts: { type: Array, default: () => [] },
+  selectedId: { type: [String, Number], default: null }
 });
 
 const emit = defineEmits(['back', 'selection-change']);
@@ -18,7 +19,6 @@ const showModal = ref(false);
 const showDeleteModal = ref(false);
 const showUnsavedChangesModal = ref(false);
 const editingEffort = ref(null);
-const selectedEffortId = ref(null);
 const itemToDelete = ref(null);
 const isFormDirty = ref(false); 
 const pendingConfirm = ref(null);
@@ -103,14 +103,14 @@ const effortTree = computed(() => {
 });
 
 const selectedEffort = computed(() => {
-    const id = selectedEffortId.value;
+    const id = props.selectedId;
     if (!id) return null;
     
     // Recursive helper to find node in tree
     const findInTree = (nodes) => {
         for (const node of nodes) {
-            // Loose equality for URL matching
-            if (node.id == id) return node;
+            // Robust String comparison
+            if (String(node.id) === String(id)) return node;
             if (node.children && node.children.length > 0) {
                 const found = findInTree(node.children);
                 if (found) return found;
@@ -119,7 +119,9 @@ const selectedEffort = computed(() => {
         return null;
     };
     
-    return findInTree(props.efforts);
+    const res = findInTree(props.efforts);
+    console.log('[SEL] Found effort?', !!res, 'for id:', id);
+    return res;
 });
 
 // Select tree item
@@ -178,8 +180,8 @@ const confirmDelete = async () => {
             
             if (res.success) {
                 showNotification(`Deleted '${deletedItem.name}' successfully.`);
-                if (selectedEffortId.value === itemToDelete.value.id) {
-                    selectedEffortId.value = null; 
+                if (String(props.selectedId) === String(deletedItem.id)) {
+                    // Emit null to clear selection via parent
                     emit('selection-change', null);
                     isFormDirty.value = false;
                 }
@@ -225,7 +227,7 @@ const saveEffort = async (effortData) => {
          // Apply changes to prop (mutable array)
          if (isNew) {
              props.efforts.push(newEffortsList[newEffortsList.length - 1]);
-             selectedEffortId.value = effortData.id;
+             // selectedEffortId.value = effortData.id; // Removed ref
              emit('selection-change', effortData.id);
          } else if (index !== -1) {
              Object.assign(props.efforts[index], effortData);
@@ -252,11 +254,7 @@ const confirmNavigation = (onConfirm, onCancel) => {
 // Expose checks to parent view
 defineExpose({
     isFormDirty,
-    confirmNavigation,
-    selectEffort: (id) => {
-        // Always update.
-        selectedEffortId.value = id;
-    }
+    confirmNavigation
 });
 
 const effortFormRef = ref(null);
@@ -312,7 +310,7 @@ const showInfoModal = ref(false);
                     v-for="rootNode in displayedEfforts" 
                     :key="rootNode.id" 
                     :effort="rootNode" 
-                    :selected-id="selectedEffortId"
+                    :selected-id="selectedId"
                     @select="handleSelect"
                 />
                 <div v-if="efforts.length === 0" class="empty-tree">
@@ -347,6 +345,7 @@ const showInfoModal = ref(false);
             <div v-if="selectedEffort" class="detail-content-wrapper">
                  <SoftwareEffortForm
                     ref="effortFormRef"
+                    :key="selectedEffort.id"
                     :effort="selectedEffort"
                     :available-parents="efforts"
                     :is-edit="true"

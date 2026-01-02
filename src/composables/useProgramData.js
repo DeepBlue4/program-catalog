@@ -9,7 +9,10 @@ export function useProgramData() {
 
     // Trigger fetch if needed
     if (!store.state.items && !store.state.loading) {
+        console.log('[useProgramData] Triggering fetchItems');
         store.fetchItems();
+    } else {
+        console.log('[useProgramData] Items available or loading:', !!store.state.items, store.state.loading);
     }
 
     const chartData = computed(() => store.state.items);
