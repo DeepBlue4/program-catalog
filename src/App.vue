@@ -51,8 +51,13 @@ const handleBackToCatalog = () => {
 
 // --- Breadcrumb Logic ---
 const breadcrumbs = computed(() => {
-    const crumbs = [{ name: 'Program Catalog', id: null, path: '/' }]; // Root
+    const crumbs = [{ name: 'Home', id: null, path: '/' }]; // Root
     
+    // Reset to default on specific pages
+    if (['Dashboard', 'PermissionDenied'].includes(route.name)) {
+        return crumbs;
+    }
+
     if (selectedNode.value && chartData.value) {
         // Helper to find path in tree
         const findPath = (node, targetId, currentPath = []) => {
