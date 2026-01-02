@@ -1,10 +1,9 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import SoftwareEffortForm from './SoftwareEffortForm.vue';
 import SoftwareEffortTreeItem from './SoftwareEffortTreeItem.vue';
 import ConfirmationModal from './ConfirmationModal.vue';
 
-// ... (previous imports)
 
 const props = defineProps({
   programName: { type: String, required: true },
@@ -58,12 +57,37 @@ const cancelUnsavedChanges = () => {
     pendingCancel.value = null;
 };
 
+// Pagination State
+const currentPage = ref(1);
+const itemsPerPage = 10;
+
+// Reset page when program changes
+watch(() => props.programId, () => {
+    currentPage.value = 1;
+});
+
+const totalPages = computed(() => Math.ceil(props.efforts.length / itemsPerPage));
+
+const displayedEfforts = computed(() => {
+    // Slice raw efforts for pagination
+    // Note: This simplistic pagination flattens the view of roots. 
+    // If deep hierarchy navigation is desired, we might paginate only roots.
+    // For now, based on mock data which is mostly flat list of efforts per program (or shallow tree),
+    // we slice the computed roots.
+
+    const start = (currentPage.value - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    
+    // We paginate the ROOTS of the tree view
+    return effortTree.value.slice(start, end);
+});
+
 // --- Tree Building Logic ---
 const effortTree = computed(() => {
     const map = {};
     const roots = [];
     
-    // Shallow copy for tree construction, preserving references to original objects
+    // Shallow copy for tree construction
     const nodes = props.efforts.map(e => ({ ...e, children: [] }));
     
     nodes.forEach(node => { map[node.id] = node; });
@@ -265,7 +289,7 @@ const showInfoModal = ref(false);
             <h3 class="panel-title">Hierarchy</h3>
             <div class="tree-content">
                 <SoftwareEffortTreeItem 
-                    v-for="rootNode in effortTree" 
+                    v-for="rootNode in displayedEfforts" 
                     :key="rootNode.id" 
                     :effort="rootNode" 
                     :selected-id="selectedEffortId"
@@ -274,6 +298,27 @@ const showInfoModal = ref(false);
                 <div v-if="efforts.length === 0" class="empty-tree">
                     No efforts found.
                 </div>
+            </div>
+            
+            <!-- Pagination Controls -->
+            <div v-if="efforts.length > itemsPerPage" class="pagination-controls">
+                <button 
+                    class="page-btn" 
+                    :disabled="currentPage === 1" 
+                    @click="currentPage--"
+                >
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="page-info">
+                    {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, efforts.length) }} of {{ efforts.length }}
+                </span>
+                <button 
+                    class="page-btn" 
+                    :disabled="currentPage === totalPages" 
+                    @click="currentPage++"
+                >
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
         </div>
 
@@ -805,5 +850,49 @@ const showInfoModal = ref(false);
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+.empty-tree {
+    padding: 2rem;
+    text-align: center;
+    color: var(--md-sys-color-secondary);
+    font-style: italic;
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-low);
+}
+
+.page-btn {
+    background: transparent;
+    border: none;
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.page-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.page-info {
+    font-size: 12px;
+    color: var(--md-sys-color-secondary);
+    font-variant-numeric: tabular-nums;
 }
 </style>

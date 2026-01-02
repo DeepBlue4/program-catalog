@@ -115,25 +115,23 @@ export class CompassAPIService {
      */
     static async getSoftwareEfforts(hierarchyNodeUUID) {
         if (CompassAPIService.useTestData) {
-            // Return simple mock efforts
+            await CompassAPIService.simulateLatency();
+            // Return simple mock efforts locally or via generator if needed
+            // For now, let's generate a larger list to test paging
+            const count = 45; // Test pagination
+            const efforts = [];
+            for (let i = 0; i < count; i++) {
+                efforts.push({
+                    id: `eff-${hierarchyNodeUUID}-${i}`,
+                    name: `Mock Effort ${i + 1}`,
+                    type: i % 3 === 0 ? 'System' : 'Service',
+                    status: 'Active',
+                    description: `Automated mock effort ${i + 1} description.`,
+                });
+            }
             return {
                 success: true,
-                data: [
-                    {
-                        id: `eff-${hierarchyNodeUUID}-1`,
-                        name: "Mock Effort 1",
-                        type: "System",
-                        status: "Active",
-                        description: "A mock system effort for testing.",
-                    },
-                    {
-                        id: `eff-${hierarchyNodeUUID}-2`,
-                        name: "Mock Effort 2",
-                        type: "Service",
-                        status: "Planned",
-                        description: "A mock service effort.",
-                    },
-                ],
+                data: efforts
             };
         }
 
@@ -188,6 +186,7 @@ export class CompassAPIService {
      */
     static async getEnterpriseHierarchy() {
         if (CompassAPIService.useTestData) {
+            await CompassAPIService.simulateLatency();
             return {
                 success: true,
                 data: CompassAPIService.generateMockHierarchy(),
@@ -241,23 +240,31 @@ export class CompassAPIService {
 
     // --- Mock Data Generators ---
 
+    static async simulateLatency() {
+        if (!CompassAPIService.useTestData) return;
+        const ms = Math.floor(Math.random() * 800) + 800; // 800 - 1600ms
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     static generateMockHierarchy() {
         const effortTypes = ['System', 'Service', 'Component', 'Application', 'Library'];
-        const effortStatuses = ['Active', 'Maintenance', 'Plannned', 'Deprecated'];
+        const effortStatuses = ['Active', 'Maintenance', 'Planned', 'Deprecated'];
         const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+        // Scale Factor: Increase for larger tree
+        const MAX_DEPTH = 4; // 0-indexed, so 5 levels
+        const MIN_CHILDREN = 2;
+        const MAX_CHILDREN = 5;
+
         const createNode = (depth, parentName) => {
-            const id = Math.floor(Math.random() * 1000000);
+            const id = Math.floor(Math.random() * 10000000); // Larger ID space
             let name;
 
             if (depth === 0) name = "Boeing PGC";
-            else if (depth === 1) name = `${pick(['Space', 'Defense', 'Commercial', 'Global'])} Division`;
-            else if (depth === 2) name = `${pick(['X', 'Y', 'Z', 'Alpha', 'Beta'])} Program`;
-            else if (depth === 3) name = `${pick(['Avionics', 'Propulsion', 'Software', 'Logistics'])} Team`;
-            else name = `Unit ${Math.floor(Math.random() * 100)}`;
-
-            // Add unique suffix to avoid dupes in search
-            name = `${name} ${id.toString().slice(-4)}`;
+            else if (depth === 1) name = `${pick(['Space', 'Defense', 'Commercial', 'Global'])} Division ${id.toString().slice(-2)}`;
+            else if (depth === 2) name = `${pick(['X', 'Y', 'Z', 'Alpha', 'Beta', 'Gamma', 'Delta'])} Program ${id.toString().slice(-3)}`;
+            else if (depth === 3) name = `${pick(['Avionics', 'Propulsion', 'Software', 'Logistics', 'Mission', 'Ground'])} Team ${id.toString().slice(-3)}`;
+            else name = `Unit ${Math.floor(Math.random() * 1000)}`;
 
             // Program Properties
             const programLeader = `Leader ${pick(['Smith', 'Johnson', 'Williams', 'Brown'])}`;
@@ -293,70 +300,58 @@ export class CompassAPIService {
                 });
 
                 // Create 1-2 Child efforts
-                const numChildren = Math.floor(Math.random() * 2) + 1;
+                const numChildren = Math.floor(Math.random() * 3) + 1;
                 for (let c = 0; c < numChildren; c++) {
                     const childId = `EFF-${id}-child-${c}`;
                     softwareEfforts.push({
                         id: childId,
-                        name: `${pick(['Auth', 'Data', 'UI', 'Network'])} Service`,
-                        type: 'Service',
-                        status: 'Active',
-                        description: 'Core service handling business logic.',
+                        name: `${name.split(' ')[0]} Module ${c + 1}`,
+                        type: pick(effortTypes),
+                        status: pick(effortStatuses),
+                        description: `Sub-component for ${name}`,
                         parent: rootId,
                         inherit_statement_of_work_profile: true,
+                        local_statement_of_work_profile: {},
                         inherit_technical_points_of_contact: true,
+                        local_technical_points_of_contact: {},
                         inherit_developer_setup: true,
+                        local_developer_setup: {},
                         inherit_work_location: true,
+                        local_work_location: {},
                         children: [],
                         linked_software_efforts: []
                     });
                 }
             }
 
-            const hasSoftwareEffort = softwareEfforts.length > 0;
-
-            // Use program_id to match expected backend schema if possible, but UI might rely on value/id.
-            // The previous logic used 'value' as ID. The store uses 'program_id'.
-            // Accessor helpers try both. We'll set both to be safe.
-            const node = {
-                name: name,
-                value: id,
-                program_id: id,
-                hasSoftwareEffort: hasSoftwareEffort,
-                containsSoftwareEffort: false, // Calculated later
-                softwareEfforts: softwareEfforts,
-                programLeader,
-                chiefEngineer,
-                primaryLocation,
-                primaryType,
-                programValue,
-                children: [],
-                collapsed: depth > 1
-            };
-
-            if (depth < 4) {
-                const numChildren = Math.floor(Math.random() * 3) + 1; // 1-3 children
+            // Recursive Children
+            const children = [];
+            if (depth < MAX_DEPTH) {
+                const numChildren = Math.floor(Math.random() * (MAX_CHILDREN - MIN_CHILDREN + 1)) + MIN_CHILDREN;
                 for (let i = 0; i < numChildren; i++) {
-                    node.children.push(createNode(depth + 1, name));
+                    children.push(createNode(depth + 1, name));
                 }
             }
-            return node;
+
+            return {
+                value: id,
+                name: name,
+                children: children,
+                details: {
+                    programLeader,
+                    chiefEngineer,
+                    primaryLocation,
+                    primaryType,
+                    programValue
+                },
+                softwareEfforts: softwareEfforts,
+                hasSoftwareEffort: softwareEfforts.length > 0,
+                has_descendant_expecting_software_effort: children.some(c => c.hasSoftwareEffort || c.has_descendant_expecting_software_effort)
+            };
         };
 
-        const calculateStatuses = (node) => {
-            let childHasEffort = false;
-            if (node.children && node.children.length > 0) {
-                node.children.forEach(child => {
-                    const childResult = calculateStatuses(child);
-                    if (childResult) childHasEffort = true;
-                });
-            }
-            node.containsSoftwareEffort = childHasEffort;
-            return node.hasSoftwareEffort || node.containsSoftwareEffort;
-        };
-
-        const root = createNode(0, null);
-        calculateStatuses(root);
-        return root; // Return single object
+        return createNode(0, "Root");
     }
+
+
 }

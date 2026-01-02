@@ -77,6 +77,12 @@ const handleReset = () => {
 
 <template>
   <div class="chart-wrapper m3-card elevated">
+    <!-- Loading Overlay -->
+    <div v-if="store.state.loading" class="loading-overlay">
+        <div class="spinner"></div>
+        <span>Loading Catalog...</span>
+    </div>
+
     <div class="filter-bar">
         <label class="filter-label">Filter View:</label>
         <div class="toggle-group">
@@ -98,17 +104,14 @@ const handleReset = () => {
             <i class="fas fa-sync-alt"></i>
         </button>
     </div>
-    <OrgChart 
-        ref="chartRef"
-        v-if="chartData" 
-        :data="chartData" 
-        :selected-id="selectedNode?.value" 
-        @node-click="handleNodeClick" 
-    />
-    <div v-else class="empty-state">
-        No software efforts found.
-    </div>
-    <div class="legend-wrapper">
+    
+    <div class="chart-container">
+        <OrgChart 
+            ref="chartRef"
+            :data="chartData" 
+            :selected-id="selectedNode ? selectedNode.value : null"
+            @node-click="handleNodeClick" 
+        />
         <Legend />
     </div>
   </div>
@@ -118,10 +121,44 @@ const handleReset = () => {
 .chart-wrapper {
     width: 100%;
     height: 100%;
-    position: relative;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     background: var(--md-sys-color-surface);
     border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 1rem;
+    color: var(--md-sys-color-primary);
+    font-weight: 500;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--md-sys-color-surface-container-high);
+    border-top: 4px solid var(--md-sys-color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .filter-bar {
