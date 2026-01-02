@@ -788,8 +788,13 @@ const handleCancel = () => {
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
     background: var(--md-sys-color-surface);
     overflow: hidden;
+    /* Definition Borders & Sizing */
+    box-sizing: border-box;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 12px;
 }
 
 /* HEADER */
