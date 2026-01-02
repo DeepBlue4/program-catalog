@@ -322,6 +322,7 @@ async function getAllSoftwareEfforts() {
                 allEfforts.push({
                     ...eff,
                     _programName: node.name,
+                    _programId: node.value || node.program_id,
                     _fullLabel: `${node.name} > ${eff.name} (${eff.type})`
                 });
             });

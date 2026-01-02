@@ -66,6 +66,35 @@ const store = useProgramCatalogStore();
 const allEffortCandidates = ref([]); // Global list of efforts
 const linkSearchQuery = ref('');
 
+// Contextual Help Content
+const activeHelp = ref(null); // ID of currently open help section
+const toggleHelp = (id) => {
+    activeHelp.value = activeHelp.value === id ? null : id;
+};
+
+const helpContent = {
+    sow: {
+        title: 'About Statement of Work',
+        text: 'The Statement of Work (SOW) defines the specific scope, deliverables, timeline, and governing standards for this effort. It serves as the contract between the program and the engineering team, ensuring clear alignment on *what* is being delivered and the constraints under which it must be built.'
+    },
+    pocs: {
+        title: 'Points of Contact',
+        text: 'Identifies the key individuals responsible for technical leadership, security, and operational management. Keeping this up-to-date allows automated tools and other teams to quickly find the right person for approvals, incident response, or technical questions.'
+    },
+    dev: {
+        title: 'Developer Setup',
+        text: 'Specifies the approved technical stack, including programming languages, operating systems, and development environments. This information automates onboarding for new engineers by telling them exactly what tools they need and where to find the source code.'
+    },
+    location: {
+        title: 'Work Locations',
+        text: 'Lists the authorized physical or virtual locations where this work is performed. This is critical for compliance with export controls, security zones, and resource planning for on-site facilities.'
+    },
+    general: {
+        title: 'General & Links',
+        text: 'Manage high-level relationships for this effort. Use "Linked Efforts" to connect this software to dependencies or related components across different programs in the catalog.'
+    }
+};
+
 // Load all efforts from catalog for linking
 onMounted(async () => {
     allEffortCandidates.value = await store.getAllSoftwareEfforts();
@@ -380,7 +409,22 @@ const handleCancel = () => {
             
             <!-- GENERAL TAB -->
             <div v-if="activeTab === 'general'" class="tab-content fade-in">
-                <h3>General Configuration</h3>
+                <div class="tab-header" style="margin-bottom: 1.5rem;">
+                    <div class="header-text-group">
+                         <h3>General Configuration</h3>
+                         <button class="btn-icon-sm" @click="toggleHelp('general')" :class="{ 'active': activeHelp === 'general' }">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <transition name="expand">
+                    <div v-if="activeHelp === 'general'" class="help-card m3-surface-variant">
+                        <h4>{{ helpContent.general.title }}</h4>
+                        <p>{{ helpContent.general.text }}</p>
+                    </div>
+                </transition>
+
                 <div class="field-section">
                     <label class="section-label">Linked Efforts</label>
                     <div class="help-text">Search and select other efforts to link across the entire catalog.</div>
@@ -404,8 +448,23 @@ const handleCancel = () => {
                                     class="dropdown-item" 
                                     @click="addLink(cand)"
                                 >
-                                    <div class="item-main">{{ cand.name }}</div>
-                                    <div class="item-sub">{{ cand._programName }} &bull; {{ cand.type }}</div>
+                                    <div class="item-icon">
+                                        <i class="fas fa-code-branch"></i>
+                                    </div>
+                                    <div class="item-content">
+                                        <div class="item-main">
+                                            <span class="name">{{ cand.name }}</span>
+                                            <span class="id-badge">ID: {{ cand.id }}</span>
+                                        </div>
+                                        <div class="item-sub">
+                                            <span class="program-name">
+                                                <i class="fas fa-layer-group"></i> {{ cand._programName }}
+                                                <span class="program-id-sub">({{ cand._programId }})</span>
+                                            </span>
+                                            <span class="separator">•</span>
+                                            <span class="type">{{ cand.type }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -431,7 +490,12 @@ const handleCancel = () => {
             <!-- STATEMENT OF WORK TAB -->
             <div v-if="activeTab === 'sow'" class="tab-content fade-in">
                 <div class="tab-header">
-                    <h3>Statement of Work</h3>
+                    <div class="header-text-group">
+                        <h3>Statement of Work</h3>
+                        <button class="btn-icon-sm" @click="toggleHelp('sow')" :class="{ 'active': activeHelp === 'sow' }">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
                     <div class="header-controls">
                         <span v-if="formData.inherit_statement_of_work_profile" class="inherited-badge">Inheriting from Parent</span>
                         <label class="inherit-toggle">
@@ -441,6 +505,13 @@ const handleCancel = () => {
                         </label>
                      </div>
                 </div>
+                
+                <transition name="expand">
+                    <div v-if="activeHelp === 'sow'" class="help-card m3-surface-variant">
+                        <h4>{{ helpContent.sow.title }}</h4>
+                        <p>{{ helpContent.sow.text }}</p>
+                    </div>
+                </transition>
                 
                 <div class="form-fields-grid" :class="{ 'is-inherited': formData.inherit_statement_of_work_profile }">
                      <div class="field-group span-2">
@@ -522,7 +593,12 @@ const handleCancel = () => {
             <!-- POCs TAB -->
              <div v-if="activeTab === 'pocs'" class="tab-content fade-in">
                 <div class="tab-header">
-                    <h3>Technical Point of Contacts</h3>
+                    <div class="header-text-group">
+                        <h3>Technical Point of Contacts</h3>
+                        <button class="btn-icon-sm" @click="toggleHelp('pocs')" :class="{ 'active': activeHelp === 'pocs' }">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
                     <div class="header-controls">
                         <span v-if="formData.inherit_technical_points_of_contact" class="inherited-badge">Inheriting from Parent</span>
                         <label class="inherit-toggle">
@@ -532,6 +608,13 @@ const handleCancel = () => {
                         </label>
                     </div>
                 </div>
+
+                <transition name="expand">
+                    <div v-if="activeHelp === 'pocs'" class="help-card m3-surface-variant">
+                        <h4>{{ helpContent.pocs.title }}</h4>
+                        <p>{{ helpContent.pocs.text }}</p>
+                    </div>
+                </transition>
 
                 <div class="form-fields-grid" :class="{ 'is-inherited': formData.inherit_technical_points_of_contact }">
                      <div class="field-group" :class="{ 'has-error': errors.software_lead }">
@@ -564,17 +647,29 @@ const handleCancel = () => {
 
             <!-- DEV SETUP TAB -->
              <div v-if="activeTab === 'dev'" class="tab-content fade-in">
-                 <div class="tab-header">
-                    <h3>Developer Setup</h3>
+                  <div class="tab-header">
+                    <div class="header-text-group">
+                        <h3>Developer Setup</h3>
+                        <button class="btn-icon-sm" @click="toggleHelp('dev')" :class="{ 'active': activeHelp === 'dev' }">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
                     <div class="header-controls">
                         <span v-if="formData.inherit_developer_setup" class="inherited-badge">Inheriting from Parent</span>
                         <label class="inherit-toggle">
                             <input type="checkbox" v-model="formData.inherit_developer_setup" :disabled="!formData.parent">
-                             <span class="toggle-track"></span>
+                              <span class="toggle-track"></span>
                             <span>Inherit</span>
                         </label>
                     </div>
                 </div>
+
+                <transition name="expand">
+                    <div v-if="activeHelp === 'dev'" class="help-card m3-surface-variant">
+                        <h4>{{ helpContent.dev.title }}</h4>
+                        <p>{{ helpContent.dev.text }}</p>
+                    </div>
+                </transition>
 
                 <div class="form-fields-grid" :class="{ 'is-inherited': formData.inherit_developer_setup }">
                      <div class="field-group">
@@ -646,8 +741,13 @@ const handleCancel = () => {
 
             <!-- LOCATION TAB -->
              <div v-if="activeTab === 'location'" class="tab-content fade-in">
-                 <div class="tab-header">
-                    <h3>Work Locations</h3>
+                  <div class="tab-header">
+                    <div class="header-text-group">
+                        <h3>Work Locations</h3>
+                         <button class="btn-icon-sm" @click="toggleHelp('location')" :class="{ 'active': activeHelp === 'location' }">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
                     <div class="header-controls">
                         <span v-if="formData.inherit_work_location" class="inherited-badge">Inheriting from Parent</span>
                         <label class="inherit-toggle">
@@ -657,6 +757,13 @@ const handleCancel = () => {
                         </label>
                     </div>
                 </div>
+
+                <transition name="expand">
+                    <div v-if="activeHelp === 'location'" class="help-card m3-surface-variant">
+                        <h4>{{ helpContent.location.title }}</h4>
+                        <p>{{ helpContent.location.text }}</p>
+                    </div>
+                </transition>
 
                 <div class="form-fields-grid" :class="{ 'is-inherited': formData.inherit_work_location }">
                     <div class="field-group span-2">
@@ -796,6 +903,68 @@ const handleCancel = () => {
     flex-direction: column;
     padding: 1rem 0;
     border-right: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.header-text-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-icon-sm {
+    background: transparent;
+    border: none;
+    color: var(--md-sys-color-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-icon-sm:hover, .btn-icon-sm.active {
+    color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.help-card {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background: var(--md-sys-color-surface-container);
+    border-left: 4px solid var(--md-sys-color-primary);
+}
+
+.help-card h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 14px;
+    color: var(--md-sys-color-primary);
+}
+
+.help-card p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Expansion Animation */
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+  max-height: 200px;
+  opacity: 1;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+  margin-bottom: 0;
+  padding: 0 1rem;
 }
 
 .tab-btn {
@@ -1238,5 +1407,108 @@ const handleCancel = () => {
     align-items: center;
     justify-content: center;
     box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Search Dropdown Enhanced */
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--md-sys-color-surface-container);
+    border-radius: 8px; /* M3 Standard */
+    margin-top: 4px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    transition: background 0.2s;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: var(--md-sys-color-surface-container-high);
+}
+
+.item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.item-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.item-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.item-main .name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+}
+
+.id-badge {
+    font-size: 11px;
+    font-family: monospace;
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.item-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--md-sys-color-secondary);
+}
+
+.item-sub .program-name i {
+    font-size: 10px;
+    margin-right: 2px;
+    opacity: 0.7;
+}
+
+.item-sub .program-name {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.program-id-sub {
+    font-family: monospace;
+    opacity: 0.8;
+    font-size: 11px;
 }
 </style>

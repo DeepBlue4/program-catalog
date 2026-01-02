@@ -272,6 +272,7 @@ const handleRevertRequest = () => {
 };
 
 const showInfoModal = ref(false);
+const showHelpModal = ref(false);
 
 // ... (previous code) ...
 
@@ -287,7 +288,8 @@ const showInfoModal = ref(false);
               </button>
           </div>
           <div class="right-actions">
-              <button class="btn-icon-tonal" @click="showInfoModal = true" title="Program Information">
+              <!-- Info Icon now shows "What is a Software Effort?" -->
+              <button class="btn-icon-tonal" @click="showHelpModal = true" title="What is a Software Effort?">
                   <i class="fas fa-info-circle"></i>
               </button>
               <button class="btn-filled" @click="handleCreate">
@@ -296,7 +298,13 @@ const showInfoModal = ref(false);
           </div>
       </div>
       <div class="title-block">
-          <h2 class="page-title">Software Efforts <span class="program-ref">- {{ programName }}</span></h2>
+          <!-- Program Name is now the trigger for Program Info -->
+          <h2 class="page-title">
+            Software Efforts 
+            <button class="program-ref-btn" @click="showInfoModal = true" title="View Program Details">
+                - {{ programName }}
+            </button>
+          </h2>
       </div>
     </div>
 
@@ -362,6 +370,52 @@ const showInfoModal = ref(false);
                 <p>Select a Software Effort from the hierarchy to view or edit details.</p>
             </div>
         </main>
+    </div>
+
+    <!-- Help Modal -->
+    <div v-if="showHelpModal" class="modal-overlay" @click.self="showHelpModal = false">
+        <div class="info-modal-card m3-card elevated help-modal">
+            <div class="info-header">
+                <div class="header-text">
+                    <span class="overline">Contextual Help</span>
+                    <h2>What is a Software Effort?</h2>
+                </div>
+                <button class="btn-icon" @click="showHelpModal = false">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="info-body">
+                <p class="help-text-large">
+                    A <strong>Software Effort</strong> represents a distinct unit of software delivery—whether it's a platform, application, service, or library.
+                </p>
+                <div class="help-grid">
+                    <div class="help-item">
+                        <i class="fas fa-cube"></i>
+                        <div class="content">
+                            <h4>Encapsulation</h4>
+                            <p>It encapsulates the code, its lifecycle, compliance data, and governance in one object.</p>
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <i class="fas fa-sitemap"></i>
+                        <div class="content">
+                            <h4>Hierarchy</h4>
+                            <p>Efforts can be nested (e.g., a 'Platform' containing multiple 'Services') to model complex systems.</p>
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <i class="fas fa-clipboard-check"></i>
+                        <div class="content">
+                            <h4>Governance</h4>
+                            <p>Track Statements of Work, Security Focals, and Developer Setup requirements centrally.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="info-footer">
+                <button class="btn-filled" @click="showHelpModal = false">Got it</button>
+            </div>
+        </div>
     </div>
 
     <!-- Program Info Modal -->
@@ -546,9 +600,25 @@ const showInfoModal = ref(false);
     color: var(--md-sys-color-on-surface);
 }
 
-.program-ref {
+
+.program-ref-btn {
+    background: transparent;
+    border: none;
+    font-size: inherit;
     font-weight: 300;
-    color: var(--md-sys-color-secondary);
+    font-family: inherit;
+    color: var(--md-sys-color-primary);
+    cursor: pointer;
+    padding: 0 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+}
+
+.program-ref-btn:hover {
+    background: var(--md-sys-color-surface-container-high);
+    text-decoration-color: var(--md-sys-color-primary);
 }
 
 .master-detail-container {
@@ -764,39 +834,89 @@ const showInfoModal = ref(false);
     width: 600px;
     max-width: 90vw;
     background: var(--md-sys-color-surface);
-    border-radius: 12px;
+    border-radius: 28px; /* M3 Standard */
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 4px 8px 3px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.3); /* Elevation 3 */
 }
 
 .info-header {
-    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    padding: 24px 24px 16px 24px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    /* Removed border-bottom for cleaner look, widely used in M3 dialogs */
 }
 
 .header-text h2 {
     margin: 0;
     font-size: 24px;
+    line-height: 32px;
     color: var(--md-sys-color-on-surface);
 }
 
 .overline {
     display: block;
-    font-size: 11px;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     color: var(--md-sys-color-primary);
-    font-weight: 600;
-    margin-bottom: 4px;
+    font-weight: 500;
+    margin-bottom: 8px;
 }
 
 .info-body {
-    padding: 1.5rem;
+    padding: 0 24px 24px 24px;
+    overflow-y: auto;
 }
+
+.help-text-large {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--md-sys-color-on-surface);
+    margin-bottom: 2rem;
+}
+
+.help-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 16px;
+}
+
+.help-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.help-item i {
+    font-size: 20px;
+    color: var(--md-sys-color-primary);
+    margin-top: 2px;
+}
+
+.help-item h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface);
+}
+
+.help-item p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 1.4;
+}
+
+.info-footer {
+    padding: 16px 24px 24px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
 
 .info-grid {
     display: grid;
