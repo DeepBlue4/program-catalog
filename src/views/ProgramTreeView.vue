@@ -59,6 +59,22 @@ watch(() => route.query.program_id, (newId) => {
     }
 }, { immediate: true });
 
+// Sync Data Load -> Selection (Race Condition Fix)
+// If URL has ID but data wasn't ready during immediate route watch, try again when data loads.
+watch(chartData, (newData) => {
+    const targetId = route.query.program_id;
+    // Check if we need to sync:
+    // 1. Data is available
+    // 2. We have a target ID in URL
+    // 3. AND (We have no selection OR selection doesn't match target)
+    if (newData && targetId) {
+        if (!selectedNode.value || String(selectedNode.value.value) !== String(targetId)) {
+            const node = findNodeById(targetId);
+            if (node) selectNode(node);
+        }
+    }
+}, { immediate: true });
+
 const handleNodeClick = (nodeData) => {
     selectNode(nodeData);
 };
@@ -107,11 +123,15 @@ const handleReset = () => {
     
     <div class="chart-container">
         <OrgChart 
+            v-if="chartData"
             ref="chartRef"
             :data="chartData" 
             :selected-id="selectedNode ? selectedNode.value : null"
             @node-click="handleNodeClick" 
         />
+        <div v-else class="empty-state">
+            No program data available.
+        </div>
         <Legend />
     </div>
   </div>

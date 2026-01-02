@@ -38,6 +38,15 @@ watch(programId, (newId) => {
     }
 });
 
+// Sync Data Load -> Selection (Race Condition Fix)
+watch(currentProgram, (node) => {
+    // If we have a computed program but it's not currently selected in the global store, select it.
+    // This happens on page reload where useProgramData is empty initially.
+    if (node && (!selectedNode.value || selectedNode.value.value != node.value)) {
+        selectNode(node);
+    }
+}, { immediate: true });
+
 const goBack = () => {
     // Navigate back to tree with program selected
     if (currentProgram.value) {
@@ -59,24 +68,40 @@ const handleNavigation = (to, from, next) => {
     }
 };
 
-// Deep Linking Logic
-const checkDeepLink = () => {
-    const targetId = route.query.softwareeffort_id;
+// Deep Linking Logic 
+// 1. URL -> Selection (Initial Load & Navigation)
+const syncSelectionFromUrl = () => {
+    const targetId = route.query.effort_id;
     if (targetId && effortsList.value) {
+        // Wait for next tick to ensure list is mounted/ready if needed, though ref check handles most
         effortsList.value.selectEffort(targetId);
     }
 };
 
-// Watch query for changes (same program, different effort)
-watch(() => route.query.softwareeffort_id, (newVal) => {
-    if (newVal && effortsList.value) {
-        effortsList.value.selectEffort(newVal);
+watch(() => route.query.effort_id, (newId) => {
+    if (effortsList.value) {
+        // Handle selection and deselection
+        effortsList.value.selectEffort(newId || null);
     }
-});
+}, { immediate: true });
+
+// 2. Selection -> URL (User Interaction)
+const handleEffortSelection = (id) => {
+    const currentId = route.query.effort_id;
+    if (String(currentId) !== String(id)) {
+        const query = { ...route.query };
+        if (id) {
+            query.effort_id = id;
+        } else {
+             delete query.effort_id;
+        }
+        router.replace({ query });
+    }
+};
 
 // Wait for list to be mounted/updated
 watch(effortsList, (val) => {
-    if (val) checkDeepLink();
+    if (val) syncSelectionFromUrl();
 });
 
 onBeforeRouteLeave(handleNavigation);
@@ -94,6 +119,7 @@ onBeforeRouteUpdate(handleNavigation);
             :program-id="currentProgram.value" 
             :efforts="currentProgram.softwareEfforts"
             @back="goBack"
+            @selection-change="handleEffortSelection"
           />
       </div>
       <div v-else class="loading-state">

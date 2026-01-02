@@ -12,7 +12,7 @@ const props = defineProps({
   efforts: { type: Array, default: () => [] }
 });
 
-const emit = defineEmits(['back']);
+const emit = defineEmits(['back', 'selection-change']);
 
 const showModal = ref(false);
 const showDeleteModal = ref(false);
@@ -103,15 +103,32 @@ const effortTree = computed(() => {
 });
 
 const selectedEffort = computed(() => {
-    return props.efforts.find(e => e.id === selectedEffortId.value);
+    const id = selectedEffortId.value;
+    if (!id) return null;
+    
+    // Recursive helper to find node in tree
+    const findInTree = (nodes) => {
+        for (const node of nodes) {
+            // Loose equality for URL matching
+            if (node.id == id) return node;
+            if (node.children && node.children.length > 0) {
+                const found = findInTree(node.children);
+                if (found) return found;
+            }
+        }
+        return null;
+    };
+    
+    return findInTree(props.efforts);
 });
 
 // Select tree item
 const handleSelect = (effort) => {
-    if (selectedEffortId.value === effort.id) return;
+    // Always emit change to allow parent/URL to decide state.
+    // Early return here might block re-selection or deep link sync if state got out of whack.
     
     triggerActionWithCheck(() => {
-        selectedEffortId.value = effort.id;
+        emit('selection-change', effort.id);
     });
 };
 
@@ -163,6 +180,7 @@ const confirmDelete = async () => {
                 showNotification(`Deleted '${deletedItem.name}' successfully.`);
                 if (selectedEffortId.value === itemToDelete.value.id) {
                     selectedEffortId.value = null; 
+                    emit('selection-change', null);
                     isFormDirty.value = false;
                 }
             } else {
@@ -208,6 +226,7 @@ const saveEffort = async (effortData) => {
          if (isNew) {
              props.efforts.push(newEffortsList[newEffortsList.length - 1]);
              selectedEffortId.value = effortData.id;
+             emit('selection-change', effortData.id);
          } else if (index !== -1) {
              Object.assign(props.efforts[index], effortData);
          }
@@ -235,6 +254,7 @@ defineExpose({
     isFormDirty,
     confirmNavigation,
     selectEffort: (id) => {
+        // Always update.
         selectedEffortId.value = id;
     }
 });

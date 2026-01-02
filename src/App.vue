@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import SearchBox from './components/SearchBox.vue';
 import UserMenu from './components/UserMenu.vue';
@@ -21,7 +21,7 @@ const handleNodeSelect = (node) => {
         router.push({ 
             name: 'ProgramEfforts', 
             params: { programId: node.parentId },
-            query: { softwareeffort_id: node.value }
+            query: { effort_id: node.value }
         });
     } else if (route.name === 'ProgramEfforts') {
         router.push({ name: 'ProgramEfforts', params: { programId: node.value } });
@@ -48,7 +48,9 @@ const breadcrumbs = computed(() => {
     if (selectedNode.value && chartData.value) {
         // Helper to find path in tree
         const findPath = (node, targetId, currentPath = []) => {
-            if (node.value === targetId) return [...currentPath, node];
+            const nodeId = node.value || node.program_id;
+            if (String(nodeId) === String(targetId)) return [...currentPath, node];
+            
             if (node.children) {
                 for (const child of node.children) {
                     const res = findPath(child, targetId, [...currentPath, node]);
@@ -58,12 +60,22 @@ const breadcrumbs = computed(() => {
             return null;
         };
         
-        const treePath = findPath(chartData.value, selectedNode.value.value);
+        // Ensure we're looking for the ID correctly regardless of which property holds it
+        const targetId = selectedNode.value.value || selectedNode.value.program_id;
+        const treePath = findPath(chartData.value, targetId);
         if (treePath) {
              crumbs.pop(); // Remove static root
-             treePath.forEach(n => crumbs.push({ name: n.name, id: n.value }));
+             treePath.forEach(n => crumbs.push({ 
+                 name: n.name, 
+                 id: n.value || n.program_id,
+                 children: n.children // Pass children for dropdown
+             }));
         } else {
-             crumbs.push({ name: selectedNode.value.name, id: selectedNode.value.value });
+             crumbs.push({ 
+                 name: selectedNode.value.name, 
+                 id: selectedNode.value.value || selectedNode.value.program_id,
+                 children: selectedNode.value.children 
+             });
         }
     }
     return crumbs;
@@ -93,10 +105,43 @@ const handleBreadcrumbClick = (crumb) => {
     
     if (crumb.id) {
         handleNodeSelect({ value: crumb.id, name: crumb.name });
-        // If we represent a "folder", maybe we stay in catalog view.
-
     }
 };
+
+const showBreadcrumbDropdown = ref(false);
+const breadcrumbDropdownRef = ref(null);
+
+const toggleDropdown = () => {
+    showBreadcrumbDropdown.value = !showBreadcrumbDropdown.value;
+};
+
+const selectChild = (child) => {
+    handleNodeSelect(child);
+    showBreadcrumbDropdown.value = false;
+};
+
+// Click outside to close
+const closeDropdown = (e) => {
+    if (!showBreadcrumbDropdown.value) return;
+    
+    // Ref inside v-for is an array
+    const el = Array.isArray(breadcrumbDropdownRef.value) ? breadcrumbDropdownRef.value[0] : breadcrumbDropdownRef.value;
+    
+    if (el && !el.contains(e.target)) {
+        showBreadcrumbDropdown.value = false;
+    }
+};
+
+window.addEventListener('click', closeDropdown);
+
+// Close on navigation
+watch(route, () => {
+    showBreadcrumbDropdown.value = false;
+});
+
+onUnmounted(() => {
+    window.removeEventListener('click', closeDropdown);
+});
 </script>
 
 <template>
@@ -117,6 +162,26 @@ const handleBreadcrumbClick = (crumb) => {
                 >
                     {{ crumb.name }}
                 </span>
+
+                <!-- Dropdown for Active/Last Crumb with Children -->
+                <div 
+                    v-if="index === displayedBreadcrumbs.length - 1 && crumb.children && crumb.children.length > 0" 
+                    class="breadcrumb-dropdown-container"
+                    ref="breadcrumbDropdownRef"
+                >
+                    <button class="icon-btn-small" @click.stop="toggleDropdown">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    
+                    <div v-if="showBreadcrumbDropdown" class="dropdown-menu m3-elevation-2">
+                        <div class="dropdown-header">Sub-Programs</div>
+                        <template v-for="child in crumb.children" :key="child.value || child.program_id">
+                            <div class="dropdown-item" @click="selectChild(child)">
+                                {{ child.name }}
+                            </div>
+                        </template>
+                    </div>
+                </div>
             </template>
           </nav>
       </div>
@@ -262,6 +327,72 @@ const handleBreadcrumbClick = (crumb) => {
     gap: 1rem;
 }
 
+/* Breadcrumb Dropdown */
+.breadcrumb-dropdown-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.icon-btn-small {
+    background: transparent;
+    border: none;
+    color: var(--md-sys-color-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+    transition: background 0.2s;
+}
+
+.icon-btn-small:hover {
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    background: var(--md-sys-color-surface);
+    border-radius: 8px;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    padding: 8px 0;
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.m3-elevation-2 {
+    box-shadow: var(--md-sys-elevation-level2);
+}
+
+.dropdown-header {
+    padding: 8px 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--md-sys-color-secondary);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.dropdown-item {
+    padding: 8px 16px;
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: var(--md-sys-color-surface-container-high);
+}
+
 .breadcrumbs {
     display: flex;
     align-items: center;
@@ -269,7 +400,7 @@ const handleBreadcrumbClick = (crumb) => {
     margin-left: 1rem;
     font-size: 14px;
     white-space: nowrap;
-    overflow: hidden;
+    /* overflow: hidden; Removed to allow dropdown */
 }
 
 .crumb {

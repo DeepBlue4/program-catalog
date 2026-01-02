@@ -181,7 +181,8 @@ function findByOrgId(orgId, node = state.items) {
     }
 
     // Check if current node matches (compare as strings to handle route params)
-    if (String(node.program_id) === String(orgId)) {
+    // Support both program_id (API) and value (Mock)
+    if (String(node.program_id) === String(orgId) || String(node.value) === String(orgId)) {
         return node;
     }
 
