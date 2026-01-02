@@ -324,6 +324,10 @@ export class CompassAPIService {
                 }
             }
 
+            // NEW: Compliance Requirement simulation
+            // Randomly assign expectation (e.g., 60% of leaf candidates expect efforts)
+            const expectsEffort = isLeafCandidate && Math.random() > 0.4;
+
             return {
                 value: id,
                 name: name,
@@ -337,6 +341,7 @@ export class CompassAPIService {
 
                 softwareEfforts: softwareEfforts,
                 hasSoftwareEffort: softwareEfforts.length > 0,
+                expect_software_effort: expectsEffort,
                 has_descendant_expecting_software_effort: children.some(c => c.hasSoftwareEffort || c.has_descendant_expecting_software_effort)
             };
         };

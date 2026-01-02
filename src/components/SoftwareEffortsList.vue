@@ -126,11 +126,13 @@ const selectedEffort = computed(() => {
 
 // Select tree item
 const handleSelect = (effort) => {
-    // Always emit change to allow parent/URL to decide state.
-    // Early return here might block re-selection or deep link sync if state got out of whack.
-    
     triggerActionWithCheck(() => {
-        emit('selection-change', effort.id);
+        // Toggle logic: If already selected, deselect (emit null)
+        if (String(props.selectedId) === String(effort.id)) {
+             emit('selection-change', null);
+        } else {
+             emit('selection-change', effort.id);
+        }
     });
 };
 
@@ -386,7 +388,7 @@ const showHelpModal = ref(false);
             </div>
             <div class="info-body">
                 <p class="help-text-large">
-                    A <strong>Software Effort</strong> represents a distinct unit of software delivery—whether it's a platform, application, service, or library.
+                    A <strong>Software Effort</strong> serves as the central hub for any distinct unit of software development. Whether you are managing a <strong>Software Team</strong>, delivering a specific <strong>Product</strong>, building a reusable <strong>Component (CSCI)</strong>, or executing a time-bound <strong>Project</strong>, a Software Effort encapsulates all the necessary governance, resources, and technical configurations in one place.
                 </p>
                 <div class="help-grid">
                     <div class="help-item">

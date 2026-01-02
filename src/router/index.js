@@ -12,6 +12,16 @@ const routes = [
         path: '/efforts/:programId',
         name: 'ProgramEfforts',
         component: ProgramEffortsView
+    },
+    {
+        path: '/dashboard',
+        name: 'Dashboard',
+        component: () => import('../views/Dashboard.vue')
+    },
+    {
+        path: '/403',
+        name: 'PermissionDenied',
+        component: () => import('../views/PermissionDenied.vue')
     }
 ];
 

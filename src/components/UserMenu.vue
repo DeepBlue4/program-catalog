@@ -58,6 +58,18 @@ onUnmounted(() => {
         <span class="icon"><i class="fas fa-book"></i></span>
         Documentation
       </a>
+
+      <div class="divider"></div>
+
+      <router-link to="/dashboard" class="menu-item">
+        <span class="icon"><i class="fas fa-chart-pie"></i></span>
+        Dashboard
+      </router-link>
+
+      <router-link to="/403" class="menu-item">
+        <span class="icon"><i class="fas fa-lock"></i></span>
+        Unauthorized (Demo)
+      </router-link>
       
       <button class="menu-item logout">
         <span class="icon"><i class="fas fa-right-from-bracket"></i></span>
