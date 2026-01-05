@@ -147,11 +147,11 @@ const handleReset = () => {
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
     border-radius: 12px;
     overflow: hidden;
     position: relative;
-    border: 1px solid var(--md-sys-color-outline-variant);
+    border: 1px solid #C4C7C5; /* outline-variant */
 }
 
 .loading-overlay {
@@ -167,15 +167,15 @@ const handleReset = () => {
     justify-content: center;
     z-index: 100;
     gap: 1rem;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     font-weight: 500;
 }
 
 .spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid var(--md-sys-color-surface-container-high);
-    border-top: 4px solid var(--md-sys-color-primary);
+    border: 4px solid #ECE6F0; /* surface-container-high */
+    border-top: 4px solid #005AC1; /* primary */
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -202,14 +202,14 @@ const handleReset = () => {
 .filter-label {
     font-size: 12px;
     font-weight: 500;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .toggle-group {
     display: flex;
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
     border-radius: 18px;
     padding: 2px;
 }
@@ -221,14 +221,14 @@ const handleReset = () => {
     border-radius: 16px;
     font-size: 13px;
     font-weight: 500;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .toggle-group button.active {
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+    background: #DAE2F9; /* secondary-container */
+    color: #131C2B; /* on-secondary-container */
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
@@ -239,13 +239,13 @@ const handleReset = () => {
 .v-divider {
     width: 1px;
     height: 24px;
-    background: var(--md-sys-color-outline-variant);
+    background: #C4C7C5; /* outline-variant */
 }
 
 .icon-btn {
     background: transparent;
     border: none;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     cursor: pointer;
     font-size: 16px;
     padding: 8px;
@@ -257,7 +257,7 @@ const handleReset = () => {
 }
 
 .icon-btn:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
 }
 
 .empty-state {
@@ -266,7 +266,7 @@ const handleReset = () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--md-sys-color-outline);
+    color: #79747E; /* outline */
 }
 
 .chart-container {

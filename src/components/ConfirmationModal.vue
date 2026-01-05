@@ -61,7 +61,7 @@ const emit = defineEmits(['confirm', 'cancel']);
 }
 
 .modal-card {
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
     padding: 1.5rem;
     border-radius: 28px;
     width: 90%;
@@ -75,12 +75,12 @@ const emit = defineEmits(['confirm', 'cancel']);
 .modal-title {
     margin: 0 0 1rem 0;
     font-size: 24px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .modal-message {
     margin: 0 0 1.5rem 0;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     font-size: 16px;
     line-height: 1.5;
 }
@@ -94,7 +94,7 @@ const emit = defineEmits(['confirm', 'cancel']);
 .btn-text {
     background: transparent;
     border: none;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     padding: 10px 24px;
     border-radius: 20px;
     font-weight: 500;
@@ -103,13 +103,13 @@ const emit = defineEmits(['confirm', 'cancel']);
 }
 
 .btn-text:hover {
-    background: rgba(var(--md-sys-color-primary-rgb), 0.08); /* Fallback or simplified hover */
-    background: var(--md-sys-color-surface-variant);
+    background: rgba(0, 90, 193, 0.08); /* primary-rgb */
+    background: #E7E0EC; /* surface-variant */
 }
 
 .btn-filled {
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
+    background: #005AC1; /* primary */
+    color: #FFFFFF; /* on-primary */
     border: none;
     padding: 10px 24px;
     border-radius: 20px;
@@ -123,8 +123,8 @@ const emit = defineEmits(['confirm', 'cancel']);
 }
 
 .btn-filled.danger {
-    background: var(--md-sys-color-error, #B3261E);
-    color: var(--md-sys-color-on-error);
+    background: #BA1A1A; /* error */
+    color: #FFFFFF; /* on-error */
 }
 
 @keyframes fadeIn {

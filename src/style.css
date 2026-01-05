@@ -1,53 +1,13 @@
-:root {
-  /* Material 3 - Design Tokens (Approximation) */
-  --md-sys-color-primary: #005AC1;
-  /* Primary Blue-ish */
-  --md-sys-color-on-primary: #FFFFFF;
-  --md-sys-color-primary-container: #D8E2FF;
-  --md-sys-color-on-primary-container: #001A41;
-
-  --md-sys-color-secondary: #575E71;
-  --md-sys-color-secondary-container: #DBE2F9;
-
-  --md-sys-color-tertiary: #755B00;
-  /* Gold-ish for Effort */
-  --md-sys-color-tertiary-container: #FFDF90;
-  --md-sys-color-on-tertiary-container: #241A00;
-
-  --md-sys-color-surface: #FEF7FF;
-  --md-sys-color-on-surface: #1D1B20;
-  --md-sys-color-surface-container: #F3EDF7;
-  --md-sys-color-surface-container-low: #F7F2FA;
-  --md-sys-color-surface-container-high: #ECE6F0;
-
-  --md-sys-color-outline: #79747E;
-  --md-sys-color-outline-variant: #C4C7C5;
-
-  --md-sys-shape-corner-medium: 12px;
-  --md-sys-shape-corner-large: 16px;
-  --md-sys-shape-corner-xl: 28px;
-
-  /* Status Colors (Custom M3 Mapping) */
-  --status-effort-bg: var(--md-sys-color-tertiary-container);
-  --status-effort-text: var(--md-sys-color-on-tertiary-container);
-
-  --status-parent-bg: var(--md-sys-color-primary-container);
-  --status-parent-text: var(--md-sys-color-on-primary-container);
-
-  --status-neutral-bg: var(--md-sys-color-surface-container-high);
-  --status-neutral-text: var(--md-sys-color-on-surface);
-
-  /* Shadows */
-  --md-sys-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
-  --md-sys-elevation-2: 0px 2px 6px 2px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
-}
+/* Global Styles & Utilities (Standardized Hex Colors) */
 
 body {
   margin: 0;
   font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
   /* M3 prefers Roboto, fallback to Inter */
-  background-color: var(--md-sys-color-surface);
-  color: var(--md-sys-color-on-surface);
+  background-color: #FEF7FF;
+  /* surface */
+  color: #1D1B20;
+  /* on-surface */
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -61,19 +21,25 @@ body {
 
 /* M3 Card */
 .m3-card {
-  background: var(--md-sys-color-surface-container-low);
-  border-radius: var(--md-sys-shape-corner-medium);
+  background: #F7F2FA;
+  /* surface-container-low */
+  border-radius: 12px;
+  /* medium */
   /* No border in M3 usually, mostly elevation or tonal diff */
 }
 
 .m3-card.elevated {
-  box-shadow: var(--md-sys-elevation-1);
-  background: var(--md-sys-color-surface-container-low);
+  box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  /* elevation-1 */
+  background: #F7F2FA;
+  /* surface-container-low */
 }
 
 .m3-card.outlined {
-  background: var(--md-sys-color-surface);
-  border: 1px solid var(--md-sys-color-outline-variant);
+  background: #FEF7FF;
+  /* surface */
+  border: 1px solid #C4C7C5;
+  /* outline-variant */
 }
 
 /* Typography */
@@ -86,13 +52,16 @@ h3 {
 
 /* Utility */
 .text-primary {
-  color: var(--md-sys-color-primary);
+  color: #005AC1;
+  /* primary */
 }
 
 /* Buttons */
 .btn-filled {
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
+  background: #005AC1;
+  /* primary */
+  color: #FFFFFF;
+  /* on-primary */
   border: none;
   border-radius: 100px;
   /* Pillow shape */
@@ -104,13 +73,16 @@ h3 {
 }
 
 .btn-filled:hover {
-  box-shadow: var(--md-sys-elevation-1);
+  box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  /* elevation-1 */
 }
 
 .btn-outlined {
   background: transparent;
-  color: var(--md-sys-color-primary);
-  border: 1px solid var(--md-sys-color-outline);
+  color: #005AC1;
+  /* primary */
+  border: 1px solid #79747E;
+  /* outline */
   border-radius: 100px;
   padding: 10px 24px;
   font-weight: 500;
@@ -125,7 +97,8 @@ h3 {
 
 .btn-text {
   background: transparent;
-  color: var(--md-sys-color-primary);
+  color: #005AC1;
+  /* primary */
   border: none;
   border-radius: 100px;
   padding: 10px 24px;
@@ -135,11 +108,13 @@ h3 {
 }
 
 .btn-text:hover {
-  background: var(--md-sys-color-surface-container-high);
+  background: #ECE6F0;
+  /* surface-container-high */
 }
 
 .btn-text.danger {
-  color: var(--md-sys-color-error, #B3261E);
+  color: #BA1A1A;
+  /* error */
 }
 
 .btn-text.danger:hover {

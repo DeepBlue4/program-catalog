@@ -173,7 +173,7 @@ onBeforeRouteUpdate(handleNavigation);
 .efforts-wrapper {
     width: 100%;
     height: 100%;
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
     border-radius: 12px;
     overflow: hidden;
     display: flex;
@@ -191,7 +191,7 @@ onBeforeRouteUpdate(handleNavigation);
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
 }
 
 .state-content {
@@ -215,15 +215,15 @@ onBeforeRouteUpdate(handleNavigation);
 }
 
 .icon-circle.error {
-    background: var(--md-sys-color-error-container);
-    color: var(--md-sys-color-on-error-container);
+    background: #FFDAD6; /* error-container */
+    color: #410002; /* on-error-container */
 }
 
 .spinner {
     width: 48px;
     height: 48px;
-    border: 4px solid var(--md-sys-color-surface-container-high);
-    border-top: 4px solid var(--md-sys-color-primary);
+    border: 4px solid #ECE6F0; /* surface-container-high */
+    border-top: 4px solid #005AC1; /* primary */
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 1rem;
@@ -233,17 +233,17 @@ onBeforeRouteUpdate(handleNavigation);
     margin: 0;
     font-size: 1.5rem;
     font-weight: 500;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .state-text {
     font-size: 1.1rem;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
 .state-description {
     margin: 0;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     line-height: 1.5;
 }
 
@@ -254,8 +254,8 @@ onBeforeRouteUpdate(handleNavigation);
 }
 
 .btn-filled {
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
+    background: #005AC1; /* primary */
+    color: #FFFFFF; /* on-primary */
     border: none;
     padding: 10px 24px;
     border-radius: 100px;
@@ -268,14 +268,14 @@ onBeforeRouteUpdate(handleNavigation);
 }
 
 .btn-filled:hover {
-    box-shadow: var(--md-sys-elevation-level1);
+    box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3); /* elevation-level1 */
     transform: translateY(-1px);
 }
 
 .btn-outlined {
     background: transparent;
-    border: 1px solid var(--md-sys-color-outline);
-    color: var(--md-sys-color-primary);
+    border: 1px solid #79747E; /* outline */
+    color: #005AC1; /* primary */
     padding: 10px 24px;
     border-radius: 100px;
     font-weight: 500;
@@ -287,13 +287,13 @@ onBeforeRouteUpdate(handleNavigation);
 }
 
 .btn-outlined:hover {
-    background: var(--md-sys-color-surface-container);
+    background: #F3EDF7; /* surface-container */
 }
 
 .debug-toggle {
     margin-top: 2rem;
     font-size: 0.75rem;
-    color: var(--md-sys-color-outline);
+    color: #79747E; /* outline */
     cursor: pointer;
     text-decoration: underline;
 }
@@ -302,12 +302,12 @@ onBeforeRouteUpdate(handleNavigation);
     margin-top: 1rem;
     padding: 1rem;
     width: 100%;
-    background: var(--md-sys-color-surface-container-low);
+    background: #F7F2FA; /* surface-container-low */
     text-align: left;
     font-family: monospace;
     font-size: 0.75rem;
     border-radius: 8px;
-    border: 1px solid var(--md-sys-color-outline-variant);
+    border: 1px solid #C4C7C5; /* outline-variant */
 }
 
 @keyframes spin {

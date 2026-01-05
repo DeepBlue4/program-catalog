@@ -42,14 +42,14 @@ const goHome = () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--md-sys-color-background);
+    background-color: #FEF7FF; /* background */
 }
 
 .content {
     text-align: center;
     padding: 3rem;
     max-width: 500px;
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
     border-radius: 28px;
     display: flex;
     flex-direction: column;
@@ -61,11 +61,11 @@ const goHome = () => {
     position: relative;
     font-size: 80px;
     margin-bottom: 1rem;
-    color: var(--md-sys-color-surface-variant);
+    color: #E7E0EC; /* surface-variant */
 }
 
 .shield {
-    color: var(--md-sys-color-surface-container-high);
+    color: #ECE6F0; /* surface-container-high */
 }
 
 .lock {
@@ -73,27 +73,27 @@ const goHome = () => {
     bottom: -10px;
     right: -10px;
     font-size: 40px;
-    color: var(--md-sys-color-error);
-    background: var(--md-sys-color-surface);
+    color: #BA1A1A; /* error */
+    background: #FEF7FF; /* surface */
     border-radius: 50%;
     padding: 4px;
 }
 
 h1 {
     font-size: 32px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     margin: 0;
 }
 
 .subtitle {
     font-size: 18px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     margin: 0;
 }
 
 .details {
     font-size: 14px;
-    color: var(--md-sys-color-outline);
+    color: #79747E; /* outline */
     line-height: 1.5;
 }
 
@@ -102,8 +102,8 @@ h1 {
 }
 
 .btn-filled {
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
+    background: #005AC1; /* primary */
+    color: #FFFFFF; /* on-primary */
     border: none;
     padding: 12px 32px;
     border-radius: 100px;

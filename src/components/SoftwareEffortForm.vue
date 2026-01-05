@@ -845,19 +845,19 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     flex-direction: column;
     height: 100%;
     width: 100%;
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
     overflow: hidden;
     /* Definition Borders & Sizing */
     box-sizing: border-box;
-    border: 1px solid var(--md-sys-color-outline-variant);
+    border: 1px solid #C4C7C5; /* outline-variant */
     border-radius: 12px;
 }
 
 /* HEADER */
 .form-header-persistent {
     padding: 1.5rem 2rem 1rem 2rem;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
-    background: var(--md-sys-color-surface);
+    border-bottom: 1px solid #C4C7C5; /* outline-variant */
+    background: #FEF7FF; /* surface */
 }
 
 .header-main {
@@ -876,7 +876,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     display: block;
     font-size: 12px;
     font-weight: 500;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 4px;
@@ -887,7 +887,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     font-size: 24px;
     font-weight: 400;
     font-family: inherit;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     border: none;
     border-bottom: 2px solid transparent;
     background: transparent;
@@ -897,11 +897,11 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 
 .clean-input-lg:focus {
     outline: none;
-    border-bottom-color: var(--md-sys-color-primary);
+    border-bottom-color: #005AC1; /* primary */
 }
 
 .clean-input-lg::placeholder {
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     opacity: 0.5;
 }
 
@@ -909,7 +909,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     display: flex;
     gap: 2rem;
     font-size: 13px;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
 }
 
 .meta-field {
@@ -919,11 +919,11 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 }
 
 .meta-field label {
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
 }
 
 .meta-value {
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     font-family: monospace;
 }
 
@@ -931,13 +931,13 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     background: transparent;
     border: none;
     font-size: 13px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     padding: 2px;
     cursor: pointer;
 }
 
 .clean-select-sm:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
     border-radius: 4px;
 }
 
@@ -959,11 +959,11 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 /* Tabs */
 .tabs-vertical {
     width: 220px;
-    background: var(--md-sys-color-surface-container-low);
+    background: #F7F2FA; /* surface-container-low */
     display: flex;
     flex-direction: column;
     padding: 1rem 0;
-    border-right: 1px solid var(--md-sys-color-outline-variant);
+    border-right: 1px solid #C4C7C5; /* outline-variant */
 }
 
 .header-text-group {
@@ -975,7 +975,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 .btn-icon-sm {
     background: transparent;
     border: none;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     cursor: pointer;
     padding: 4px;
     border-radius: 50%;
@@ -986,29 +986,29 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 }
 
 .btn-icon-sm:hover, .btn-icon-sm.active {
-    color: var(--md-sys-color-primary);
-    background: var(--md-sys-color-surface-container-high);
+    color: #005AC1; /* primary */
+    background: #ECE6F0; /* surface-container-high */
 }
 
 .help-card {
     margin-bottom: 1.5rem;
     padding: 1rem;
     border-radius: 8px;
-    background: var(--md-sys-color-surface-container);
-    border-left: 4px solid var(--md-sys-color-primary);
+    background: #F3EDF7; /* surface-container */
+    border-left: 4px solid #005AC1; /* primary */
 }
 
 .help-card h4 {
     margin: 0 0 0.5rem 0;
     font-size: 14px;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
 }
 
 .help-card p {
     margin: 0;
     font-size: 13px;
     line-height: 1.5;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
 }
 
 /* Expansion Animation */
@@ -1034,7 +1034,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     text-align: left;
     padding: 12px 24px;
     font-size: 14px;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     cursor: pointer;
     border-left: 3px solid transparent;
     transition: 0.2s;
@@ -1046,14 +1046,14 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 
 
 .tab-btn:hover {
-    background: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-on-surface);
+    background: #ECE6F0; /* surface-container-high */
+    color: #1D1B20; /* on-surface */
 }
 
 .tab-btn.active {
-    background: var(--md-sys-color-surface-container);
-    color: var(--md-sys-color-primary);
-    border-left-color: var(--md-sys-color-primary);
+    background: #F3EDF7; /* surface-container */
+    color: #005AC1; /* primary */
+    border-left-color: #005AC1; /* primary */
 }
 
 /* Content */
@@ -1070,7 +1070,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 .tab-content h3 {
     margin: 0 0 1.5rem 0;
     font-size: 18px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     font-weight: 500;
 }
 
@@ -1079,7 +1079,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    border-bottom: 1px solid #C4C7C5; /* outline-variant */
     padding-bottom: 0.5rem;
 }
 
@@ -1096,8 +1096,8 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 .inherited-badge {
     font-size: 12px;
     font-weight: 500;
-    color: var(--md-sys-color-secondary);
-    background: var(--md-sys-color-surface-container);
+    color: #625B71; /* secondary */
+    background: #F3EDF7; /* surface-container */
     padding: 4px 8px;
     border-radius: 4px;
 }
@@ -1126,7 +1126,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 .field-group label {
     font-size: 12px;
     font-weight: 600;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     margin-bottom: 8px;
     text-transform: uppercase;
 }
@@ -1135,9 +1135,9 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     width: 100%;
     padding: 10px 12px;
     font-size: 14px;
-    color: var(--md-sys-color-on-surface);
-    background: var(--md-sys-color-surface-container-lowest);
-    border: 1px solid var(--md-sys-color-outline);
+    color: #1D1B20; /* on-surface */
+    background: #FFFFFF; /* surface-container-lowest */
+    border: 1px solid #79747E; /* outline */
     border-radius: 6px;
     font-family: inherit;
     box-sizing: border-box;
@@ -1146,15 +1146,15 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 
 .clean-input:focus, .clean-textarea:focus {
     outline: none;
-    border-color: var(--md-sys-color-primary);
-    background: var(--md-sys-color-surface);
-    box-shadow: 0 0 0 3px var(--md-sys-color-primary-container);
+    border-color: #005AC1; /* primary */
+    background: #FEF7FF; /* surface */
+    box-shadow: 0 0 0 3px #D8E2FF; /* primary-container */
 }
 
 .clean-input:disabled, .clean-textarea:disabled {
     background: rgba(0,0,0,0.02);
     border-color: transparent;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     cursor: default;
 }
 
@@ -1185,7 +1185,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
 .inherit-toggle input {
@@ -1195,7 +1195,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 .toggle-track {
     width: 36px;
     height: 20px;
-    background: var(--md-sys-color-surface-variant);
+    background: #E7E0EC; /* surface-variant */
     border-radius: 20px;
     position: relative;
     transition: 0.3s;
@@ -1214,7 +1214,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 }
 
 .inherit-toggle input:checked + .toggle-track {
-    background: var(--md-sys-color-primary);
+    background: #005AC1; /* primary */
 }
 
 .inherit-toggle input:checked + .toggle-track::after {
@@ -1241,7 +1241,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     left: 10px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     font-size: 14px;
 }
 
@@ -1250,20 +1250,20 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--md-sys-color-surface-container-low);
+    background: #F7F2FA; /* surface-container-low */
     max-height: 200px;
     overflow-y: auto;
     z-index: 10;
     border-radius: 8px;
     margin-top: 4px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    border: 1px solid var(--md-sys-color-outline-variant);
+    border: 1px solid #C4C7C5; /* outline-variant */
 }
 
 .dropdown-item {
     padding: 8px 16px;
     cursor: pointer;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    border-bottom: 1px solid #C4C7C5; /* outline-variant */
 }
 
 .dropdown-item:last-child {
@@ -1271,18 +1271,18 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 }
 
 .dropdown-item:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
 }
 
 .item-main {
     font-size: 14px;
     font-weight: 500;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .item-sub {
     font-size: 11px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
 .linked-chips-container {
@@ -1294,8 +1294,8 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 .link-chip {
     display: flex;
     align-items: center;
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+    background: #DBE2F9; /* secondary-container */
+    color: #1D192B; /* on-secondary-container */
     padding: 6px 12px;
     border-radius: 16px;
     gap: 8px;
@@ -1343,7 +1343,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 
 .empty-msg {
     font-size: 13px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     font-style: italic;
     padding: 0.5rem 0;
 }
@@ -1359,22 +1359,23 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 
 /* Validation Styles */
 .required-star {
-    color: var(--md-sys-color-error, #B3261E);
+    color: #BA1A1A; /* error */
     margin-left: 4px;
     font-weight: bold;
 }
 
 .has-error label {
-    color: var(--md-sys-color-error, #B3261E);
+    color: #BA1A1A; /* error */
 }
 
 .has-error input, .has-error select, .has-error textarea {
-    border-color: var(--md-sys-color-error, #B3261E) !important;
+    border-color: #BA1A1A !important;
+    /* error */
 }
 
 .error-msg {
     font-size: 11px;
-    color: var(--md-sys-color-error, #B3261E);
+    color: #BA1A1A; /* error */
     margin-top: 4px;
     display: block;
 }
@@ -1384,9 +1385,9 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     width: 100%;
     padding: 8px 12px;
     border-radius: 4px;
-    border: 1px solid var(--md-sys-color-outline);
-    background: var(--md-sys-color-surface);
-    color: var(--md-sys-color-on-surface);
+    border: 1px solid #79747E; /* outline */
+    background: #FEF7FF; /* surface */
+    color: #1D1B20; /* on-surface */
     font-size: 14px;
     font-family: inherit;
     transition: 0.2s;
@@ -1401,8 +1402,8 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 
 .clean-select:focus {
     outline: none;
-    border-color: var(--md-sys-color-primary);
-    box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+    border-color: #005AC1; /* primary */
+    box-shadow: 0 0 0 1px #005AC1; /* primary */
 }
 
 /* Updated Tab UX */
@@ -1432,25 +1433,25 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
-    color: var(--md-sys-color-error);
-    background: var(--md-sys-color-error-container);
+    color: #BA1A1A; /* error */
+    background: #FFDAD6; /* error-container */
     padding: 2px 6px;
     border-radius: 4px;
     letter-spacing: 0.5px;
 }
 
 .tab-btn.has-error {
-    color: var(--md-sys-color-error, #B3261E);
-    background: var(--md-sys-color-error-container);
+    color: #BA1A1A; /* error */
+    background: #FFDAD6; /* error-container */
 }
 
 .tab-btn.has-error:hover {
-    background: var(--md-sys-color-error-container);
+    background: #FFDAD6; /* error-container */
 }
 
 .tab-btn.has-error .tab-label, 
 .tab-btn.has-error .tab-icon {
-    color: var(--md-sys-color-error, #B3261E);
+    color: #BA1A1A; /* error */
 }
 
 .error-badge {
@@ -1478,7 +1479,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     width: 100%;
     max-height: 300px;
     overflow-y: auto;
-    background: var(--md-sys-color-surface-container);
+    background: #F3EDF7; /* surface-container */
     border-radius: 8px; /* M3 Standard */
     margin-top: 4px;
     z-index: 100;
@@ -1493,7 +1494,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     gap: 12px;
     padding: 12px 16px;
     cursor: pointer;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    border-bottom: 1px solid #C4C7C5; /* outline-variant */
     transition: background 0.2s;
 }
 
@@ -1502,15 +1503,15 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 }
 
 .dropdown-item:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
 }
 
 .item-icon {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+    background: #DBE2F9; /* secondary-container */
+    color: #1D192B; /* on-secondary-container */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1534,14 +1535,14 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 .item-main .name {
     font-size: 14px;
     font-weight: 500;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .id-badge {
     font-size: 11px;
     font-family: monospace;
-    background: var(--md-sys-color-surface-variant);
-    color: var(--md-sys-color-on-surface-variant);
+    background: #E7E0EC; /* surface-variant */
+    color: #49454F; /* on-surface-variant */
     padding: 2px 6px;
     border-radius: 4px;
 }
@@ -1551,7 +1552,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
 .item-sub .program-name i {
@@ -1572,5 +1573,4 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     opacity: 0.8;
     font-size: 11px;
 }
-
 </style>

@@ -41,9 +41,9 @@ const getStatusLabel = (effort) => effort.status || 'Active';
 
 const getStatusColor = (status) => {
     const s = (status || '').toLowerCase();
-    if (s === 'active') return 'var(--md-sys-color-primary)';
-    if (s === 'maintenance') return 'var(--md-sys-color-secondary)';
-    return 'var(--md-sys-color-outline)'; // Dot color
+    if (s === 'active') return '#005AC1'; /* primary */
+    if (s === 'maintenance') return '#625B71'; /* secondary */
+    return '#79747E'; /* outline - Dot color */
 };
 </script>
 
@@ -106,12 +106,12 @@ const getStatusColor = (status) => {
 }
 
 .node-row:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
 }
 
 .node-row.selected {
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+    background: #DBE2F9; /* secondary-container */
+    color: #1D192B; /* on-secondary-container */
 }
 
 .node-content {
@@ -128,7 +128,7 @@ const getStatusColor = (status) => {
     align-items: center;
     justify-content: center;
     font-size: 10px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     border-radius: 4px;
 }
 
@@ -177,6 +177,6 @@ const getStatusColor = (status) => {
     top: 0;
     bottom: 0;
     width: 1px;
-    background-color: var(--md-sys-color-outline-variant);
+    background-color: #C4C7C5; /* outline-variant */
 }
 </style>

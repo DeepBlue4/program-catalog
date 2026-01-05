@@ -100,20 +100,20 @@ onUnmounted(() => {
 }
 
 .menu-trigger:hover {
-  background: var(--md-sys-color-surface-container-high);
+  background: #ECE6F0; /* surface-container-high */
 }
 
 .trigger-icon {
   font-size: 36px;
-  color: var(--md-sys-color-primary);
+  color: #005AC1; /* primary */
 }
 
 .avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
+  background: #005AC1; /* primary */
+  color: #FFFFFF; /* on-primary */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -133,7 +133,7 @@ onUnmounted(() => {
   right: 0;
   margin-top: 8px;
   width: 280px;
-  background: var(--md-sys-color-surface-container);
+  background: #F3EDF7; /* surface-container */
   border-radius: 12px;
   padding: 1rem;
   z-index: 100;
@@ -159,13 +159,13 @@ onUnmounted(() => {
 
 .name {
   font-weight: 500;
-  color: var(--md-sys-color-on-surface);
+  color: #1D1B20; /* on-surface */
   font-size: 16px;
 }
 
 .email {
   font-size: 12px;
-  color: var(--md-sys-color-secondary);
+  color: #625B71; /* secondary */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -186,18 +186,18 @@ onUnmounted(() => {
 }
 
 .role-badge.admin {
-  background: var(--md-sys-color-tertiary-container);
-  color: var(--md-sys-color-on-tertiary-container);
+  background: #FFDF90; /* tertiary-container */
+  color: #241A00; /* on-tertiary-container */
 }
 
 .role-badge.manager {
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
+  background: #DBE2F9; /* secondary-container */
+  color: #1D192B; /* on-secondary-container */
 }
 
 .divider {
   height: 1px;
-  background: var(--md-sys-color-outline-variant);
+  background: #C4C7C5; /* outline-variant */
   margin: 0.5rem 0;
 }
 
@@ -209,7 +209,7 @@ onUnmounted(() => {
   padding: 10px 12px;
   border-radius: 8px;
   text-decoration: none;
-  color: var(--md-sys-color-on-surface);
+  color: #1D1B20; /* on-surface */
   background: none;
   border: none;
   font-size: 14px;

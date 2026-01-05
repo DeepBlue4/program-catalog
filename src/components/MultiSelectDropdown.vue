@@ -165,14 +165,14 @@ const removeOption = (option) => {
     display: block;
     font-size: 12px;
     font-weight: 600;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     margin-bottom: 6px;
     text-transform: uppercase;
 }
 
 .select-trigger {
-    background: var(--md-sys-color-surface-container-lowest);
-    border: 1px solid var(--md-sys-color-outline);
+    background: #FFFFFF; /* surface-container-lowest */
+    border: 1px solid #79747E; /* outline */
     border-radius: 6px;
     padding: 6px 36px 6px 8px; /* Right padding for arrow */
     min-height: 42px;
@@ -184,14 +184,14 @@ const removeOption = (option) => {
 }
 
 .select-trigger:hover {
-    border-color: var(--md-sys-color-outline-variant);
-    background: var(--md-sys-color-surface-container-low);
+    border-color: #C4C7C5; /* outline-variant */
+    background: #F7F2FA; /* surface-container-low */
 }
 
 .select-trigger.active {
-    border-color: var(--md-sys-color-primary);
-    box-shadow: 0 0 0 1px var(--md-sys-color-primary);
-    background: var(--md-sys-color-surface);
+    border-color: #005AC1; /* primary */
+    box-shadow: 0 0 0 1px #005AC1; /* primary */
+    background: #FEF7FF; /* surface */
 }
 
 .trigger-content {
@@ -202,7 +202,7 @@ const removeOption = (option) => {
 }
 
 .placeholder {
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     font-size: 14px;
     padding-left: 4px;
     opacity: 0.7;
@@ -213,7 +213,7 @@ const removeOption = (option) => {
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     pointer-events: none;
 }
 
@@ -227,8 +227,8 @@ const removeOption = (option) => {
 .select-chip {
     display: flex;
     align-items: center;
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+    background: #DBE2F9; /* secondary-container */
+    color: #1D192B; /* on-secondary-container */
     font-size: 13px;
     font-weight: 500;
     padding: 2px 8px;
@@ -261,10 +261,10 @@ const removeOption = (option) => {
     left: 0;
     right: 0;
     margin-top: 4px;
-    background: var(--md-sys-color-surface-container);
+    background: #F3EDF7; /* surface-container */
     border-radius: 8px;
     z-index: 100;
-    border: 1px solid var(--md-sys-color-outline-variant);
+    border: 1px solid #C4C7C5; /* outline-variant */
     overflow: hidden;
     max-height: 300px;
     display: flex;
@@ -273,7 +273,7 @@ const removeOption = (option) => {
 
 .dropdown-search {
     padding: 8px;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    border-bottom: 1px solid #C4C7C5; /* outline-variant */
     display: flex;
     align-items: center;
     gap: 8px;
@@ -282,7 +282,7 @@ const removeOption = (option) => {
 .search-input {
     background: transparent;
     border: none;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     font-size: 14px;
     width: 100%;
     font-family: inherit;
@@ -293,7 +293,7 @@ const removeOption = (option) => {
 }
 
 .search-icon {
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
 .options-list {
@@ -309,23 +309,23 @@ const removeOption = (option) => {
     gap: 12px;
     cursor: pointer;
     font-size: 14px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     transition: background 0.1s;
 }
 
 .dropdown-option:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
 }
 
 .dropdown-option.selected {
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+    background: #DBE2F9; /* secondary-container */
+    color: #1D192B; /* on-secondary-container */
 }
 
 .checkbox-custom {
     width: 18px;
     height: 18px;
-    border: 2px solid var(--md-sys-color-outline);
+    border: 2px solid #79747E; /* outline */
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -334,16 +334,16 @@ const removeOption = (option) => {
 }
 
 .dropdown-option.selected .checkbox-custom {
-    background: var(--md-sys-color-primary);
-    border-color: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
+    background: #005AC1; /* primary */
+    border-color: #005AC1; /* primary */
+    color: #FFFFFF; /* on-primary */
 }
 
 .no-results {
     padding: 12px;
     text-align: center;
     font-size: 13px;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     opacity: 0.7;
 }
 

@@ -147,10 +147,10 @@ const openHelp = (type) => {
   margin: 0;
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: var(--md-sys-color-secondary);
+  color: #625B71; /* secondary */
   letter-spacing: 0.5px;
   font-weight: 600;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  border-bottom: 1px solid #C4C7C5; /* outline-variant */
   padding-bottom: 0.5rem;
 }
 
@@ -175,8 +175,8 @@ const openHelp = (type) => {
 }
 
 .count-badge {
-    background: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-on-surface-variant);
+    background: #ECE6F0; /* surface-container-high */
+    color: #49454F; /* on-surface-variant */
     font-size: 10px;
     padding: 2px 6px;
     border-radius: 10px;
@@ -188,7 +188,7 @@ const openHelp = (type) => {
 .icon-btn-tiny {
     background: transparent;
     border: none;
-    color: var(--md-sys-color-outline);
+    color: #79747E; /* outline */
     cursor: pointer;
     font-size: 14px;
     padding: 2px;
@@ -198,7 +198,7 @@ const openHelp = (type) => {
 }
 
 .icon-btn-tiny:hover {
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
 }
 
 .dot {
@@ -238,7 +238,7 @@ const openHelp = (type) => {
 
 .label {
   font-size: 0.85rem;
-  color: var(--md-sys-color-on-surface);
+  color: #1D1B20; /* on-surface */
   font-weight: 500;
 }
 
@@ -248,8 +248,8 @@ const openHelp = (type) => {
     bottom: 100%; /* Appears above legend */
     left: 0;
     width: 260px;
-    background: var(--md-sys-color-inverse-surface);
-    color: var(--md-sys-color-inverse-on-surface);
+    background: #313033; /* inverse-surface */
+    color: #F4EFF4; /* inverse-on-surface */
     border-radius: 8px;
     padding: 12px;
     margin-bottom: 8px;
@@ -269,13 +269,13 @@ const openHelp = (type) => {
 .popover-title {
     font-weight: 600;
     font-size: 13px;
-    color: var(--md-sys-color-inverse-primary);
+    color: #D0BCFF; /* inverse-primary */
 }
 
 .close-btn {
     background: transparent;
     border: none;
-    color: var(--md-sys-color-inverse-on-surface);
+    color: #F4EFF4; /* inverse-on-surface */
     cursor: pointer;
     font-size: 16px;
     line-height: 1;
@@ -296,7 +296,7 @@ const openHelp = (type) => {
     margin-top: 8px;
     font-size: 12px;
     text-align: right;
-    color: var(--md-sys-color-inverse-primary);
+    color: #D0BCFF; /* inverse-primary */
 }
 
 /* Shim for backdrop click */

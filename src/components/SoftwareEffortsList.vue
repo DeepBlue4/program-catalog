@@ -641,8 +641,8 @@ const showHelpModal = ref(false);
     bottom: 2rem;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--md-sys-color-inverse-surface);
-    color: var(--md-sys-color-inverse-on-surface);
+    background: #313033; /* inverse-surface */
+    color: #F4EFF4; /* inverse-on-surface */
     padding: 12px 24px;
     border-radius: 8px;
     display: flex;
@@ -662,8 +662,8 @@ const showHelpModal = ref(false);
 }
 
 .notification-toast.error {
-    background: var(--md-sys-color-error, #B3261E);
-    color: var(--md-sys-color-on-error);
+    background: #BA1A1A; /* error */
+    color: #FFFFFF; /* on-error */
 }
 
 .toast-slide-enter-active,
@@ -683,7 +683,7 @@ const showHelpModal = ref(false);
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: var(--md-sys-color-surface);
+  background-color: #FEF7FF; /* surface */
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -703,12 +703,10 @@ const showHelpModal = ref(false);
     width: 100%;
 }
 
-
-
 .page-title {
     margin: 0;
     font-size: 24px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 
@@ -718,7 +716,7 @@ const showHelpModal = ref(false);
     font-size: inherit;
     font-weight: 300;
     font-family: inherit;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     cursor: pointer;
     padding: 0 4px;
     border-radius: 4px;
@@ -728,8 +726,8 @@ const showHelpModal = ref(false);
 }
 
 .program-ref-btn:hover {
-    background: var(--md-sys-color-surface-container-high);
-    text-decoration-color: var(--md-sys-color-primary);
+    background: #ECE6F0; /* surface-container-high */
+    text-decoration-color: #005AC1; /* primary */
 }
 
 .master-detail-container {
@@ -744,27 +742,25 @@ const showHelpModal = ref(false);
     width: 320px;
     display: flex;
     flex-direction: column;
-    background: var(--md-sys-color-surface-container-low);
+    background: #F7F2FA; /* surface-container-low */
     border-radius: 12px;
     overflow: hidden;
 }
-
-
 
 .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
-    background: var(--md-sys-color-surface-container-low);
+    border-bottom: 1px solid #C4C7C5; /* outline-variant */
+    background: #F7F2FA; /* surface-container-low */
 }
 
 .panel-title {
     margin: 0;
     font-size: 14px;
     text-transform: uppercase;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
 .sidebar-warning-badge {
@@ -786,14 +782,14 @@ const showHelpModal = ref(false);
 .empty-tree {
     padding: 2rem;
     text-align: center;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     font-size: 14px;
 }
 
 /* Detail Panel */
 .detail-panel {
     flex: 1;
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
     border-radius: 12px;
     display: flex;
     flex-direction: column;
@@ -812,13 +808,13 @@ const showHelpModal = ref(false);
     align-items: flex-start;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    border-bottom: 1px solid #C4C7C5; /* outline-variant */
 }
 
 .detail-header h1 {
     margin: 0.5rem 0 0.25rem 0;
     font-size: 32px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .badges {
@@ -830,7 +826,7 @@ const showHelpModal = ref(false);
 .type-badge {
     font-size: 11px;
     text-transform: uppercase;
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
     padding: 2px 6px;
     border-radius: 4px;
     font-weight: 600;
@@ -840,13 +836,13 @@ const showHelpModal = ref(false);
     font-size: 11px;
     padding: 2px 8px;
     border-radius: 12px;
-    background: var(--md-sys-color-primary-container);
-    color: var(--md-sys-color-on-primary-container);
+    background: #D8E2FF; /* primary-container */
+    color: #001D35; /* on-primary-container */
 }
 
 .id-ref {
     font-family: monospace;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     font-size: 12px;
 }
 
@@ -859,13 +855,13 @@ const showHelpModal = ref(false);
 .detail-section h3 {
     font-size: 16px;
     font-weight: 500;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     margin: 0 0 0.75rem 0;
 }
 
 .detail-section p {
     margin: 0;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     line-height: 1.5;
 }
 
@@ -878,7 +874,7 @@ const showHelpModal = ref(false);
 .inherited-pill {
     display: inline-block;
     font-size: 12px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     background: rgba(0,0,0,0.05);
     padding: 4px 12px;
     border-radius: 16px;
@@ -891,7 +887,7 @@ const showHelpModal = ref(false);
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
 .empty-detail .icon {
@@ -961,8 +957,8 @@ const showHelpModal = ref(false);
 }
 
 .btn-icon-tonal {
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+    background: #DBE2F9; /* secondary-container */
+    color: #1D192B; /* on-secondary-container */
     border: none;
     width: 40px;
     height: 40px;
@@ -982,7 +978,7 @@ const showHelpModal = ref(false);
 .btn-icon {
     background: transparent;
     border: none;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     cursor: pointer;
     font-size: 1.2rem;
     padding: 8px;
@@ -990,14 +986,14 @@ const showHelpModal = ref(false);
 }
 
 .btn-icon:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
 }
 
 /* Info Modal */
 .info-modal-card {
     width: 600px;
     max-width: 90vw;
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
     border-radius: 28px; /* M3 Standard */
     overflow: hidden;
     display: flex;
@@ -1017,7 +1013,7 @@ const showHelpModal = ref(false);
     margin: 0;
     font-size: 24px;
     line-height: 32px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .overline {
@@ -1025,7 +1021,7 @@ const showHelpModal = ref(false);
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     font-weight: 500;
     margin-bottom: 8px;
 }
@@ -1038,7 +1034,7 @@ const showHelpModal = ref(false);
 .help-text-large {
     font-size: 16px;
     line-height: 1.6;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     margin-bottom: 2rem;
 }
 
@@ -1057,20 +1053,20 @@ const showHelpModal = ref(false);
 
 .help-item i {
     font-size: 20px;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     margin-top: 2px;
 }
 
 .help-item h4 {
     margin: 0 0 0.25rem 0;
     font-size: 14px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .help-item p {
     margin: 0;
     font-size: 13px;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     line-height: 1.4;
 }
 
@@ -1092,20 +1088,20 @@ const showHelpModal = ref(false);
 .info-item label {
     display: block;
     font-size: 12px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     margin-bottom: 4px;
 }
 
 .info-item .value {
     font-size: 16px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     font-weight: 400;
 }
 
 .info-item .value.code {
     font-family: monospace;
     font-size: 14px;
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
     padding: 2px 6px;
     border-radius: 4px;
     display: inline-block;
@@ -1115,7 +1111,7 @@ const showHelpModal = ref(false);
     display: flex;
     justify-content: space-around;
     padding: 1rem;
-    background: var(--md-sys-color-surface-container-low);
+    background: #F7F2FA; /* surface-container-low */
     border-radius: 12px;
 }
 
@@ -1128,21 +1124,21 @@ const showHelpModal = ref(false);
 .stat-num {
     font-size: 24px;
     font-weight: 700;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
 }
 
 .stat-label {
     font-size: 12px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     text-transform: uppercase;
 }
 
 .info-footer {
     padding: 1rem 1.5rem;
-    border-top: 1px solid var(--md-sys-color-outline-variant);
+    border-top: 1px solid #C4C7C5; /* outline-variant */
     display: flex;
     justify-content: flex-end;
-    background: var(--md-sys-color-surface-container-low);
+    background: #F7F2FA; /* surface-container-low */
 }
 
 .modal-card {
@@ -1157,7 +1153,7 @@ const showHelpModal = ref(false);
 .empty-tree {
     padding: 2rem;
     text-align: center;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     font-style: italic;
     font-size: 14px;
 }
@@ -1167,14 +1163,14 @@ const showHelpModal = ref(false);
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    border-top: 1px solid var(--md-sys-color-outline-variant);
-    background: var(--md-sys-color-surface-container-low);
+    border-top: 1px solid #C4C7C5; /* outline-variant */
+    background: #F7F2FA; /* surface-container-low */
 }
 
 .page-btn {
     background: transparent;
     border: none;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     cursor: pointer;
     padding: 8px;
     border-radius: 50%;
@@ -1185,7 +1181,7 @@ const showHelpModal = ref(false);
 }
 
 .page-btn:hover:not(:disabled) {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
 }
 
 .page-btn:disabled {
@@ -1195,7 +1191,7 @@ const showHelpModal = ref(false);
 
 .page-info {
     font-size: 12px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     font-variant-numeric: tabular-nums;
 }
 </style>

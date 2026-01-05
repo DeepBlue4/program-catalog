@@ -21,13 +21,17 @@ import {
   mdiFormatListBulleted
 } from '@mdi/js';
 import { useProgramData } from '../composables/useProgramData';
-import { STATUS_COLORS } from '../styles/statusConstants'; // Import Colors
+import { STATUS_COLORS, RAW_COLORS } from '../styles/statusConstants'; // Import Colors
 
 const router = useRouter();
 const { allNodes, selectNode } = useProgramData();
 
 const chartRefCompliance = ref(null);
+const chartRefCoverage = ref(null);
+const chartRefValidity = ref(null);
 let chartInstanceCompliance = null;
+let chartInstanceCoverage = null;
+let chartInstanceValidity = null;
 
 // Modal State
 const activeMetricModal = ref(null);
@@ -140,15 +144,11 @@ const closeMetricModal = () => {
     activeMetricModal.value = null;
 };
 
-// Helper to get CSS variable value
-const getCssVar = (name) => {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-};
-
 const initCharts = () => {
-    // Theme Colors derived from CSS variables
-    const primaryColor = getCssVar('--md-sys-color-primary') || '#6750A4';
-    const errorColor = getCssVar('--md-sys-color-error') || '#B3261E';
+    // Theme Colors
+    const primaryColor = RAW_COLORS.primary;
+    const errorColor = RAW_COLORS.error;
+    const surfaceVariant = '#E7E0EC'; // Placeholder or add to constants if reused often
 
     // Compliance Gauge
     if (chartRefCompliance.value) {
@@ -173,7 +173,7 @@ const initCharts = () => {
                         width: 20,
                         color: [
                             [0.7, errorColor], 
-                            [0.9, getCssVar('--md-sys-color-surface-variant') || '#E7E0EC'], 
+                            [0.9, surfaceVariant], 
                             [1, primaryColor]    
                         ]
                     }
@@ -193,10 +193,63 @@ const initCharts = () => {
             }]
         });
     }
+
+    // Coverage Chart (Expecting vs Filled vs Missing)
+    if (chartRefCoverage.value) {
+        chartInstanceCoverage = echarts.init(chartRefCoverage.value);
+        const data = dashboardData.value.counts;
+        const filled = data.expecting - data.missing;
+
+        chartInstanceCoverage.setOption({
+            tooltip: { trigger: 'item' },
+            legend: { top: '5%', left: 'center', show: false },
+            series: [{
+                name: 'Coverage',
+                type: 'pie',
+                radius: ['40%', '70%'],
+                avoidLabelOverlap: false,
+                itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+                label: { show: false },
+                emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+                data: [
+                    { value: filled, name: 'Filled', itemStyle: { color: primaryColor } },
+                    { value: data.missing, name: 'Missing', itemStyle: { color: errorColor } }
+                ]
+            }]
+        });
+    }
+
+    // Validity Chart (Active vs Valid vs Unexpected)
+    if (chartRefValidity.value) {
+        chartInstanceValidity.setOption && chartInstanceValidity.dispose();
+        chartInstanceValidity = echarts.init(chartRefValidity.value);
+        const data = dashboardData.value.counts;
+        const valid = data.active - data.anomaly;
+        
+        chartInstanceValidity.setOption({
+            tooltip: { trigger: 'item' },
+            legend: { show: false },
+            series: [{
+                name: 'Validity',
+                type: 'pie',
+                radius: ['40%', '70%'],
+                avoidLabelOverlap: false,
+                itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+                label: { show: false },
+                emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+                data: [
+                    { value: valid, name: 'Valid', itemStyle: { color: primaryColor } }, // Using primary for Valid
+                    { value: data.anomaly, name: 'Unexpected', itemStyle: { color: RAW_COLORS.errorContainer } } 
+                ]
+            }]
+        });
+    }
 };
 
 const handleResize = () => {
     chartInstanceCompliance?.resize();
+    chartInstanceCoverage?.resize();
+    chartInstanceValidity?.resize();
 };
 
 const navigateToProgram = (node) => {
@@ -219,108 +272,150 @@ onMounted(() => {
 onUnmounted(() => {
     window.removeEventListener('resize', handleResize);
     chartInstanceCompliance?.dispose();
+    chartInstanceCoverage?.dispose();
+    chartInstanceValidity?.dispose();
 });
 
 </script>
 
 <template>
   <div class="dashboard-container">
-    <!-- ... (Header and Metrics Grid remain unchanged) ... -->
     <div class="header-section">
         <h1>Analytics Dashboard</h1>
         <p>Enterprise insights, software delivery tracking, and compliance metrics</p>
     </div>
 
-    <!-- Metrics Grid (6 items) -->
-    <div class="metrics-grid">
-        <!-- 1. Total -->
-        <div class="metric-card m3-card filled interactive" @click="openMetricModal('total')">
-            <div class="card-icon neutral">
-                <BaseIcon :path="mdiLayers" />
+    <!-- Section 1: Program Health (Visualization) -->
+    <section class="dashboard-section">
+        <h2 class="section-title">Program Health</h2>
+        <div class="charts-grid">
+            <!-- 1. Compliance -->
+            <div class="chart-card m3-card outlined compliance-card">
+                <div class="chart-header">
+                    <h3>Platform Compliance</h3>
+                    <p>Meeting expectations</p>
+                </div>
+                <div class="chart-wrapper" ref="chartRefCompliance"></div>
+                <div class="legend-mini">
+                    <div class="legend-item"><span class="dot error"></span> < 70%</div>
+                    <div class="legend-item"><span class="dot good"></span> > 90%</div>
+                </div>
             </div>
-            <div class="metric-content">
-                <span class="value">{{ dashboardData.counts.total }}</span>
-                <span class="label">Total Programs</span>
-            </div>
-            <BaseIcon :path="mdiInformation" class="info-icon" />
-        </div>
-        
-        <!-- 2. Expecting -->
-        <div class="metric-card m3-card filled interactive" @click="openMetricModal('expecting')">
-            <div class="card-icon primary">
-                <BaseIcon :path="mdiClipboardCheck" />
-            </div>
-             <div class="metric-content">
-                <span class="value">{{ dashboardData.counts.expecting }}</span>
-                <span class="label">Expecting Effort</span>
-            </div>
-             <BaseIcon :path="mdiInformation" class="info-icon" />
-        </div>
 
-        <!-- 3. Active (Has Effort) -->
-        <div class="metric-card m3-card filled interactive" @click="openMetricModal('active')">
-            <div class="card-icon good">
-                <BaseIcon :path="mdiSourceBranch" />
+            <!-- 2. Coverage -->
+            <div class="chart-card m3-card outlined">
+                <div class="chart-header">
+                    <h3>Effort Coverage</h3>
+                    <p>Expected programs with efforts</p>
+                </div>
+                <div class="chart-wrapper" ref="chartRefCoverage"></div>
+                <div class="legend-mini">
+                     <div class="legend-item"><span class="dot primary"></span> Filled</div>
+                     <div class="legend-item"><span class="dot error"></span> Missing</div>
+                </div>
             </div>
-             <div class="metric-content">
-                <span class="value">{{ dashboardData.counts.active }}</span>
-                <span class="label">Active Efforts</span>
-            </div>
-             <BaseIcon :path="mdiInformation" class="info-icon" />
-        </div>
 
-        <!-- 4. Missing (Compliance Gap) -->
-        <div class="metric-card m3-card filled interactive warning-card" @click="openMetricModal('missing')">
-            <div class="card-icon warning">
-                <BaseIcon :path="mdiAlert" />
+            <!-- 3. Validity -->
+             <div class="chart-card m3-card outlined">
+                <div class="chart-header">
+                    <h3>Data Validity</h3>
+                    <p>Active efforts validation</p>
+                </div>
+                <div class="chart-wrapper" ref="chartRefValidity"></div>
+                <div class="legend-mini">
+                     <div class="legend-item"><span class="dot primary"></span> Valid</div>
+                     <div class="legend-item"><span class="dot warning-color"></span> Unexpected</div>
+                </div>
             </div>
-            <div class="metric-content">
-                <span class="value">{{ dashboardData.counts.missing }}</span>
-                <span class="label">Missing Efforts</span>
-            </div>
-             <BaseIcon :path="mdiInformation" class="info-icon" />
         </div>
+    </section>
 
-        <!-- 5. Anomaly (Unexpected) -->
-        <div class="metric-card m3-card filled interactive anomaly-card" @click="openMetricModal('anomaly')">
-            <div class="card-icon error-container">
-                <BaseIcon :path="mdiAlertCircle" />
+    <!-- Section 2: Catalog Inventory (Metrics) -->
+    <section class="dashboard-section">
+        <h2 class="section-title">Catalog Inventory</h2>
+        <div class="inventory-grid">
+            <!-- Expecting -->
+            <div class="metric-card m3-card filled interactive" @click="openMetricModal('expecting')">
+                <div class="card-icon primary small-icon">
+                    <BaseIcon :path="mdiClipboardCheck" />
+                </div>
+                 <div class="metric-content">
+                    <span class="value">{{ dashboardData.counts.expecting }}</span>
+                    <span class="label">Expecting Effort</span>
+                </div>
             </div>
-            <div class="metric-content">
-                <span class="value">{{ dashboardData.counts.anomaly }}</span>
-                <span class="label">Unexpected Efforts</span>
+
+            <!-- Missing -->
+            <div class="metric-card m3-card filled interactive warning-card" @click="openMetricModal('missing')">
+                <div class="card-icon warning small-icon">
+                    <BaseIcon :path="mdiAlert" />
+                </div>
+                <div class="metric-content">
+                    <span class="value">{{ dashboardData.counts.missing }}</span>
+                    <span class="label">Missing Efforts</span>
+                </div>
             </div>
-             <BaseIcon :path="mdiInformation" class="info-icon" />
+
+            <!-- Unexpectd -->
+            <div class="metric-card m3-card filled interactive anomaly-card" @click="openMetricModal('anomaly')">
+                <div class="card-icon error-container small-icon">
+                    <BaseIcon :path="mdiAlertCircle" />
+                </div>
+                <div class="metric-content">
+                    <span class="value">{{ dashboardData.counts.anomaly }}</span>
+                    <span class="label">Unexpected Efforts</span>
+                </div>
+            </div>
+
+            <!-- Total -->
+            <div class="metric-card m3-card filled interactive" @click="openMetricModal('total')">
+                <div class="card-icon neutral small-icon">
+                    <BaseIcon :path="mdiLayers" />
+                </div>
+                <div class="metric-content">
+                    <span class="value">{{ dashboardData.counts.total }}</span>
+                    <span class="label">Total Programs</span>
+                </div>
+            </div>
+
+            <!-- Active -->
+            <div class="metric-card m3-card filled interactive" @click="openMetricModal('active')">
+                <div class="card-icon good small-icon">
+                    <BaseIcon :path="mdiSourceBranch" />
+                </div>
+                 <div class="metric-content">
+                    <span class="value">{{ dashboardData.counts.active }}</span>
+                    <span class="label">Active Efforts</span>
+                </div>
+            </div>
+
+            <!-- Parent -->
+            <div class="metric-card m3-card filled interactive" @click="openMetricModal('parent')">
+                <div class="card-icon neutral small-icon">
+                    <BaseIcon :path="mdiSitemap" />
+                </div>
+                <div class="metric-content">
+                    <span class="value">{{ dashboardData.counts.parent }}</span>
+                    <span class="label">Parent Programs</span>
+                </div>
+            </div>
+
+            <!-- Neutral -->
+            <div class="metric-card m3-card filled interactive" @click="openMetricModal('neutral')">
+                <div class="card-icon neutral-light small-icon">
+                    <BaseIcon :path="mdiCircle" />
+                </div>
+                <div class="metric-content">
+                    <span class="value">{{ dashboardData.counts.neutral }}</span>
+                    <span class="label">Neutral Programs</span>
+                </div>
+            </div>
         </div>
+    </section>
 
-        <!-- 6. Parent -->
-        <div class="metric-card m3-card filled interactive" @click="openMetricModal('parent')">
-            <div class="card-icon neutral">
-                <BaseIcon :path="mdiSitemap" />
-            </div>
-            <div class="metric-content">
-                <span class="value">{{ dashboardData.counts.parent }}</span>
-                <span class="label">Parent Programs</span>
-            </div>
-             <BaseIcon :path="mdiInformation" class="info-icon" />
-        </div>
-
-         <!-- 6. Neutral -->
-        <div class="metric-card m3-card filled interactive" @click="openMetricModal('neutral')">
-            <div class="card-icon neutral-light">
-                <BaseIcon :path="mdiCircle" />
-            </div>
-            <div class="metric-content">
-                <span class="value">{{ dashboardData.counts.neutral }}</span>
-                <span class="label">Neutral Programs</span>
-            </div>
-             <BaseIcon :path="mdiInformation" class="info-icon" />
-        </div>
-    </div>
-
-    <!-- Main Content Area -->
-    <div class="content-grid">
-        <!-- Actionable List with Tabs -->
+    <!-- Section 3: Action Items -->
+    <section class="dashboard-section">
+        <h2 class="section-title">Program Status</h2>
         <div class="list-card m3-card outlined">
             <div class="card-header tabs-header">
                 <button 
@@ -349,7 +444,7 @@ onUnmounted(() => {
                     @click="activeListTab = 'active'"
                 >
                      <BaseIcon :path="mdiTable" class="tab-icon" />
-                    All Active
+                    Populated
                     <span class="badge neutral" v-if="dashboardData.counts.active">{{ dashboardData.counts.active }}</span>
                 </button>
             </div>
@@ -395,25 +490,7 @@ onUnmounted(() => {
                 </table>
             </div>
         </div>
-        
-        <!-- Compliance Chart -->
-        <div class="chart-card m3-card outlined compliance-card">
-            <!-- ... (Chart content remains unchanged) ... -->
-            <div class="chart-header">
-                <h3>Platform Compliance</h3>
-                <p>Programs meeting expectations</p>
-            </div>
-            <div class="chart-wrapper" ref="chartRefCompliance"></div>
-            <div class="legend-mini">
-                <div class="legend-item">
-                    <span class="dot error"></span> < 70%
-                </div>
-                <div class="legend-item">
-                    <span class="dot good"></span> > 90%
-                </div>
-            </div>
-        </div>
-    </div>
+    </section>
 
     <!-- Interactive Metric Modal -->
     <transition name="fade">
@@ -446,8 +523,8 @@ onUnmounted(() => {
     width: 100%;
     height: 100%;
     overflow-y: auto;
-    background-color: var(--md-sys-color-background);
-    color: var(--md-sys-color-on-background);
+    background-color: #FEF7FF; /* background */
+    color: #1D1B20; /* on-background */
     padding: 1.5rem;
     box-sizing: border-box;
     display: flex;
@@ -465,31 +542,59 @@ onUnmounted(() => {
     margin: 0;
     font-size: 24px;
     font-weight: 500;
-    color: var(--md-sys-color-on-background);
+    color: #1D1B20; /* on-background */
 }
 
 .header-section p {
     margin: 0;
     font-size: 14px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
-/* Metrics Grid - 6 Columns adaptive */
-.metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Default to 3 columns */
+/* Sections */
+.dashboard-section {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
-    width: 100%;
 }
 
-@media (max-width: 1100px) {
-    .metrics-grid {
+.section-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #005AC1; /* primary */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 1. Charts Grid */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .charts-grid {
+        grid-template-columns: 1fr; 
+    }
+}
+
+/* 2. Inventory Grid (Auto-fit for 7 items) */
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 1000px) {
+    .inventory-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 600px) {
-    .metrics-grid {
+    .inventory-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -500,24 +605,26 @@ onUnmounted(() => {
     padding: 1.25rem;
     gap: 1rem;
     border-radius: 12px;
-    background-color: var(--md-sys-color-surface-container);
+    background-color: #F3EDF7; /* surface-container */
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     cursor: pointer;
     border: 1px solid transparent;
 }
 
+/* No compact class needed if all are uniformly styled */
+
 .metric-card:hover {
-    box-shadow: var(--md-sys-elevation-level2);
+    box-shadow: 0px 2px 4px rgba(0,0,0,0.14); /* elevation-level2 approx */
     transform: translateY(-2px);
-    border-color: var(--md-sys-color-primary);
+    border-color: #005AC1; /* primary */
 }
 
 .info-icon {
     position: absolute;
     top: 10px;
     right: 10px;
-    color: var(--md-sys-color-outline);
+    color: #79747E; /* outline */
     font-size: 14px;
     opacity: 0;
     transition: opacity 0.2s;
@@ -540,7 +647,7 @@ onUnmounted(() => {
 /* Icons Colors */
 /* Icons Colors */
 .card-icon.primary { background-color: v-bind('STATUS_COLORS.active.bg'); color: v-bind('STATUS_COLORS.active.text'); }
-.card-icon.good { background-color: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
+.card-icon.good { background-color: #FFDF90; color: #231B00; } /* tertiary-container/on-tertiary-container */
 .card-icon.warning { background-color: v-bind('STATUS_COLORS.gap.bg'); color: v-bind('STATUS_COLORS.gap.text'); }
 .card-icon.neutral { background-color: v-bind('STATUS_COLORS.parent.bg'); color: v-bind('STATUS_COLORS.parent.text'); }
 .card-icon.neutral-light { background-color: v-bind('STATUS_COLORS.neutral.bg'); color: v-bind('STATUS_COLORS.neutral.border'); }
@@ -555,36 +662,28 @@ onUnmounted(() => {
     font-size: 24px;
     font-weight: 600;
     line-height: 1.2;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .metric-content .label {
     font-size: 11px;
     font-weight: 500;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-/* Content Grid */
-.content-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 1.5rem;
-    flex: 1;
-    min-height: 400px;
-}
-
-@media (max-width: 900px) {
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
+.small-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    border-radius: 8px;
 }
 
 /* Action List Card */
 .list-card {
-    background-color: var(--md-sys-color-surface);
-    border: 1px solid var(--md-sys-color-outline-variant);
+    background-color: #FEF7FF; /* surface */
+    border: 1px solid #C4C7C5; /* outline-variant */
     border-radius: 12px;
     padding: 1.5rem;
     display: flex;
@@ -603,7 +702,7 @@ onUnmounted(() => {
     margin: 0;
     font-size: 18px;
     font-weight: 500;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .badge.warning {
@@ -636,7 +735,7 @@ onUnmounted(() => {
 .tabs-header {
     display: flex;
     gap: 8px;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    border-bottom: 1px solid #C4C7C5; /* outline-variant */
     padding-bottom: 0;
     margin-bottom: 0;
 }
@@ -647,7 +746,7 @@ onUnmounted(() => {
     padding: 8px 16px;
     font-size: 14px;
     font-weight: 500;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     cursor: pointer;
     border-bottom: 2px solid transparent;
     display: flex;
@@ -657,14 +756,14 @@ onUnmounted(() => {
 }
 
 .tab-btn:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
 }
 
 .tab-btn.active {
-    color: var(--md-sys-color-primary);
-    border-bottom-color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
+    border-bottom-color: #005AC1; /* primary */
 }
 
 .tab-icon {
@@ -674,21 +773,21 @@ onUnmounted(() => {
 .count-tag {
     font-size: 12px;
     padding: 2px 8px;
-    background: var(--md-sys-color-primary-container);
-    color: var(--md-sys-color-on-primary-container);
+    background: #D8E2FF; /* primary-container */
+    color: #001D35; /* on-primary-container */
     border-radius: 4px;
     font-weight: 500;
 }
 
 .count-tag.zero {
-    background: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-on-surface-variant);
+    background: #ECE6F0; /* surface-container-high */
+    color: #49454F; /* on-surface-variant */
 }
 
 .table-container {
     flex: 1;
     overflow-y: auto;
-    border: 1px solid var(--md-sys-color-outline-variant);
+    border: 1px solid #C4C7C5; /* outline-variant */
     border-radius: 8px;
     margin-top: 1rem;
 }
@@ -702,8 +801,8 @@ onUnmounted(() => {
 .data-table th {
     text-align: left;
     padding: 12px 16px;
-    background: var(--md-sys-color-surface-container-low);
-    color: var(--md-sys-color-secondary);
+    background: #F7F2FA; /* surface-container-low */
+    color: #625B71; /* secondary */
     font-weight: 500;
     position: sticky;
     top: 0;
@@ -712,20 +811,20 @@ onUnmounted(() => {
 
 .data-table td {
     padding: 12px 16px;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
-    color: var(--md-sys-color-on-surface);
+    border-bottom: 1px solid #C4C7C5; /* outline-variant */
+    color: #1D1B20; /* on-surface */
 }
 
 .data-table .id-cell {
     font-family: monospace;
     font-size: 12px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
 .btn-text {
     background: none;
     border: none;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     font-weight: 500;
     cursor: pointer;
     font-size: 13px;
@@ -737,21 +836,21 @@ onUnmounted(() => {
 }
 
 .btn-text:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
 }
 
 /* Empty State */
 .empty-state {
     text-align: center;
     padding: 2rem !important;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     font-weight: 500;
 }
 
 /* Chart Card */
 .chart-card {
-    background-color: var(--md-sys-color-surface);
-    border: 1px solid var(--md-sys-color-outline-variant);
+    background-color: #FEF7FF; /* surface */
+    border: 1px solid #C4C7C5; /* outline-variant */
     border-radius: 12px;
     padding: 1.5rem;
     display: flex;
@@ -767,7 +866,7 @@ onUnmounted(() => {
 .chart-header p {
     margin: 4px 0 0 0;
     font-size: 12px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
 .chart-wrapper {
@@ -780,7 +879,7 @@ onUnmounted(() => {
     display: flex;
     gap: 1rem;
     font-size: 12px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     margin-top: 1rem;
 }
 
@@ -796,9 +895,11 @@ onUnmounted(() => {
     border-radius: 50%;
 }
 
-.dot.error { background: var(--md-sys-color-error); }
-.dot.neutral { background: var(--md-sys-color-surface-variant); }
-.dot.good { background: var(--md-sys-color-primary); }
+.dot.error { background: #BA1A1A; }
+.dot.neutral { background: #E0E0E0; }
+.dot.good { background: #005AC1; }
+.dot.primary { background: #005AC1; }
+.dot.warning-color { background: #FFDAD6; }
 
 /* Modals */
 .modal-backdrop {
@@ -816,12 +917,12 @@ onUnmounted(() => {
 }
 
 .metric-modal {
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
     width: 400px;
     max-width: 90%;
     border-radius: 28px;
     padding: 1.5rem;
-    box-shadow: var(--md-sys-elevation-level3);
+    box-shadow: 0px 4px 8px 3px rgba(0,0,0,0.15), 0px 1px 3px rgba(0,0,0,0.3); /* elevation-level3 */
     display: flex;
     flex-direction: column;
 }
@@ -836,21 +937,21 @@ onUnmounted(() => {
 .modal-header h2 {
     margin: 0;
     font-size: 1.25rem;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .close-btn {
     background: transparent;
     border: none;
     font-size: 1.25rem;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     cursor: pointer;
     padding: 4px;
     border-radius: 50%;
 }
 
 .close-btn:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
 }
 
 .modal-body {
@@ -859,14 +960,14 @@ onUnmounted(() => {
 
 .definition {
     font-size: 1rem;
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     margin-bottom: 1.5rem;
     line-height: 1.5;
 }
 
 .context-box {
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+    background: #DAE2F9; /* secondary-container */
+    color: #131C2B; /* on-secondary-container */
     padding: 1rem;
     border-radius: 12px;
     display: flex;
@@ -892,8 +993,8 @@ onUnmounted(() => {
 }
 
 .btn-filled {
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
+    background: #005AC1; /* primary */
+    color: #FFFFFF; /* on-primary */
     border: none;
     padding: 10px 24px;
     border-radius: 100px;
@@ -903,7 +1004,7 @@ onUnmounted(() => {
 }
 
 .btn-filled:hover {
-    box-shadow: var(--md-sys-elevation-level1);
+    box-shadow: 0px 1px 2px rgba(0,0,0,0.3); /* elevation-level1 */
 }
 
 /* Transitions */

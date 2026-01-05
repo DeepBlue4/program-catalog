@@ -304,8 +304,8 @@ const currentEnvironment = computed(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--md-sys-color-background);
-  color: var(--md-sys-color-on-background);
+  background-color: #FEF7FF; /* background */
+  color: #1D1B20; /* on-background */
 }
 
 /* Header */
@@ -315,13 +315,13 @@ const currentEnvironment = computed(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: var(--md-sys-color-surface);
-    color: var(--md-sys-color-on-surface);
+    background-color: #FEF7FF; /* surface */
+    color: #1D1B20; /* on-surface */
     z-index: 10;
 }
 
 .m3-elevation-1 {
-    box-shadow: var(--md-sys-elevation-level1);
+    box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3); /* elevation-level1 */
 }
 
 .header-left {
@@ -334,7 +334,7 @@ const currentEnvironment = computed(() => {
     align-items: center;
     gap: 0.75rem;
     padding-right: 1.5rem;
-    border-right: 1px solid var(--md-sys-color-outline-variant);
+    border-right: 1px solid #C4C7C5; /* outline-variant */
 }
 
 .env-badge {
@@ -347,21 +347,21 @@ const currentEnvironment = computed(() => {
 }
 
 .badge-local {
-    background-color: var(--md-sys-color-tertiary-container);
-    color: var(--md-sys-color-on-tertiary-container);
-    border: 1px solid var(--md-sys-color-tertiary);
+    background-color: #FFDF90; /* tertiary-container */
+    color: #241A00; /* on-tertiary-container */
+    border: 1px solid #755B00; /* tertiary */
 }
 
 .badge-dev {
-    background-color: var(--md-sys-color-primary-container);
-    color: var(--md-sys-color-on-primary-container);
-    border: 1px solid var(--md-sys-color-primary);
+    background-color: #D8E2FF; /* primary-container */
+    color: #001D35; /* on-primary-container */
+    border: 1px solid #005AC1; /* primary */
 }
 
 .badge-stage {
-    background-color: var(--md-sys-color-error-container);
-    color: var(--md-sys-color-on-error-container);
-    border: 1px solid var(--md-sys-color-error);
+    background-color: #FFDAD6; /* error-container */
+    color: #410002; /* on-error-container */
+    border: 1px solid #BA1A1A; /* error */
 }
 
 .logo-icon {
@@ -391,7 +391,7 @@ const currentEnvironment = computed(() => {
 .icon-btn-small {
     background: transparent;
     border: none;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     cursor: pointer;
     padding: 4px;
     border-radius: 50%;
@@ -403,8 +403,8 @@ const currentEnvironment = computed(() => {
 }
 
 .icon-btn-small:hover {
-    background: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-on-surface);
+    background: #ECE6F0; /* surface-container-high */
+    color: #1D1B20; /* on-surface */
 }
 
 .dropdown-menu {
@@ -412,25 +412,25 @@ const currentEnvironment = computed(() => {
     top: 100%;
     left: 0;
     margin-top: 8px;
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
     border-radius: 8px;
     min-width: 200px;
     max-height: 300px;
     overflow-y: auto;
     z-index: 100;
     padding: 8px 0;
-    border: 1px solid var(--md-sys-color-outline-variant);
+    border: 1px solid #C4C7C5; /* outline-variant */
 }
 
 .m3-elevation-2 {
-    box-shadow: var(--md-sys-elevation-level2);
+    box-shadow: 0px 2px 6px 2px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3); /* elevation-level2 */
 }
 
 .dropdown-header {
     padding: 8px 16px;
     font-size: 11px;
     text-transform: uppercase;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     font-weight: 600;
     letter-spacing: 0.5px;
 }
@@ -438,13 +438,13 @@ const currentEnvironment = computed(() => {
 .dropdown-item {
     padding: 8px 16px;
     font-size: 14px;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     cursor: pointer;
     transition: background 0.2s;
 }
 
 .dropdown-item:hover {
-    background: var(--md-sys-color-surface-container-high);
+    background: #ECE6F0; /* surface-container-high */
 }
 
 .breadcrumbs {
@@ -454,11 +454,10 @@ const currentEnvironment = computed(() => {
     margin-left: 1rem;
     font-size: 14px;
     white-space: nowrap;
-    /* overflow: hidden; Removed to allow dropdown */
 }
 
 .crumb {
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     cursor: pointer;
     transition: color 0.2s;
     max-width: 200px;
@@ -467,24 +466,24 @@ const currentEnvironment = computed(() => {
 }
 
 .crumb:hover:not(.active):not(.ellipsis) {
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
     text-decoration: underline;
 }
 
 .crumb.active {
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
     font-weight: 600;
     cursor: default;
 }
 
 .crumb.ellipsis {
     cursor: default;
-    color: var(--md-sys-color-outline);
+    color: #79747E; /* outline */
     letter-spacing: 2px;
 }
 
 .separator {
-    color: var(--md-sys-color-outline);
+    color: #79747E; /* outline */
     font-size: 12px;
 }
 
@@ -512,7 +511,7 @@ const currentEnvironment = computed(() => {
 /* Sidebar Styling */
 .sidebar {
     width: 360px;
-    background: var(--md-sys-color-surface);
+    background: #FEF7FF; /* surface */
     border-radius: 12px;
     display: flex;
     flex-direction: column;
@@ -528,22 +527,22 @@ const currentEnvironment = computed(() => {
 
 .sidebar-header {
     padding: 1.5rem;
-    background: var(--md-sys-color-surface-container-low);
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    background: #F7F2FA; /* surface-container-low */
+    border-bottom: 1px solid #C4C7C5; /* outline-variant */
 }
 
 .type-overline {
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 1px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     font-weight: 500;
 }
 
 .sidebar-header h2 {
     margin: 0.5rem 0 1rem 0;
     font-size: 1.5rem;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .status-tags {
@@ -592,18 +591,18 @@ const currentEnvironment = computed(() => {
 .info-group label {
     display: block;
     font-size: 0.75rem;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
     margin-bottom: 0.25rem;
 }
 
 .info-group span {
     font-size: 1rem;
-    color: var(--md-sys-color-on-surface);
+    color: #1D1B20; /* on-surface */
 }
 
 .divider {
     height: 1px;
-    background: var(--md-sys-color-outline-variant);
+    background: #C4C7C5; /* outline-variant */
     margin: 1.5rem 0;
 }
 
@@ -617,12 +616,12 @@ const currentEnvironment = computed(() => {
 .stat-value {
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--md-sys-color-primary);
+    color: #005AC1; /* primary */
 }
 
 .btn-filled {
-    background: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
+    background: #005AC1; /* primary */
+    color: #FFFFFF; /* on-primary */
     border: none;
     padding: 10px 24px;
     border-radius: 20px;
@@ -632,13 +631,13 @@ const currentEnvironment = computed(() => {
 }
 
 .btn-filled:hover {
-    box-shadow: var(--md-sys-elevation-level1);
+    box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3); /* elevation-level1 */
 }
 
 .btn-outlined {
     background: transparent;
-    border: 1px solid var(--md-sys-color-outline);
-    color: var(--md-sys-color-primary);
+    border: 1px solid #79747E; /* outline */
+    color: #005AC1; /* primary */
     padding: 10px 24px;
     border-radius: 20px;
     font-weight: 500;
@@ -652,6 +651,6 @@ const currentEnvironment = computed(() => {
 .sidebar-empty {
     padding: 2rem;
     text-align: center;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 </style>

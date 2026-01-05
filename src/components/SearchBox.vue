@@ -94,9 +94,9 @@ const handleBlur = () => {
 .search-input {
   width: 100%;
   padding: 10px 16px 10px 40px;
-  background: var(--md-sys-color-surface);
-  color: var(--md-sys-color-on-surface);
-  border: 1px solid var(--md-sys-color-outline);
+  background: #FEF7FF; /* surface */
+  color: #1D1B20; /* on-surface */
+  border: 1px solid #79747E; /* outline */
   border-radius: 24px;
   font-size: 14px;
   outline: none;
@@ -106,9 +106,9 @@ const handleBlur = () => {
 }
 
 .search-input:focus {
-  border-color: var(--md-sys-color-primary);
-  background: var(--md-sys-color-surface-container-low);
-  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+  border-color: #005AC1; /* primary */
+  background: #F7F2FA; /* surface-container-low */
+  box-shadow: 0 0 0 1px #005AC1; /* primary */
 }
 
 .search-icon {
@@ -118,7 +118,7 @@ const handleBlur = () => {
   transform: translateY(-50%);
   opacity: 0.6;
   font-size: 14px;
-  color: var(--md-sys-color-on-surface);
+  color: #1D1B20; /* on-surface */
   pointer-events: none;
 }
 
@@ -127,13 +127,13 @@ const handleBlur = () => {
   top: 100%;
   left: 0;
   width: 100%;
-  background: var(--md-sys-color-surface-container-high);
-  border: 1px solid var(--md-sys-color-outline-variant);
+  background: #ECE6F0; /* surface-container-high */
+  border: 1px solid #C4C7C5; /* outline-variant */
   border-radius: 12px;
   margin-top: 6px;
   padding: 4px;
   list-style: none;
-  box-shadow: var(--md-sys-elevation-level2);
+  box-shadow: 0px 2px 6px 2px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3); /* elevation-2 */
   z-index: 1000;
   max-height: 400px;
   overflow-y: auto;
@@ -147,7 +147,7 @@ const handleBlur = () => {
 }
 
 .suggestion-item:hover {
-  background: var(--md-sys-color-surface-container-highest);
+  background: #E6E0E9; /* surface-container-highest */
 }
 
 .item-content {
@@ -168,7 +168,7 @@ const handleBlur = () => {
 
 .item-name {
   font-weight: 500;
-  color: var(--md-sys-color-on-surface);
+  color: #1D1B20; /* on-surface */
   font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
@@ -177,7 +177,7 @@ const handleBlur = () => {
 
 .item-row.secondary {
     font-size: 11px;
-    color: var(--md-sys-color-secondary);
+    color: #625B71; /* secondary */
 }
 
 .item-type-badge {
@@ -186,18 +186,18 @@ const handleBlur = () => {
   font-size: 9px;
   padding: 1px 5px;
   border-radius: 4px;
-  background: var(--md-sys-color-tertiary-container);
-  color: var(--md-sys-color-on-tertiary-container);
+  background: #FFDF90; /* tertiary-container */
+  color: #241A00; /* on-tertiary-container */
   width: fit-content;
 }
 
 .item-type-badge.program {
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+    background: #DBE2F9; /* secondary-container */
+    color: #1D192B; /* on-secondary-container */
 }
 
 .item-context {
-    color: var(--md-sys-color-on-surface-variant);
+    color: #49454F; /* on-surface-variant */
     opacity: 0.8;
 }
 
