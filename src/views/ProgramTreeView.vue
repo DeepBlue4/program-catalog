@@ -3,6 +3,8 @@ import { watch, ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import OrgChart from '../components/OrgChart.vue';
 import Legend from '../components/Legend.vue';
+import BaseIcon from '../components/BaseIcon.vue';
+import { mdiRefresh } from '@mdi/js';
 import { useProgramData } from '../composables/useProgramData.js';
 
 const router = useRouter();
@@ -117,7 +119,7 @@ const handleReset = () => {
         </div>
         <div class="v-divider"></div>
         <button class="icon-btn" @click="handleReset" title="Reset View">
-            <i class="fas fa-sync-alt"></i>
+            <BaseIcon :path="mdiRefresh" />
         </button>
     </div>
     

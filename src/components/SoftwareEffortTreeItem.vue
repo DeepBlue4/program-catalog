@@ -1,5 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
+import BaseIcon from './BaseIcon.vue';
+import { mdiMenuDown, mdiMenuRight } from '@mdi/js';
 
 const props = defineProps({
   effort: {
@@ -55,8 +57,8 @@ const getStatusColor = (status) => {
         <!-- Indentation & Expand Toggle -->
         <div class="node-content">
              <div class="expand-control" @click="toggleExpand" :style="{ visibility: hasChildren ? 'visible' : 'hidden' }">
-                <i v-if="isExpanded" class="fas fa-caret-down"></i>
-                <i v-else class="fas fa-caret-right"></i>
+                <BaseIcon v-if="isExpanded" :path="mdiMenuDown" :size="20" />
+                <BaseIcon v-else :path="mdiMenuRight" :size="20" />
              </div>
              
              <div class="status-dot" :style="{ backgroundColor: getStatusColor(effort.status) }"></div>

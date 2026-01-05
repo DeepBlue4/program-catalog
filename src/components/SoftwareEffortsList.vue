@@ -3,6 +3,22 @@ import { ref, computed, watch } from 'vue';
 import SoftwareEffortForm from './SoftwareEffortForm.vue';
 import SoftwareEffortTreeItem from './SoftwareEffortTreeItem.vue';
 import ConfirmationModal from './ConfirmationModal.vue';
+import BaseIcon from './BaseIcon.vue';
+import {
+  mdiArrowLeft,
+  mdiInformation,
+  mdiPlus,
+  mdiChevronLeft,
+  mdiChevronRight,
+  mdiHandPointingLeft,
+
+  mdiCube,
+  mdiSitemap,
+  mdiClipboardCheck,
+  mdiCheckCircle,
+  mdiAlertCircle,
+  mdiClose
+} from '@mdi/js';
 
 
 const props = defineProps({
@@ -286,16 +302,16 @@ const showHelpModal = ref(false);
       <div class="actions-row">
           <div class="left-actions">
               <button class="btn-outlined" @click="handleBack">
-                <i class="fas fa-arrow-left"></i> Back to Catalog
+                <BaseIcon :path="mdiArrowLeft" /> Back to Catalog
               </button>
           </div>
           <div class="right-actions">
               <!-- Info Icon now shows "What is a Software Effort?" -->
               <button class="btn-icon-tonal" @click="showHelpModal = true" title="What is a Software Effort?">
-                  <i class="fas fa-info-circle"></i>
+                  <BaseIcon :path="mdiInformation" />
               </button>
               <button class="btn-filled" @click="handleCreate">
-                  <i class="fas fa-plus"></i> New Effort
+                  <BaseIcon :path="mdiPlus" /> New Effort
               </button>
           </div>
       </div>
@@ -335,7 +351,7 @@ const showHelpModal = ref(false);
                     :disabled="currentPage === 1" 
                     @click="currentPage--"
                 >
-                    <i class="fas fa-chevron-left"></i>
+                    <BaseIcon :path="mdiChevronLeft" />
                 </button>
                 <span class="page-info">
                     {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, efforts.length) }} of {{ efforts.length }}
@@ -345,7 +361,7 @@ const showHelpModal = ref(false);
                     :disabled="currentPage === totalPages" 
                     @click="currentPage++"
                 >
-                    <i class="fas fa-chevron-right"></i>
+                    <BaseIcon :path="mdiChevronRight" />
                 </button>
             </div>
         </div>
@@ -368,7 +384,7 @@ const showHelpModal = ref(false);
             </div>
             
             <div v-else class="empty-detail">
-                <span class="icon"><i class="fas fa-hand-point-left"></i></span>
+                <span class="icon"><BaseIcon :path="mdiHandPointingLeft" :size="48" /></span>
                 <p>Select a Software Effort from the hierarchy to view or edit details.</p>
             </div>
         </main>
@@ -383,7 +399,7 @@ const showHelpModal = ref(false);
                     <h2>What is a Software Effort?</h2>
                 </div>
                 <button class="btn-icon" @click="showHelpModal = false">
-                    <i class="fas fa-times"></i>
+                    <BaseIcon :path="mdiClose" />
                 </button>
             </div>
             <div class="info-body">
@@ -392,21 +408,21 @@ const showHelpModal = ref(false);
                 </p>
                 <div class="help-grid">
                     <div class="help-item">
-                        <i class="fas fa-cube"></i>
+                        <BaseIcon :path="mdiCube" :size="20" />
                         <div class="content">
                             <h4>Encapsulation</h4>
                             <p>It encapsulates the code, its lifecycle, compliance data, and governance in one object.</p>
                         </div>
                     </div>
                     <div class="help-item">
-                        <i class="fas fa-sitemap"></i>
+                        <BaseIcon :path="mdiSitemap" :size="20" />
                         <div class="content">
                             <h4>Hierarchy</h4>
                             <p>Efforts can be nested (e.g., a 'Platform' containing multiple 'Services') to model complex systems.</p>
                         </div>
                     </div>
                     <div class="help-item">
-                        <i class="fas fa-clipboard-check"></i>
+                        <BaseIcon :path="mdiClipboardCheck" :size="20" />
                         <div class="content">
                             <h4>Governance</h4>
                             <p>Track Statements of Work, Security Focals, and Developer Setup requirements centrally.</p>
@@ -429,7 +445,7 @@ const showHelpModal = ref(false);
                     <h2>{{ programName }}</h2>
                 </div>
                 <button class="btn-icon" @click="showInfoModal = false">
-                    <i class="fas fa-times"></i>
+                    <BaseIcon :path="mdiClose" />
                 </button>
             </div>
             <div class="info-body">
@@ -523,7 +539,7 @@ const showHelpModal = ref(false);
     <!-- Notification Toast -->
     <transition name="toast-slide">
         <div v-if="notification.show" class="notification-toast" :class="notification.type">
-            <i class="fas" :class="notification.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'"></i>
+            <BaseIcon :path="notification.type === 'success' ? mdiCheckCircle : mdiAlertCircle" />
             <span>{{ notification.message }}</span>
         </div>
     </transition>

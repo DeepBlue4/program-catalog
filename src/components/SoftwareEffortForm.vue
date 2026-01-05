@@ -1,6 +1,19 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useProgramCatalogStore } from '../store/programCatalogStore'; // Import store
+import BaseIcon from '../components/BaseIcon.vue';
+import {
+  mdiFileSign,
+  mdiAccountGroup,
+  mdiLaptop,
+  mdiMapMarker,
+  mdiLink,
+  mdiInformation,
+  mdiMagnify,
+  mdiSourceBranch,
+  mdiLayers,
+  mdiClose
+} from '@mdi/js';
 
 const props = defineProps({
   effort: {
@@ -55,11 +68,11 @@ const emit = defineEmits(['save', 'cancel', 'delete', 'dirty-change', 'revert', 
 // Tabs
 const activeTab = ref('sow');
 const tabs = [
-    { id: 'sow', label: 'Statement of Work', icon: 'fas fa-file-contract', required: true },
-    { id: 'pocs', label: 'Point of Contacts', icon: 'fas fa-users', required: true },
-    { id: 'dev', label: 'Developer Setup', icon: 'fas fa-laptop-code' },
-    { id: 'location', label: 'Work Locations', icon: 'fas fa-map-marker-alt' },
-    { id: 'general', label: 'General & Links', icon: 'fas fa-link' },
+    { id: 'sow', label: 'Statement of Work', icon: mdiFileSign, required: true },
+    { id: 'pocs', label: 'Point of Contacts', icon: mdiAccountGroup, required: true },
+    { id: 'dev', label: 'Developer Setup', icon: mdiLaptop },
+    { id: 'location', label: 'Work Locations', icon: mdiMapMarker },
+    { id: 'general', label: 'General & Links', icon: mdiLink },
 ];
 
 const store = useProgramCatalogStore();
@@ -394,7 +407,7 @@ const handleCancel = () => {
                 @click="activeTab = tab.id"
             >
                 <div class="tab-icon-container">
-                    <i :class="[tab.icon, 'tab-icon']"></i>
+                    <BaseIcon :path="tab.icon" class="tab-icon" />
                     <span v-if="tabErrors[tab.id]" class="error-badge">!</span>
                 </div>
                 <div class="tab-info">
@@ -413,7 +426,7 @@ const handleCancel = () => {
                     <div class="header-text-group">
                          <h3>General Configuration</h3>
                          <button class="btn-icon-sm" @click="toggleHelp('general')" :class="{ 'active': activeHelp === 'general' }">
-                            <i class="fas fa-info-circle"></i>
+                            <BaseIcon :path="mdiInformation" :size="16" />
                         </button>
                     </div>
                 </div>
@@ -432,7 +445,7 @@ const handleCancel = () => {
                     <div class="link-manager">
                         <!-- Search Box -->
                         <div class="link-search-wrapper">
-                            <i class="fas fa-search search-icon"></i>
+                            <BaseIcon :path="mdiMagnify" class="search-icon" />
                             <input 
                                 v-model="linkSearchQuery" 
                                 type="text" 
@@ -449,7 +462,7 @@ const handleCancel = () => {
                                     @click="addLink(cand)"
                                 >
                                     <div class="item-icon">
-                                        <i class="fas fa-code-branch"></i>
+                                        <BaseIcon :path="mdiSourceBranch" />
                                     </div>
                                     <div class="item-content">
                                         <div class="item-main">
@@ -458,7 +471,7 @@ const handleCancel = () => {
                                         </div>
                                         <div class="item-sub">
                                             <span class="program-name">
-                                                <i class="fas fa-layer-group"></i> {{ cand._programName }}
+                                                <BaseIcon :path="mdiLayers" :size="10" /> {{ cand._programName }}
                                                 <span class="program-id-sub">({{ cand._programId }})</span>
                                             </span>
                                             <span class="separator">•</span>
@@ -472,13 +485,13 @@ const handleCancel = () => {
                         <!-- Selected Chips -->
                         <div class="linked-chips-container">
                             <div v-for="link in linkedEffortObjects" :key="link.id" class="link-chip">
-                                <span class="chip-icon"><i class="fas fa-link"></i></span>
+                                <span class="chip-icon"><BaseIcon :path="mdiLink" :size="12" /></span>
                                 <div class="chip-info">
                                     <div class="chip-label">{{ link.name }}</div>
                                     <div class="chip-meta">{{ link._programName || 'Unknown Program' }}</div>
                                 </div>
                                 <button class="chip-remove" @click.stop="removeLink(link.id)">
-                                    <i class="fas fa-times"></i>
+                                    <BaseIcon :path="mdiClose" :size="12" />
                                 </button>
                             </div>
                             <div v-if="linkedEffortObjects.length === 0" class="empty-msg">No linked efforts.</div>
@@ -493,7 +506,7 @@ const handleCancel = () => {
                     <div class="header-text-group">
                         <h3>Statement of Work</h3>
                         <button class="btn-icon-sm" @click="toggleHelp('sow')" :class="{ 'active': activeHelp === 'sow' }">
-                            <i class="fas fa-info-circle"></i>
+                            <BaseIcon :path="mdiInformation" :size="16" />
                         </button>
                     </div>
                     <div class="header-controls">
@@ -596,7 +609,7 @@ const handleCancel = () => {
                     <div class="header-text-group">
                         <h3>Technical Point of Contacts</h3>
                         <button class="btn-icon-sm" @click="toggleHelp('pocs')" :class="{ 'active': activeHelp === 'pocs' }">
-                            <i class="fas fa-info-circle"></i>
+                            <BaseIcon :path="mdiInformation" :size="16" />
                         </button>
                     </div>
                     <div class="header-controls">
@@ -651,7 +664,7 @@ const handleCancel = () => {
                     <div class="header-text-group">
                         <h3>Developer Setup</h3>
                         <button class="btn-icon-sm" @click="toggleHelp('dev')" :class="{ 'active': activeHelp === 'dev' }">
-                            <i class="fas fa-info-circle"></i>
+                            <BaseIcon :path="mdiInformation" :size="16" />
                         </button>
                     </div>
                     <div class="header-controls">
@@ -745,7 +758,7 @@ const handleCancel = () => {
                     <div class="header-text-group">
                         <h3>Work Locations</h3>
                          <button class="btn-icon-sm" @click="toggleHelp('location')" :class="{ 'active': activeHelp === 'location' }">
-                            <i class="fas fa-info-circle"></i>
+                            <BaseIcon :path="mdiInformation" :size="16" />
                         </button>
                     </div>
                     <div class="header-controls">

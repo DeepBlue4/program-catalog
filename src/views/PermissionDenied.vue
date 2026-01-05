@@ -1,5 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router';
+import BaseIcon from '../components/BaseIcon.vue';
+import { mdiShield, mdiLock, mdiHome } from '@mdi/js';
 
 const router = useRouter();
 
@@ -12,8 +14,8 @@ const goHome = () => {
   <div class="forbidden-container">
     <div class="content m3-card elevated">
       <div class="icon-area">
-        <i class="fas fa-shield-alt shield"></i>
-        <i class="fas fa-lock lock"></i>
+        <BaseIcon :path="mdiShield" class="shield" :size="80" />
+        <BaseIcon :path="mdiLock" class="lock" :size="40" />
       </div>
       
       <h1>Access Denied</h1>
@@ -26,7 +28,7 @@ const goHome = () => {
       
       <div class="actions">
         <button class="btn-filled" @click="goHome">
-            <i class="fas fa-home"></i> Go to Home
+            <BaseIcon :path="mdiHome" /> Go to Home
         </button>
       </div>
     </div>

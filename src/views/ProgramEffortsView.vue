@@ -2,6 +2,8 @@
 import { onMounted, computed, watch, ref } from 'vue';
 import { useRoute, useRouter, onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router';
 import SoftwareEffortsList from '../components/SoftwareEffortsList.vue';
+import BaseIcon from '../components/BaseIcon.vue';
+import { mdiMagnify, mdiArrowLeft, mdiRefresh } from '@mdi/js';
 import { useProgramData } from '../composables/useProgramData.js';
 
 const route = useRoute();
@@ -135,7 +137,7 @@ onBeforeRouteUpdate(handleNavigation);
           <!-- Error / Not Found State -->
           <div v-else class="state-content error-state">
               <div class="icon-circle error">
-                  <i class="fas fa-search"></i>
+                  <BaseIcon :path="mdiMagnify" />
               </div>
               <h3 class="state-title">Program Not Found</h3>
               <p class="state-description">
@@ -146,10 +148,10 @@ onBeforeRouteUpdate(handleNavigation);
               <!-- Action Buttons -->
               <div class="state-actions">
                   <button class="btn-filled" @click="goBack">
-                      <i class="fas fa-arrow-left"></i> Return to Catalog
+                      <BaseIcon :path="mdiArrowLeft" /> Return to Catalog
                   </button>
                   <button class="btn-outlined" @click="retryFetch">
-                      <i class="fas fa-sync-alt"></i> Retry
+                      <BaseIcon :path="mdiRefresh" /> Retry
                   </button>
               </div>
 

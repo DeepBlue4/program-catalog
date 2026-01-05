@@ -1,5 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import BaseIcon from '../components/BaseIcon.vue';
+import { mdiAccountCircle, mdiBookOpenVariant, mdiChartPie, mdiLock, mdiLogout } from '@mdi/js';
 
 const isOpen = ref(false);
 const menuRef = ref(null);
@@ -33,7 +35,7 @@ onUnmounted(() => {
 <template>
   <div class="user-menu" ref="menuRef">
     <button class="menu-trigger" @click.stop="toggleMenu">
-      <i class="fas fa-user-circle trigger-icon"></i>
+      <BaseIcon :path="mdiAccountCircle" class="trigger-icon" :size="36" />
     </button>
 
     <div v-if="isOpen" class="menu-dropdown m3-card elevated">
@@ -55,24 +57,24 @@ onUnmounted(() => {
       <div class="divider"></div>
 
       <a href="https://vuejs.org" target="_blank" class="menu-item">
-        <span class="icon"><i class="fas fa-book"></i></span>
+        <span class="icon"><BaseIcon :path="mdiBookOpenVariant" :size="16" /></span>
         Documentation
       </a>
 
       <div class="divider"></div>
 
       <router-link to="/dashboard" class="menu-item">
-        <span class="icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="icon"><BaseIcon :path="mdiChartPie" :size="16" /></span>
         Dashboard
       </router-link>
 
       <router-link to="/403" class="menu-item">
-        <span class="icon"><i class="fas fa-lock"></i></span>
+        <span class="icon"><BaseIcon :path="mdiLock" :size="16" /></span>
         Unauthorized (Demo)
       </router-link>
       
       <button class="menu-item logout">
-        <span class="icon"><i class="fas fa-right-from-bracket"></i></span>
+        <span class="icon"><BaseIcon :path="mdiLogout" :size="16" /></span>
         Sign Out
       </button>
     </div>

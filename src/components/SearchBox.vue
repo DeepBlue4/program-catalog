@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
+import BaseIcon from '../components/BaseIcon.vue';
+import { mdiMagnify } from '@mdi/js';
 
 const props = defineProps({
   items: {
@@ -52,7 +54,7 @@ const handleBlur = () => {
         @focus="isOpen = true"
         @blur="handleBlur"
       />
-      <span class="search-icon"><i class="fas fa-magnifying-glass"></i></span>
+      <span class="search-icon"><BaseIcon :path="mdiMagnify" :size="14" /></span>
     </div>
     
     <ul v-if="isOpen && filteredItems.length" class="suggestions-list">

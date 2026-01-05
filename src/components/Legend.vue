@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useProgramData } from '../composables/useProgramData';
+import BaseIcon from './BaseIcon.vue';
+import { mdiInformation } from '@mdi/js';
 
 const { allNodes } = useProgramData();
 
@@ -54,7 +56,7 @@ const openHelp = (type) => {
           <span class="count-badge">{{ counts.active }}</span>
       </div>
       <button class="icon-btn-tiny" @click.stop="openHelp('active')">
-          <i class="fas fa-info-circle"></i>
+          <BaseIcon :path="mdiInformation" :size="14" />
       </button>
     </div>
 
@@ -67,7 +69,7 @@ const openHelp = (type) => {
            <span class="count-badge">{{ counts.parent }}</span>
       </div>
       <button class="icon-btn-tiny" @click.stop="openHelp('parent')">
-          <i class="fas fa-info-circle"></i>
+          <BaseIcon :path="mdiInformation" :size="14" />
       </button>
     </div>
 
@@ -80,7 +82,7 @@ const openHelp = (type) => {
            <span class="count-badge">{{ counts.neutral }}</span>
       </div>
       <button class="icon-btn-tiny" @click.stop="openHelp('neutral')">
-          <i class="fas fa-info-circle"></i>
+          <BaseIcon :path="mdiInformation" :size="14" />
       </button>
     </div>
 

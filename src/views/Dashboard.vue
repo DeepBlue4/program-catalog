@@ -2,6 +2,21 @@
 import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import * as echarts from 'echarts';
+import BaseIcon from '../components/BaseIcon.vue';
+import {
+  mdiLayers,
+  mdiInformation,
+  mdiClipboardCheck,
+  mdiSourceBranch,
+  mdiAlert,
+  mdiSitemap,
+  mdiCircle,
+  mdiFolderOpen,
+  mdiArrowRight,
+  mdiCheckCircle,
+  mdiClose,
+  mdiLightbulb
+} from '@mdi/js';
 import { useProgramData } from '../composables/useProgramData';
 
 const router = useRouter();
@@ -198,73 +213,73 @@ onUnmounted(() => {
         <!-- 1. Total -->
         <div class="metric-card m3-card filled interactive" @click="openMetricModal('total')">
             <div class="card-icon neutral">
-                <i class="fas fa-layer-group"></i>
+                <BaseIcon :path="mdiLayers" />
             </div>
             <div class="metric-content">
                 <span class="value">{{ dashboardData.counts.total }}</span>
                 <span class="label">Total Programs</span>
             </div>
-            <i class="fas fa-info-circle info-icon"></i>
+            <BaseIcon :path="mdiInformation" class="info-icon" />
         </div>
         
         <!-- 2. Expecting -->
         <div class="metric-card m3-card filled interactive" @click="openMetricModal('expecting')">
             <div class="card-icon primary">
-                <i class="fas fa-clipboard-check"></i>
+                <BaseIcon :path="mdiClipboardCheck" />
             </div>
              <div class="metric-content">
                 <span class="value">{{ dashboardData.counts.expecting }}</span>
                 <span class="label">Expecting Effort</span>
             </div>
-             <i class="fas fa-info-circle info-icon"></i>
+             <BaseIcon :path="mdiInformation" class="info-icon" />
         </div>
 
         <!-- 3. Active (Has Effort) -->
         <div class="metric-card m3-card filled interactive" @click="openMetricModal('active')">
             <div class="card-icon good">
-                <i class="fas fa-code-branch"></i>
+                <BaseIcon :path="mdiSourceBranch" />
             </div>
              <div class="metric-content">
                 <span class="value">{{ dashboardData.counts.active }}</span>
                 <span class="label">Active Efforts</span>
             </div>
-             <i class="fas fa-info-circle info-icon"></i>
+             <BaseIcon :path="mdiInformation" class="info-icon" />
         </div>
 
         <!-- 4. Missing (Complaince Gap) -->
         <div class="metric-card m3-card filled interactive warning-card" @click="openMetricModal('missing')">
             <div class="card-icon warning">
-                <i class="fas fa-exclamation-triangle"></i>
+                <BaseIcon :path="mdiAlert" />
             </div>
             <div class="metric-content">
                 <span class="value">{{ dashboardData.counts.missing }}</span>
                 <span class="label">Missing Efforts</span>
             </div>
-             <i class="fas fa-info-circle info-icon"></i>
+             <BaseIcon :path="mdiInformation" class="info-icon" />
         </div>
 
         <!-- 5. Parent -->
         <div class="metric-card m3-card filled interactive" @click="openMetricModal('parent')">
             <div class="card-icon neutral">
-                <i class="fas fa-sitemap"></i>
+                <BaseIcon :path="mdiSitemap" />
             </div>
             <div class="metric-content">
                 <span class="value">{{ dashboardData.counts.parent }}</span>
                 <span class="label">Parent Programs</span>
             </div>
-             <i class="fas fa-info-circle info-icon"></i>
+             <BaseIcon :path="mdiInformation" class="info-icon" />
         </div>
 
          <!-- 6. Neutral -->
         <div class="metric-card m3-card filled interactive" @click="openMetricModal('neutral')">
             <div class="card-icon neutral-light">
-                <i class="fas fa-circle"></i>
+                <BaseIcon :path="mdiCircle" />
             </div>
             <div class="metric-content">
                 <span class="value">{{ dashboardData.counts.neutral }}</span>
                 <span class="label">Neutral Programs</span>
             </div>
-             <i class="fas fa-info-circle info-icon"></i>
+             <BaseIcon :path="mdiInformation" class="info-icon" />
         </div>
     </div>
 
@@ -290,20 +305,20 @@ onUnmounted(() => {
                     <tbody>
                         <tr v-for="item in dashboardData.nonCompliantList" :key="item.id">
                             <td class="name-cell">
-                                <i class="fas fa-folder-open icon-indicator"></i>
+                                <BaseIcon :path="mdiFolderOpen" class="icon-indicator" />
                                 {{ item.name }}
                             </td>
                             <td class="id-cell">{{ item.id }}</td>
                             <td>{{ item.leader }}</td>
                             <td>
                                 <button class="btn-text" @click="navigateToProgram(item.rawNode)">
-                                    Review <i class="fas fa-arrow-right"></i>
+                                    Review <BaseIcon :path="mdiArrowRight" />
                                 </button>
                             </td>
                         </tr>
                         <tr v-if="dashboardData.nonCompliantList.length === 0">
                             <td colspan="4" class="empty-state">
-                                <i class="fas fa-check-circle"></i> No concerns found. All programs are compliant.
+                                <BaseIcon :path="mdiCheckCircle" /> No concerns found. All programs are compliant.
                             </td>
                         </tr>
                     </tbody>
@@ -336,12 +351,12 @@ onUnmounted(() => {
             <div class="metric-modal m3-card elevated" @click.stop>
                 <div class="modal-header">
                     <h2>{{ metricDefinitions[activeMetricModal].title }}</h2>
-                    <button class="close-btn" @click="closeMetricModal"><i class="fas fa-times"></i></button>
+                    <button class="close-btn" @click="closeMetricModal"><BaseIcon :path="mdiClose" /></button>
                 </div>
                 <div class="modal-body">
                     <p class="definition">{{ metricDefinitions[activeMetricModal].desc }}</p>
                     <div class="context-box">
-                        <i class="fas fa-lightbulb"></i>
+                        <BaseIcon :path="mdiLightbulb" />
                         <p>{{ metricDefinitions[activeMetricModal].context }}</p>
                     </div>
                 </div>
