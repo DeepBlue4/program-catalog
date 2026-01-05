@@ -32,14 +32,12 @@ const handleNodeSelect = (node) => {
         // Always select the node to update global state
         selectNode(node);
         
-        // If we are already on the efforts view, navigate to the new program's efforts
-        // This ensures deep linking works when switching programs via search
-        if (route.name === 'ProgramEfforts') {
-            router.push({ 
-                name: 'ProgramEfforts', 
-                params: { programId: node.value || node.program_id } 
-            });
-        }
+        // Always navigate to the program's efforts view when selected via search
+        // This ensures the Search function acts as a navigation tool to the details page
+        router.push({ 
+            name: 'ProgramEfforts', 
+            params: { programId: node.value || node.program_id } 
+        });
     }
 };
 
@@ -220,7 +218,7 @@ const currentEnvironment = computed(() => {
       <!-- Router View replaces explicit view switching -->
       <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
-              <component :is="Component" />
+              <component :is="Component" :key="$route.path" />
           </transition>
       </router-view>
 
@@ -318,6 +316,7 @@ const currentEnvironment = computed(() => {
     background-color: #FEF7FF; /* surface */
     color: #1D1B20; /* on-surface */
     z-index: 10;
+    position: relative;
 }
 
 .m3-elevation-1 {

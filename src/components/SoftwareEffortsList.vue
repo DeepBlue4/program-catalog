@@ -203,6 +203,41 @@ const selectedEffort = computed(() => {
     return res;
 });
 
+// --- Pagination & Deep Linking Logic ---
+const hasDescendant = (node, id) => {
+    if (String(node.id) === String(id)) return true;
+    if (node.children && node.children.length > 0) {
+        return node.children.some(child => hasDescendant(child, id));
+    }
+    return false;
+};
+
+const jumpToSelection = (id) => {
+    if (!id || !effortTree.value.length) return;
+
+    const rootIndex = effortTree.value.findIndex(root => {
+        return String(root.id) === String(id) || hasDescendant(root, id);
+    });
+
+    if (rootIndex !== -1) {
+        const page = Math.floor(rootIndex / itemsPerPage) + 1;
+        if (currentPage.value !== page) {
+             console.log('[Pagination] Jumping to page:', page, 'for item:', id);
+             currentPage.value = page;
+        }
+    }
+};
+
+// Auto-jump when selection changes or data loads
+watch(() => props.selectedId, (newId) => {
+    if (newId) jumpToSelection(newId);
+}, { immediate: true });
+
+watch(effortTree, () => {
+    if (props.selectedId) jumpToSelection(props.selectedId);
+});
+
+
 // Select tree item
 const handleSelect = (effort) => {
     triggerActionWithCheck(() => {

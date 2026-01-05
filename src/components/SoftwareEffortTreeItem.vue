@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import BaseIcon from './BaseIcon.vue';
 import { mdiMenuDown, mdiMenuRight } from '@mdi/js';
 
@@ -21,6 +21,23 @@ const props = defineProps({
 const emit = defineEmits(['select', 'toggle']);
 
 const isExpanded = ref(true);
+
+// Recursive helper to check if this node contains the selected ID
+const hasDescendant = (node, id) => {
+    if (!node || !id) return false;
+    if (String(node.id) === String(id)) return true;
+    if (node.children && node.children.length > 0) {
+        return node.children.some(child => hasDescendant(child, id));
+    }
+    return false;
+};
+
+// Auto-expand if selection is inside this node
+watch(() => props.selectedId, (newId) => {
+    if (newId && hasDescendant(props.effort, newId)) {
+        isExpanded.value = true;
+    }
+}, { immediate: true });
 
 const toggleExpand = (e) => {
     e.stopPropagation(); // Don't trigger selection
