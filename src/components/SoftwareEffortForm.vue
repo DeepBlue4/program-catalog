@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useProgramCatalogStore } from '../store/programCatalogStore'; // Import store
 import BaseIcon from '../components/BaseIcon.vue';
+import MultiSelectDropdown from './MultiSelectDropdown.vue';
 import {
   mdiFileSign,
   mdiAccountGroup,
@@ -31,7 +32,11 @@ const props = defineProps({
         mission_critical: false,
         security_clearance: [],
         safety_criticality: [],
-        program_phase: '',
+        allow_non_us: false,
+        mission_critical: false,
+        security_clearance: [],
+        safety_criticality: [],
+        program_phase: ['Design', 'Development'], // Default phases
         program_manager_email: ''
       },
       local_technical_points_of_contact: {
@@ -309,8 +314,22 @@ const validateForm = () => {
 
 const handleSave = () => {
     if (!validateForm()) {
-        const errorFields = Object.keys(errors.value).length;
-        emit('validation-error', `Please fix the ${errorFields} error${errorFields > 1 ? 's' : ''} in the form before saving.`);
+        const fieldLabels = {
+            name: 'Effort Name',
+            program_manager_email: 'Program Manager Email',
+            allow_non_us: 'Allow Non-US Personnel',
+            software_lead: 'Software Technical Lead'
+        };
+
+        const errorMessages = Object.entries(errors.value).map(([key, msg]) => {
+            const label = fieldLabels[key] || key;
+            // Clean up message if it already contains the label to avoid "Name: Name is required"
+            // But current messages are mixed. Let's just use "Label: Message" for clarity.
+            return `• ${label}: ${msg}`;
+        });
+
+        const header = `Unable to save. Please fix the following validation error${errorMessages.length > 1 ? 's' : ''}:`;
+        emit('validation-error', `${header}\n\n${errorMessages.join('\n')}`);
         return;
     }
     emit('save', formData.value);
@@ -345,6 +364,20 @@ const handleCancel = () => {
         emit('cancel');
     }
 };
+
+// --- Constants ---
+const PROGRAM_PHASES = ['Design', 'Legacy', 'Production', 'Development', 'N/A'];
+const SAFETY_LEVELS = ['None', 'DAL A / LOR 1', 'DAL B / LOR 2', 'DAL C / LOR 3', 'DAL D / LOR 4', 'DAL E / LOR 5'];
+const SECURITY_CLEARANCES = ['None', 'Other', 'CUI', 'Secret', 'Top Secret'];
+
+// Developer Setup Options
+const ENVIRONMENT_OPTIONS = ["BSF-Global", "BSF-US", "BSF-Restricted", "BSF-Disconnected", "Boeing Enterprise Network", "On-Premises/Non-BSF", "Customer Environment", "Other"];
+const SOURCE_CONTROL_OPTIONS = ["GitLab", "Bitbucket", "ClearCase", "SVN", "Azure DevOps", "Other"];
+const ISSUE_TRACKING_OPTIONS = ["GitLab", "ClearCase", "Bitbucket", "SVN", "Azure DevOps", "Version One", "Other"];
+const LANGUAGE_OPTIONS = ["Python", "C++", "Java", "Ada", "JavaScript", "C", "Rust", "Other"];
+const OS_OPTIONS = ["Boeing Linux", "Other Linux", "Windows", "Android", "iOS", "VxWorks", "Integrity", "macOS", "Other"];
+const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
+
 </script>
 
 <template>
@@ -352,8 +385,8 @@ const handleCancel = () => {
     <!-- Header Section -->
     <header class="form-header-persistent">
         <div class="header-main">
-            <div class="name-input-wrapper">
-                <label>Effort Name</label>
+            <div class="name-input-wrapper" :class="{ 'has-error': errors.name }">
+                <label>Effort Name <span class="required-star">*</span></label>
                 <input v-model="formData.name" type="text" class="clean-input-lg" placeholder="Enter Effort Name...">
             </div>
             
@@ -536,13 +569,15 @@ const handleCancel = () => {
                             class="clean-textarea" rows="4"></textarea>
                     </div>
                     
-                    <div class="field-group">
-                        <label>Program Phase</label>
-                        <input 
-                            :value="sv('statement_of_work_profile', 'program_phase')"
-                            @input="e => updateLocal('statement_of_work_profile', 'program_phase', e.target.value)"
+                    <div class="field-group span-2">
+                        <MultiSelectDropdown 
+                            :modelValue="sv('statement_of_work_profile', 'program_phase') || []"
+                            @update:modelValue="val => updateLocal('statement_of_work_profile', 'program_phase', val)"
+                            :options="PROGRAM_PHASES"
+                            label="Program Phase"
                             :disabled="formData.inherit_statement_of_work_profile"
-                            type="text" class="clean-input" placeholder="e.g. Design, Implementation">
+                            placeholder="Select Program Phases..."
+                        />
                     </div>
                      <div class="field-group" :class="{ 'has-error': errors.program_manager_email }">
                         <label>Program Manager Email <span class="required-star">*</span></label>
@@ -554,22 +589,24 @@ const handleCancel = () => {
                          <span v-if="errors.program_manager_email" class="error-msg">{{ errors.program_manager_email }}</span>
                     </div>
 
-                     <div class="field-group">
-                        <label>Security Clearance</label>
-                        <input 
-                            :value="fromArray(sv('statement_of_work_profile', 'security_clearance'))" 
-                            @input="e => updateLocal('statement_of_work_profile', 'security_clearance', toArray(e.target.value))"
+                     <div class="field-group span-2">
+                        <MultiSelectDropdown 
+                            :modelValue="sv('statement_of_work_profile', 'security_clearance') || []"
+                            @update:modelValue="val => updateLocal('statement_of_work_profile', 'security_clearance', val)"
+                            :options="SECURITY_CLEARANCES"
+                            label="Security Clearance"
                             :disabled="formData.inherit_statement_of_work_profile"
-                            type="text" class="clean-input"
+                            placeholder="Select Security Clearance..."
                         />
                     </div>
-                     <div class="field-group">
-                        <label>Safety Criticality</label>
-                        <input 
-                            :value="fromArray(sv('statement_of_work_profile', 'safety_criticality'))" 
-                            @input="e => updateLocal('statement_of_work_profile', 'safety_criticality', toArray(e.target.value))"
+                     <div class="field-group span-2">
+                        <MultiSelectDropdown 
+                            :modelValue="sv('statement_of_work_profile', 'safety_criticality') || []"
+                            @update:modelValue="val => updateLocal('statement_of_work_profile', 'safety_criticality', val)"
+                            :options="SAFETY_LEVELS"
+                            label="Safety Criticality"
                             :disabled="formData.inherit_statement_of_work_profile"
-                            type="text" class="clean-input"
+                            placeholder="Select Safety Criticality..."
                         />
                     </div>
 
@@ -685,61 +722,67 @@ const handleCancel = () => {
                 </transition>
 
                 <div class="form-fields-grid" :class="{ 'is-inherited': formData.inherit_developer_setup }">
-                     <div class="field-group">
-                        <label>Programming Languages</label>
-                        <input 
-                            :value="fromArray(sv('developer_setup', 'programming_languages'))" 
-                            @input="e => updateLocal('developer_setup', 'programming_languages', toArray(e.target.value))"
+                     <div class="field-group span-2">
+                        <MultiSelectDropdown 
+                            :modelValue="sv('developer_setup', 'programming_languages') || []"
+                            @update:modelValue="val => updateLocal('developer_setup', 'programming_languages', val)"
+                            :options="LANGUAGE_OPTIONS"
+                            label="Programming Languages"
                             :disabled="formData.inherit_developer_setup"
-                            type="text" class="clean-input" placeholder="Python, C++, Java"
+                            placeholder="Select Languages..."
                         />
                     </div>
-                    <div class="field-group">
-                        <label>Operating Systems</label>
-                        <input 
-                            :value="fromArray(sv('developer_setup', 'operating_systems'))" 
-                            @input="e => updateLocal('developer_setup', 'operating_systems', toArray(e.target.value))"
+                    <div class="field-group span-2">
+                        <MultiSelectDropdown 
+                            :modelValue="sv('developer_setup', 'operating_systems') || []"
+                            @update:modelValue="val => updateLocal('developer_setup', 'operating_systems', val)"
+                            :options="OS_OPTIONS"
+                            label="Operating Systems"
                             :disabled="formData.inherit_developer_setup"
-                            type="text" class="clean-input" placeholder="Linux, Windows"
+                            placeholder="Select Operating Systems..."
                         />
                     </div>
 
                     <div class="field-group span-2">
-                        <label>Development Environments</label>
-                        <textarea 
-                             :value="fromArray(sv('developer_setup', 'development_environments'))" 
-                             @input="e => updateLocal('developer_setup', 'development_environments', toArray(e.target.value))"
-                             :disabled="formData.inherit_developer_setup"
-                             class="clean-textarea" rows="2" placeholder="List environments..."
-                        ></textarea>
+                        <MultiSelectDropdown 
+                            :modelValue="sv('developer_setup', 'development_environments') || []"
+                            @update:modelValue="val => updateLocal('developer_setup', 'development_environments', val)"
+                            :options="ENVIRONMENT_OPTIONS"
+                            label="Development Environments"
+                            :disabled="formData.inherit_developer_setup"
+                            placeholder="Select Environments..."
+                        />
                     </div>
 
-                     <div class="field-group">
-                        <label>Source Control Tools</label>
-                         <textarea 
-                             :value="fromArray(sv('developer_setup', 'source_control_tools'))" 
-                             @input="e => updateLocal('developer_setup', 'source_control_tools', toArray(e.target.value))"
-                             :disabled="formData.inherit_developer_setup"
-                             class="clean-textarea" rows="2"
-                        ></textarea>
+                     <div class="field-group span-2">
+                        <MultiSelectDropdown 
+                            :modelValue="sv('developer_setup', 'source_control_tools') || []"
+                            @update:modelValue="val => updateLocal('developer_setup', 'source_control_tools', val)"
+                            :options="SOURCE_CONTROL_OPTIONS"
+                            label="Source Control Tools"
+                            :disabled="formData.inherit_developer_setup"
+                            placeholder="Select Source Control Tools..."
+                        />
                     </div>
-                     <div class="field-group">
-                        <label>Issue Tracking Tools</label>
-                         <textarea 
-                             :value="fromArray(sv('developer_setup', 'issue_tracking_tools'))" 
-                             @input="e => updateLocal('developer_setup', 'issue_tracking_tools', toArray(e.target.value))"
-                             :disabled="formData.inherit_developer_setup"
-                             class="clean-textarea" rows="2"
-                        ></textarea>
+                     <div class="field-group span-2">
+                        <MultiSelectDropdown 
+                            :modelValue="sv('developer_setup', 'issue_tracking_tools') || []"
+                            @update:modelValue="val => updateLocal('developer_setup', 'issue_tracking_tools', val)"
+                            :options="ISSUE_TRACKING_OPTIONS"
+                            label="Issue Tracking Tools"
+                            :disabled="formData.inherit_developer_setup"
+                            placeholder="Select Issue Tracking Tools..."
+                        />
                     </div>
-                     <div class="field-group">
-                        <label>SBOM Location</label>
-                         <textarea 
-                             :value="fromArray(sv('developer_setup', 'sbom_location'))" 
-                             @input="e => updateLocal('developer_setup', 'sbom_location', toArray(e.target.value))"
-                             :disabled="formData.inherit_developer_setup"
-                             class="clean-textarea" rows="2"
-                        ></textarea>
+                     <div class="field-group span-2">
+                        <MultiSelectDropdown 
+                            :modelValue="sv('developer_setup', 'sbom_location') || []"
+                            @update:modelValue="val => updateLocal('developer_setup', 'sbom_location', val)"
+                            :options="SBOM_OPTIONS"
+                            label="SBOM Location"
+                            :disabled="formData.inherit_developer_setup"
+                            placeholder="Select SBOM Location..."
+                        />
                     </div>
                     <div class="field-group">
                         <label>Data Protection Assessment</label>
@@ -1529,4 +1572,5 @@ const handleCancel = () => {
     opacity: 0.8;
     font-size: 11px;
 }
+
 </style>

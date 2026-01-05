@@ -568,6 +568,11 @@ const showHelpModal = ref(false);
     justify-content: center;
 }
 
+.notification-toast span {
+    white-space: pre-wrap;
+    text-align: left;
+}
+
 .notification-toast.error {
     background: var(--md-sys-color-error, #B3261E);
     color: var(--md-sys-color-on-error);

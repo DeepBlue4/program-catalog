@@ -4,6 +4,8 @@ import { useRouter, useRoute } from 'vue-router';
 import SearchBox from './components/SearchBox.vue';
 import UserMenu from './components/UserMenu.vue';
 import { useProgramData } from './composables/useProgramData.js';
+import BaseIcon from './components/BaseIcon.vue';
+import { mdiChevronDown } from '@mdi/js';
 
 const router = useRouter();
 const route = useRoute();
@@ -152,8 +154,13 @@ watch(route, () => {
     showBreadcrumbDropdown.value = false;
 });
 
-onUnmounted(() => {
-    window.removeEventListener('click', closeDropdown);
+// --- Environment Logic ---
+const currentEnvironment = computed(() => {
+    const host = window.location.hostname;
+    if (host.includes('localhost')) return { label: 'Local', class: 'badge-local' };
+    if (host.includes('daf-compass-dev')) return { label: 'Dev', class: 'badge-dev' };
+    if (host.includes('daf-compass-stage')) return { label: 'Stage', class: 'badge-stage' };
+    return null;
 });
 </script>
 
@@ -163,6 +170,7 @@ onUnmounted(() => {
       <div class="header-left">
           <div class="logo-area">
               <h1 class="app-title">Program Catalog</h1>
+              <span v-if="currentEnvironment" class="env-badge" :class="currentEnvironment.class">{{ currentEnvironment.label }}</span>
           </div>
           
           <nav class="breadcrumbs">
@@ -183,7 +191,7 @@ onUnmounted(() => {
                     ref="breadcrumbDropdownRef"
                 >
                     <button class="icon-btn-small" @click.stop="toggleDropdown">
-                        <i class="fas fa-chevron-down"></i>
+                        <BaseIcon :path="mdiChevronDown" :size="14" />
                     </button>
                     
                     <div v-if="showBreadcrumbDropdown" class="dropdown-menu m3-elevation-2">
@@ -323,6 +331,33 @@ onUnmounted(() => {
     border-right: 1px solid var(--md-sys-color-outline-variant);
 }
 
+.env-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-local {
+    background-color: var(--md-sys-color-tertiary-container);
+    color: var(--md-sys-color-on-tertiary-container);
+    border: 1px solid var(--md-sys-color-tertiary);
+}
+
+.badge-dev {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border: 1px solid var(--md-sys-color-primary);
+}
+
+.badge-stage {
+    background-color: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+    border: 1px solid var(--md-sys-color-error);
+}
+
 .logo-icon {
     font-size: 1.5rem;
 }
@@ -460,12 +495,12 @@ onUnmounted(() => {
 /* Transitions */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
-  opacity: 0;
+    opacity: 0;
 }
 
 /* Sidebar Styling */
