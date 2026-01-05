@@ -4,20 +4,21 @@ import { useRouter } from 'vue-router';
 import * as echarts from 'echarts';
 import BaseIcon from '../components/BaseIcon.vue';
 import {
-  mdiLayers,
-  mdiInformation,
-  mdiClipboardCheck,
-  mdiSourceBranch,
-  mdiAlert,
-  mdiSitemap,
-  mdiCircle,
-  mdiFolderOpen,
+  mdiDomain,
+  mdiCodeBraces,
+  mdiFlag,
+  mdiRocketLaunch,
+  mdiFolderMultiple,
+  mdiAlertOctagram,
+  mdiHelpCircle,
+  mdiMinusCircle,
   mdiArrowRight,
   mdiCheckCircle,
   mdiClose,
   mdiLightbulb,
-  mdiAlertCircle, // For Anomaly
-  mdiTable,       // For All Active
+  mdiAlert,
+  mdiAlertCircle, // Keep
+  mdiTable,       // Keep
   mdiFormatListBulleted
 } from '@mdi/js';
 import { useProgramData } from '../composables/useProgramData';
@@ -27,10 +28,8 @@ const router = useRouter();
 const { allNodes, selectNode } = useProgramData();
 
 const chartRefCompliance = ref(null);
-const chartRefCoverage = ref(null);
 const chartRefValidity = ref(null);
 let chartInstanceCompliance = null;
-let chartInstanceCoverage = null;
 let chartInstanceValidity = null;
 
 // Modal State
@@ -61,6 +60,9 @@ const dashboardData = computed(() => {
         !n.has_descendant_expecting_software_effort
     );
 
+    // New Metric: Total Individual Efforts
+    const totalEffortsCount = hasEffort.reduce((acc, n) => acc + (n.softwareEfforts ? n.softwareEfforts.length : 0), 0);
+
     // Helpers for List Mapping
     const mapNodeToList = (n) => ({
         id: n.value,
@@ -86,7 +88,8 @@ const dashboardData = computed(() => {
             missing: missing.length,
             anomaly: anomaly.length,
             parent: parent.length,
-            neutral: neutral.length
+            neutral: neutral.length,
+            totalEfforts: totalEffortsCount // New
         },
         complianceRate,
         lists: {
@@ -101,36 +104,49 @@ const dashboardData = computed(() => {
 const metricDefinitions = {
     total: {
         title: 'Total Programs',
+        shortDesc: 'Total catalog hierarchy nodes',
         desc: 'The total number of Program, Division, and Unit nodes currently tracked in the catalog.',
         context: 'This represents the entire scope of the organization\'s hierarchy.'
     },
+    totalEfforts: {
+        title: 'Software Efforts',
+        shortDesc: 'Individual software projects',
+        desc: 'The total number of individual software efforts (projects, products, teams) tracked across all programs.',
+        context: 'A single program may manage multiple software efforts. This metric captures the total volume of software work.'
+    },
     expecting: {
         title: 'Expecting Software',
+        shortDesc: 'Flagged for software delivery',
         desc: 'Programs that have been flagged as requiring software deliverables.',
         context: 'This is the baseline for our compliance tracking. Every program here should eventually have an active effort.'
     },
     active: {
         title: 'Active (Has Effort)',
+        shortDesc: 'Currently delivering software',
         desc: 'Programs that currently have at least one assigned Software Effort.',
         context: 'These programs are actively delivering software functionality.'
     },
     missing: {
         title: 'Missing Efforts (Gap)',
+        shortDesc: 'Non-compliant (Gap)',
         desc: 'Programs that Expect Software but have Zero assigned efforts.',
         context: 'CRITICAL: These programs are non-compliant and require immediate attention to link or create software efforts.'
     },
     anomaly: {
         title: 'Unexpected Efforts',
+        shortDesc: 'Unexpected active efforts',
         desc: 'Programs that have Active Software Efforts but were NOT flagged to expect them.',
         context: 'Configuration Alert: Validate if the "Expect Software" flag should be enabled or if the effort is misplaced.'
     },
     parent: {
         title: 'Parent Programs',
+        shortDesc: 'Containers for sub-programs',
         desc: 'Programs that do not have their own efforts but contain sub-programs that do.',
         context: 'These act as organizational containers and aggregators for lower-level software work.'
     },
     neutral: {
         title: 'Neutral Programs',
+        shortDesc: 'Structural/Empty nodes',
         desc: 'Programs with no active efforts, no expectations, and no active descendants.',
         context: 'These nodes exist primarily for organizational structure and have no direct software workload.'
     }
@@ -194,52 +210,38 @@ const initCharts = () => {
         });
     }
 
-    // Coverage Chart (Expecting vs Filled vs Missing)
-    if (chartRefCoverage.value) {
-        chartInstanceCoverage = echarts.init(chartRefCoverage.value);
-        const data = dashboardData.value.counts;
-        const filled = data.expecting - data.missing;
 
-        chartInstanceCoverage.setOption({
-            tooltip: { trigger: 'item' },
-            legend: { top: '5%', left: 'center', show: false },
-            series: [{
-                name: 'Coverage',
-                type: 'pie',
-                radius: ['40%', '70%'],
-                avoidLabelOverlap: false,
-                itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
-                label: { show: false },
-                emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
-                data: [
-                    { value: filled, name: 'Filled', itemStyle: { color: primaryColor } },
-                    { value: data.missing, name: 'Missing', itemStyle: { color: errorColor } }
-                ]
-            }]
-        });
-    }
 
-    // Validity Chart (Active vs Valid vs Unexpected)
+    // Program Status Chart (Status Distribution)
     if (chartRefValidity.value) {
-        chartInstanceValidity.setOption && chartInstanceValidity.dispose();
+        if (chartInstanceValidity) chartInstanceValidity.dispose();
         chartInstanceValidity = echarts.init(chartRefValidity.value);
-        const data = dashboardData.value.counts;
-        const valid = data.active - data.anomaly;
         
+        const counts = dashboardData.value.counts;
+        const validPopulated = counts.active - counts.anomaly; // Expected & Active
+
         chartInstanceValidity.setOption({
             tooltip: { trigger: 'item' },
             legend: { show: false },
             series: [{
-                name: 'Validity',
+                name: 'Program Status',
                 type: 'pie',
                 radius: ['40%', '70%'],
                 avoidLabelOverlap: false,
                 itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
-                label: { show: false },
-                emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+                label: { 
+                    show: true, 
+                    formatter: '{c}',
+                    fontWeight: 'bold',
+                    fontSize: 14
+                },
+                emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold' } },
                 data: [
-                    { value: valid, name: 'Valid', itemStyle: { color: primaryColor } }, // Using primary for Valid
-                    { value: data.anomaly, name: 'Unexpected', itemStyle: { color: RAW_COLORS.errorContainer } } 
+                    { value: validPopulated, name: 'Populated', itemStyle: { color: RAW_COLORS.primary } },
+                    { value: counts.missing, name: 'Missing', itemStyle: { color: RAW_COLORS.error } },
+                    { value: counts.parent, name: 'Parent of Effort', itemStyle: { color: RAW_COLORS.tertiary } },
+                    { value: counts.neutral, name: 'Neutral', itemStyle: { color: '#79747E' } },
+                    { value: counts.anomaly, name: 'Unexpected', itemStyle: { color: RAW_COLORS.errorContainer } }
                 ]
             }]
         });
@@ -248,7 +250,6 @@ const initCharts = () => {
 
 const handleResize = () => {
     chartInstanceCompliance?.resize();
-    chartInstanceCoverage?.resize();
     chartInstanceValidity?.resize();
 };
 
@@ -272,7 +273,6 @@ onMounted(() => {
 onUnmounted(() => {
     window.removeEventListener('resize', handleResize);
     chartInstanceCompliance?.dispose();
-    chartInstanceCoverage?.dispose();
     chartInstanceValidity?.dispose();
 });
 
@@ -293,7 +293,7 @@ onUnmounted(() => {
             <div class="chart-card m3-card outlined compliance-card">
                 <div class="chart-header">
                     <h3>Platform Compliance</h3>
-                    <p>Meeting expectations</p>
+                    <p>Percentage of programs expecting software that actually have active efforts. (Target > 90%)</p>
                 </div>
                 <div class="chart-wrapper" ref="chartRefCompliance"></div>
                 <div class="legend-mini">
@@ -302,29 +302,19 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <!-- 2. Coverage -->
-            <div class="chart-card m3-card outlined">
-                <div class="chart-header">
-                    <h3>Effort Coverage</h3>
-                    <p>Expected programs with efforts</p>
-                </div>
-                <div class="chart-wrapper" ref="chartRefCoverage"></div>
-                <div class="legend-mini">
-                     <div class="legend-item"><span class="dot primary"></span> Filled</div>
-                     <div class="legend-item"><span class="dot error"></span> Missing</div>
-                </div>
-            </div>
-
-            <!-- 3. Validity -->
+            <!-- 2. Program Status (Renamed from Data Validity) -->
              <div class="chart-card m3-card outlined">
                 <div class="chart-header">
-                    <h3>Data Validity</h3>
-                    <p>Active efforts validation</p>
+                    <h3>Program Status</h3>
+                    <p>Breakdown of all programs by their operational state (Active, Missing, Neutral).</p>
                 </div>
                 <div class="chart-wrapper" ref="chartRefValidity"></div>
-                <div class="legend-mini">
-                     <div class="legend-item"><span class="dot primary"></span> Valid</div>
-                     <div class="legend-item"><span class="dot warning-color"></span> Unexpected</div>
+                <div class="legend-mini wrap-legend">
+                     <div class="legend-item"><span class="dot" :style="{ backgroundColor: RAW_COLORS.primary }"></span> Populated</div>
+                     <div class="legend-item"><span class="dot" :style="{ backgroundColor: RAW_COLORS.error }"></span> Missing</div>
+                     <div class="legend-item"><span class="dot" :style="{ backgroundColor: RAW_COLORS.tertiary }"></span> Parent</div>
+                     <div class="legend-item"><span class="dot" style="background-color: #79747E"></span> Neutral</div>
+                     <div class="legend-item"><span class="dot" :style="{ backgroundColor: RAW_COLORS.errorContainer }"></span> Unexpected</div>
                 </div>
             </div>
         </div>
@@ -334,81 +324,84 @@ onUnmounted(() => {
     <section class="dashboard-section">
         <h2 class="section-title">Catalog Inventory</h2>
         <div class="inventory-grid">
-            <!-- Expecting -->
-            <div class="metric-card m3-card filled interactive" @click="openMetricModal('expecting')">
-                <div class="card-icon primary small-icon">
-                    <BaseIcon :path="mdiClipboardCheck" />
-                </div>
-                 <div class="metric-content">
-                    <span class="value">{{ dashboardData.counts.expecting }}</span>
-                    <span class="label">Expecting Effort</span>
-                </div>
-            </div>
-
-            <!-- Missing -->
-            <div class="metric-card m3-card filled interactive warning-card" @click="openMetricModal('missing')">
-                <div class="card-icon warning small-icon">
-                    <BaseIcon :path="mdiAlert" />
-                </div>
-                <div class="metric-content">
-                    <span class="value">{{ dashboardData.counts.missing }}</span>
-                    <span class="label">Missing Efforts</span>
-                </div>
-            </div>
-
-            <!-- Unexpectd -->
-            <div class="metric-card m3-card filled interactive anomaly-card" @click="openMetricModal('anomaly')">
-                <div class="card-icon error-container small-icon">
-                    <BaseIcon :path="mdiAlertCircle" />
-                </div>
-                <div class="metric-content">
-                    <span class="value">{{ dashboardData.counts.anomaly }}</span>
-                    <span class="label">Unexpected Efforts</span>
-                </div>
-            </div>
-
-            <!-- Total -->
+            <!-- 1. TOTAL -->
             <div class="metric-card m3-card filled interactive" @click="openMetricModal('total')">
-                <div class="card-icon neutral small-icon">
-                    <BaseIcon :path="mdiLayers" />
+                <div class="card-top">
+                     <span class="label">Total Programs</span>
+                     <div class="card-icon neutral small-icon"><BaseIcon :path="mdiDomain" /></div>
                 </div>
-                <div class="metric-content">
-                    <span class="value">{{ dashboardData.counts.total }}</span>
-                    <span class="label">Total Programs</span>
-                </div>
+                <div class="card-value">{{ dashboardData.counts.total }}</div>
+                <div class="card-desc">{{ metricDefinitions.total.shortDesc }}</div>
             </div>
 
-            <!-- Active -->
+            <!-- 2. TOTAL EFFORTS -->
+            <div class="metric-card m3-card filled interactive" @click="openMetricModal('totalEfforts')">
+                <div class="card-top">
+                     <span class="label">Software Efforts</span>
+                     <div class="card-icon primary small-icon"><BaseIcon :path="mdiCodeBraces" /></div>
+                </div>
+                <div class="card-value">{{ dashboardData.counts.totalEfforts }}</div>
+                <div class="card-desc">{{ metricDefinitions.totalEfforts.shortDesc }}</div>
+            </div>
+
+            <!-- 3. EXPECTING -->
+             <div class="metric-card m3-card filled interactive" @click="openMetricModal('expecting')">
+                <div class="card-top">
+                     <span class="label">Expecting Software</span>
+                     <div class="card-icon primary small-icon"><BaseIcon :path="mdiFlag" /></div>
+                </div>
+                <div class="card-value">{{ dashboardData.counts.expecting }}</div>
+                <div class="card-desc">{{ metricDefinitions.expecting.shortDesc }}</div>
+            </div>
+
+            <!-- 4. ACTIVE -->
             <div class="metric-card m3-card filled interactive" @click="openMetricModal('active')">
-                <div class="card-icon good small-icon">
-                    <BaseIcon :path="mdiSourceBranch" />
+                <div class="card-top">
+                     <span class="label">Active Efforts</span>
+                     <div class="card-icon good small-icon"><BaseIcon :path="mdiRocketLaunch" /></div>
                 </div>
-                 <div class="metric-content">
-                    <span class="value">{{ dashboardData.counts.active }}</span>
-                    <span class="label">Active Efforts</span>
-                </div>
+                <div class="card-value">{{ dashboardData.counts.active }}</div>
+                 <div class="card-desc">{{ metricDefinitions.active.shortDesc }}</div>
             </div>
 
-            <!-- Parent -->
+             <!-- 5. PARENT -->
             <div class="metric-card m3-card filled interactive" @click="openMetricModal('parent')">
-                <div class="card-icon neutral small-icon">
-                    <BaseIcon :path="mdiSitemap" />
+                <div class="card-top">
+                     <span class="label">Parent Programs</span>
+                     <div class="card-icon neutral small-icon"><BaseIcon :path="mdiFolderMultiple" /></div>
                 </div>
-                <div class="metric-content">
-                    <span class="value">{{ dashboardData.counts.parent }}</span>
-                    <span class="label">Parent Programs</span>
-                </div>
+                <div class="card-value">{{ dashboardData.counts.parent }}</div>
+                <div class="card-desc">{{ metricDefinitions.parent.shortDesc }}</div>
             </div>
 
-            <!-- Neutral -->
+             <!-- 6. MISSING (Attention) -->
+            <div class="metric-card m3-card filled interactive warning-card" @click="openMetricModal('missing')">
+                <div class="card-top">
+                     <span class="label">Missing Efforts</span>
+                     <div class="card-icon warning small-icon"><BaseIcon :path="mdiAlertOctagram" /></div>
+                </div>
+                <div class="card-value">{{ dashboardData.counts.missing }}</div>
+                <div class="card-desc">{{ metricDefinitions.missing.shortDesc }}</div>
+            </div>
+
+            <!-- 7. UNEXPECTED (Attention) -->
+            <div class="metric-card m3-card filled interactive anomaly-card" @click="openMetricModal('anomaly')">
+                <div class="card-top">
+                     <span class="label">Unexpected Efforts</span>
+                     <div class="card-icon error-container small-icon"><BaseIcon :path="mdiHelpCircle" /></div>
+                </div>
+                <div class="card-value">{{ dashboardData.counts.anomaly }}</div>
+                <div class="card-desc">{{ metricDefinitions.anomaly.shortDesc }}</div>
+            </div>
+
+             <!-- 8. NEUTRAL -->
             <div class="metric-card m3-card filled interactive" @click="openMetricModal('neutral')">
-                <div class="card-icon neutral-light small-icon">
-                    <BaseIcon :path="mdiCircle" />
+                <div class="card-top">
+                     <span class="label">Neutral Programs</span>
+                     <div class="card-icon neutral-light small-icon"><BaseIcon :path="mdiMinusCircle" /></div>
                 </div>
-                <div class="metric-content">
-                    <span class="value">{{ dashboardData.counts.neutral }}</span>
-                    <span class="label">Neutral Programs</span>
-                </div>
+                <div class="card-value">{{ dashboardData.counts.neutral }}</div>
+                <div class="card-desc">{{ metricDefinitions.neutral.shortDesc }}</div>
             </div>
         </div>
     </section>
@@ -463,7 +456,6 @@ onUnmounted(() => {
                     <tbody>
                         <tr v-for="item in dashboardData.lists[activeListTab]" :key="item.id">
                             <td class="name-cell">
-                                <BaseIcon :path="mdiFolderOpen" class="icon-indicator" />
                                 {{ item.name }}
                             </td>
                             <td class="id-cell">{{ item.id }}</td>
@@ -570,7 +562,7 @@ onUnmounted(() => {
 /* 1. Charts Grid */
 .charts-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
 }
 
@@ -599,86 +591,83 @@ onUnmounted(() => {
     }
 }
 
+/* Metric Cards */
 .metric-card {
     display: flex;
-    align-items: center;
-    padding: 1.25rem;
-    gap: 1rem;
+    flex-direction: column;
+    padding: 1.25rem 1.5rem;
+    gap: 0.5rem;
     border-radius: 12px;
     background-color: #F3EDF7; /* surface-container */
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    cursor: pointer;
     border: 1px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    min-height: 140px;
+    justify-content: space-between;
 }
-
-/* No compact class needed if all are uniformly styled */
 
 .metric-card:hover {
-    box-shadow: 0px 2px 4px rgba(0,0,0,0.14); /* elevation-level2 approx */
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.1); 
     transform: translateY(-2px);
     border-color: #005AC1; /* primary */
+    background-color: #ECE6F0; /* surface-container-high */
 }
 
-.info-icon {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    color: #79747E; /* outline */
-    font-size: 14px;
-    opacity: 0;
-    transition: opacity 0.2s;
+/* Card Internals */
+.card-top {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
 }
 
-.metric-card:hover .info-icon {
-    opacity: 1;
+.metric-card .label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #49454F; /* on-surface-variant */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
 }
 
+.card-value {
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+    color: #1D1B20; /* on-surface */
+    margin: 0.5rem 0;
+}
+
+.card-desc {
+    font-size: 13px;
+    color: #625B71; /* secondary */
+    line-height: 1.4;
+}
+
+/* Icon Resizing */
 .card-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 20px;
+    flex-shrink: 0;
 }
 
-/* Icons Colors */
-/* Icons Colors */
+/* Warning/Anomaly Specifics */
+.warning-card .card-value { color: #BA1A1A; } /* error */
+.anomaly-card .card-value { color: #BA1A1A; }
+
+/* Icons Colors (Reuse existing classes) */
 .card-icon.primary { background-color: v-bind('STATUS_COLORS.active.bg'); color: v-bind('STATUS_COLORS.active.text'); }
-.card-icon.good { background-color: #FFDF90; color: #231B00; } /* tertiary-container/on-tertiary-container */
+.card-icon.good { background-color: #FFDF90; color: #231B00; } 
 .card-icon.warning { background-color: v-bind('STATUS_COLORS.gap.bg'); color: v-bind('STATUS_COLORS.gap.text'); }
 .card-icon.neutral { background-color: v-bind('STATUS_COLORS.parent.bg'); color: v-bind('STATUS_COLORS.parent.text'); }
 .card-icon.neutral-light { background-color: v-bind('STATUS_COLORS.neutral.bg'); color: v-bind('STATUS_COLORS.neutral.border'); }
 .card-icon.error-container { background-color: v-bind('STATUS_COLORS.gap.bg'); color: v-bind('STATUS_COLORS.gap.text'); }
-
-.metric-content {
-    display: flex;
-    flex-direction: column;
-}
-
-.metric-content .value {
-    font-size: 24px;
-    font-weight: 600;
-    line-height: 1.2;
-    color: #1D1B20; /* on-surface */
-}
-
-.metric-content .label {
-    font-size: 11px;
-    font-weight: 500;
-    color: #625B71; /* secondary */
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.small-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-    border-radius: 8px;
-}
 
 /* Action List Card */
 .list-card {
@@ -734,6 +723,7 @@ onUnmounted(() => {
 /* Tabs */
 .tabs-header {
     display: flex;
+    justify-content: flex-start;
     gap: 8px;
     border-bottom: 1px solid #C4C7C5; /* outline-variant */
     padding-bottom: 0;
