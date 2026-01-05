@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import * as echarts from 'echarts';
+import { STATUS_COLORS, RAW_COLORS } from '../styles/statusConstants';
 
 const props = defineProps({
   data: {
@@ -73,13 +74,8 @@ const updateChart = () => {
   // but ECharts works best with explicit hex for performance or complex strokes.
   // We'll hardcode the tokens mapped to the CSS vars for the chart specifically to ensure exact match.
   
-  const colors = {
-      primary: '#005AC1',
-      tertiary: '#755B00',
-      tertiaryContainer: '#FFDF90',
-      neutral: '#575E71',
-      surface: '#FEF7FF'
-  };
+  // Use standardized shared colors
+  const colors = RAW_COLORS;
 
   const option = {
     backgroundColor: 'transparent',
@@ -97,16 +93,18 @@ const updateChart = () => {
           let status = 'Neutral Program';
           let color = colors.neutral;
           
-          if (d.hasSoftwareEffort) {
-              status = 'Software Effort Active';
-              color = colors.primary; // Blue
+          if (d.softwareEfforts && d.softwareEfforts.length > 0) {
+              status = STATUS_COLORS.active.label;
+              color = STATUS_COLORS.active.border; // Use border (darker) for text
+          } else if (d.expecting_software_efforts) {
+               status = STATUS_COLORS.gap.label;
+               color = STATUS_COLORS.gap.border; // Use border (darker) for text
           } else if (d.has_descendant_expecting_software_effort) {
-              status = 'Parent of Effort';
-              // Keep Primary for text color as it's readable
-              color = colors.primary;
+              status = STATUS_COLORS.parent.label;
+              color = STATUS_COLORS.parent.border; // Use border (darker) for text
           } else {
-             // Neutral
-             color = colors.neutral; // Keep dark grey text for neutral status
+             status = STATUS_COLORS.neutral.label;
+             color = STATUS_COLORS.neutral.border;
           }
           
           return `
@@ -181,25 +179,38 @@ const updateChart = () => {
       const newNode = { ...node };
       
       // M3 Style Mapping
-      if (newNode.hasSoftwareEffort) {
-          // Program with Efforts -> Blue Dot (Primary)
-          newNode.itemStyle = {
-              color: colors.primary,
-              borderColor: colors.primary,
-              borderWidth: 0
-          };
-      } else if (newNode.has_descendant_expecting_software_effort) {
-          // Parent of Effort -> Outlined Blue Dot
-          newNode.itemStyle = {
-              color: colors.surface,
-              borderColor: colors.primary,
-              borderWidth: 2
-          };
-      } else {
-          // Neutral Program -> Light Grey Dot
+      // M3 Style Mapping
+      // M3 Style Mapping
+      if (newNode.softwareEfforts && newNode.softwareEfforts.length > 0) {
+           // 1. Active Efforts
+           const s = STATUS_COLORS.active;
            newNode.itemStyle = {
-              color: '#E0E0E0', 
-              borderColor: '#BDBDBD',
+              color: s.fill,
+              borderColor: s.border,
+              borderWidth: 0
+           };
+      } else if (newNode.expecting_software_efforts) {
+           // 2. Expected & No Efforts
+           const s = STATUS_COLORS.gap;
+           newNode.itemStyle = {
+              color: s.fill,
+              borderColor: s.border,
+              borderWidth: 1
+           };
+      } else if (newNode.has_descendant_expecting_software_effort) {
+          // 3. Parent of Effort
+          const s = STATUS_COLORS.parent;
+          newNode.itemStyle = {
+              color: s.fill,
+              borderColor: s.border,
+              borderWidth: 1
+           };
+      } else {
+          // 4. Neutral
+          const s = STATUS_COLORS.neutral;
+           newNode.itemStyle = {
+              color: s.fill, 
+              borderColor: s.border,
               borderWidth: 1
           };
       }

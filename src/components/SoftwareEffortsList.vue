@@ -17,8 +17,12 @@ import {
   mdiClipboardCheck,
   mdiCheckCircle,
   mdiAlertCircle,
-  mdiClose
+  mdiClose,
+  mdiAlert,
+  mdiCheckCircleOutline,
+  mdiMinusCircleOutline
 } from '@mdi/js';
+import { STATUS_COLORS } from '../styles/statusConstants';
 
 
 const props = defineProps({
@@ -27,6 +31,65 @@ const props = defineProps({
   program: { type: Object, default: () => ({}) }, // Full program details
   efforts: { type: Array, default: () => [] },
   selectedId: { type: [String, Number], default: null }
+});
+
+const statusConfig = computed(() => {
+    const p = props.program;
+    // Check both prop and nested object to be safe against data disconnects
+    const propEfforts = props.efforts || [];
+    const objEfforts = p.softwareEfforts || [];
+    const hasEfforts = propEfforts.length > 0 || objEfforts.length > 0;
+    
+    // Ensure boolean
+    const expecting = !!p.expecting_software_efforts;
+
+    console.log('[statusConfig 1] Debug for:', p.name, { 
+        expecting, 
+        hasEfforts, 
+        propEffortsLen: propEfforts.length, 
+        objEffortsLen: objEfforts.length 
+    });
+
+    if (expecting && !hasEfforts) {
+        console.log('[statusConfig 2] Debug for:', p.name, { 
+        expecting, 
+        hasEfforts, 
+        propEffortsLen: propEfforts.length, 
+        objEffortsLen: objEfforts.length 
+    });
+        return {
+            ...STATUS_COLORS.gap,
+            label: 'Expected (Missing)',
+            icon: mdiAlert,
+            isWarning: true
+        };
+    } else if (hasEfforts && !expecting) {
+        console.log('[statusConfig 3] Debug for:', p.name, { 
+        expecting, 
+        hasEfforts, 
+        propEffortsLen: propEfforts.length, 
+        objEffortsLen: objEfforts.length 
+    });
+        // Anomaly / Unexpected
+        return {
+             ...STATUS_COLORS.gap,
+             label: 'Unexpected (Assigned)',
+             icon: mdiAlertCircle,
+             isWarning: true 
+        };
+    } else if (hasEfforts) {
+        return {
+            ...STATUS_COLORS.active,
+            label: 'Software Efforts Active',
+            icon: mdiCheckCircleOutline
+        };
+    } else {
+        return {
+            ...STATUS_COLORS.neutral,
+            label: 'Not Expecting Software Efforts',
+            icon: mdiMinusCircleOutline
+        };
+    }
 });
 
 const emit = defineEmits(['back', 'selection-change']);
@@ -323,6 +386,7 @@ const showHelpModal = ref(false);
                 - {{ programName }}
             </button>
           </h2>
+          
       </div>
     </div>
 
@@ -330,7 +394,16 @@ const showHelpModal = ref(false);
     <div class="master-detail-container">
         <!-- Sidebar: Hierarchical Tree -->
         <div class="tree-sidebar m3-card outlined">
-            <h3 class="panel-title">Hierarchy</h3>
+            <div class="panel-header">
+                <h3 class="panel-title">Hierarchy</h3>
+                <div v-if="statusConfig.isWarning" 
+                     class="sidebar-warning-badge" 
+                     :style="{ backgroundColor: statusConfig.bg, color: statusConfig.text }"
+                     :title="statusConfig.label">
+                    <BaseIcon :path="statusConfig.icon" :size="14" />
+                    <span>{{ statusConfig.label }}</span>
+                </div>
+            </div>
             <div class="tree-content">
                 <SoftwareEffortTreeItem 
                     v-for="rootNode in displayedEfforts" 
@@ -443,6 +516,11 @@ const showHelpModal = ref(false);
                 <div class="header-text">
                     <span class="overline">Program Details</span>
                     <h2>{{ programName }}</h2>
+                    <!-- Status Pill (Moved here) -->
+                    <div class="status-pill small" :class="statusConfig.id" style="margin-top: 8px; display: inline-flex;">
+                        <BaseIcon :path="statusConfig.icon" :size="16" />
+                        <span>{{ statusConfig.label }}</span>
+                    </div>
                 </div>
                 <button class="btn-icon" @click="showInfoModal = false">
                     <BaseIcon :path="mdiClose" />
@@ -478,6 +556,16 @@ const showHelpModal = ref(false);
                     <div class="info-item">
                         <label>Type</label>
                         <div class="value">{{ program.primaryType || 'N/A' }}</div>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Expects Software Efforts</label>
+                        <div class="value">{{ program.expecting_software_efforts ? 'Yes' : 'No' }}</div>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Has Descendant with Efforts</label>
+                        <div class="value">{{ program.has_descendant_expecting_software_effort ? 'Yes' : 'No' }}</div>
                     </div>
                 </div>
                 
@@ -661,13 +749,32 @@ const showHelpModal = ref(false);
     overflow: hidden;
 }
 
-.panel-title {
+
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 1rem;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    background: var(--md-sys-color-surface-container-low);
+}
+
+.panel-title {
     margin: 0;
     font-size: 14px;
     text-transform: uppercase;
     color: var(--md-sys-color-secondary);
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.sidebar-warning-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px; /* Chip/Pill shape */
 }
 
 .tree-content {
@@ -796,6 +903,40 @@ const showHelpModal = ref(false);
 .actions {
     display: flex;
     gap: 0.75rem;
+}
+
+.title-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.status-pill.gap {
+    background: v-bind('STATUS_COLORS.gap.bg');
+    color: v-bind('STATUS_COLORS.gap.text');
+    border-color: v-bind('STATUS_COLORS.gap.border');
+}
+
+.status-pill.active {
+    background: v-bind('STATUS_COLORS.active.bg');
+    color: white; 
+}
+
+.status-pill.neutral {
+    background: v-bind('STATUS_COLORS.neutral.bg');
+    color: v-bind('STATUS_COLORS.neutral.text');
+    border-color: v-bind('STATUS_COLORS.neutral.border');
 }
 
 /* Modal Overlay */

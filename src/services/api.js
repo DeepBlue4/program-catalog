@@ -341,7 +341,7 @@ export class CompassAPIService {
 
                 softwareEfforts: softwareEfforts,
                 hasSoftwareEffort: softwareEfforts.length > 0,
-                expect_software_effort: expectsEffort,
+                expecting_software_efforts: expectsEffort,
                 has_descendant_expecting_software_effort: children.some(c => c.hasSoftwareEffort || c.has_descendant_expecting_software_effort)
             };
         };

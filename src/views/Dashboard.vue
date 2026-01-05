@@ -15,9 +15,13 @@ import {
   mdiArrowRight,
   mdiCheckCircle,
   mdiClose,
-  mdiLightbulb
+  mdiLightbulb,
+  mdiAlertCircle, // For Anomaly
+  mdiTable,       // For All Active
+  mdiFormatListBulleted
 } from '@mdi/js';
 import { useProgramData } from '../composables/useProgramData';
+import { STATUS_COLORS } from '../styles/statusConstants'; // Import Colors
 
 const router = useRouter();
 const { allNodes, selectNode } = useProgramData();
@@ -28,34 +32,43 @@ let chartInstanceCompliance = null;
 // Modal State
 const activeMetricModal = ref(null);
 
+// List View State
+const activeListTab = ref('missing'); // 'missing', 'anomaly', 'active'
+
 // Metrics & Lists
 const dashboardData = computed(() => {
     const nodes = allNodes.value;
     const programs = nodes.filter(n => !n.isSoftwareEffort);
     
     // Core Sets
-    const expecting = programs.filter(n => n.expect_software_effort);
+    // Correct property is 'expecting_software_efforts' based on OrgChart logic
+    const expecting = programs.filter(n => n.expecting_software_efforts);
     const hasEffort = programs.filter(n => n.hasSoftwareEffort);
     
     // Derived Sets
     const missing = expecting.filter(n => !n.hasSoftwareEffort);
+    const anomaly = hasEffort.filter(n => !n.expecting_software_efforts); // Unexpected but Active
     const parent = programs.filter(n => n.has_descendant_expecting_software_effort && !n.hasSoftwareEffort);
     
     // Strict Neutral: No effort, no expectation, no descendant activity
     const neutral = programs.filter(n => 
         !n.hasSoftwareEffort && 
-        !n.expect_software_effort && 
+        !n.expecting_software_efforts && 
         !n.has_descendant_expecting_software_effort
     );
-    
-    // Non-Compliant List for Table
-    const nonCompliantList = missing.map(n => ({
+
+    // Helpers for List Mapping
+    const mapNodeToList = (n) => ({
         id: n.value,
         name: n.name,
         leader: n.details?.programLeader || n.programLeader || 'N/A',
-        value: n.details?.programValue || n.programValue || 'N/A',
+        count: n.softwareEfforts ? n.softwareEfforts.length : 0,
         rawNode: n
-    }));
+    });
+    
+    const missingList = missing.map(mapNodeToList);
+    const anomalyList = anomaly.map(mapNodeToList);
+    const activeList = hasEffort.map(mapNodeToList); // All active for admin review
 
     const complianceRate = expecting.length 
         ? Math.round(((expecting.length - missing.length) / expecting.length) * 100) 
@@ -67,11 +80,16 @@ const dashboardData = computed(() => {
             expecting: expecting.length,
             active: hasEffort.length,
             missing: missing.length,
+            anomaly: anomaly.length,
             parent: parent.length,
             neutral: neutral.length
         },
         complianceRate,
-        nonCompliantList
+        lists: {
+            missing: missingList,
+            anomaly: anomalyList,
+            active: activeList
+        }
     };
 });
 
@@ -96,6 +114,11 @@ const metricDefinitions = {
         title: 'Missing Efforts (Gap)',
         desc: 'Programs that Expect Software but have Zero assigned efforts.',
         context: 'CRITICAL: These programs are non-compliant and require immediate attention to link or create software efforts.'
+    },
+    anomaly: {
+        title: 'Unexpected Efforts',
+        desc: 'Programs that have Active Software Efforts but were NOT flagged to expect them.',
+        context: 'Configuration Alert: Validate if the "Expect Software" flag should be enabled or if the effort is misplaced.'
     },
     parent: {
         title: 'Parent Programs',
@@ -246,7 +269,7 @@ onUnmounted(() => {
              <BaseIcon :path="mdiInformation" class="info-icon" />
         </div>
 
-        <!-- 4. Missing (Complaince Gap) -->
+        <!-- 4. Missing (Compliance Gap) -->
         <div class="metric-card m3-card filled interactive warning-card" @click="openMetricModal('missing')">
             <div class="card-icon warning">
                 <BaseIcon :path="mdiAlert" />
@@ -258,7 +281,19 @@ onUnmounted(() => {
              <BaseIcon :path="mdiInformation" class="info-icon" />
         </div>
 
-        <!-- 5. Parent -->
+        <!-- 5. Anomaly (Unexpected) -->
+        <div class="metric-card m3-card filled interactive anomaly-card" @click="openMetricModal('anomaly')">
+            <div class="card-icon error-container">
+                <BaseIcon :path="mdiAlertCircle" />
+            </div>
+            <div class="metric-content">
+                <span class="value">{{ dashboardData.counts.anomaly }}</span>
+                <span class="label">Unexpected Efforts</span>
+            </div>
+             <BaseIcon :path="mdiInformation" class="info-icon" />
+        </div>
+
+        <!-- 6. Parent -->
         <div class="metric-card m3-card filled interactive" @click="openMetricModal('parent')">
             <div class="card-icon neutral">
                 <BaseIcon :path="mdiSitemap" />
@@ -285,11 +320,38 @@ onUnmounted(() => {
 
     <!-- Main Content Area -->
     <div class="content-grid">
-        <!-- Actionable List -->
+        <!-- Actionable List with Tabs -->
         <div class="list-card m3-card outlined">
-            <div class="card-header">
-                <h3>Action Needed: Missing Efforts</h3>
-                <span class="badge warning">{{ dashboardData.counts.missing }} Programs</span>
+            <div class="card-header tabs-header">
+                <button 
+                    class="tab-btn" 
+                    :class="{ active: activeListTab === 'missing' }"
+                    @click="activeListTab = 'missing'"
+                >
+                    <BaseIcon :path="mdiAlert" class="tab-icon" />
+                    Missing Efforts 
+                    <span class="badge warning" v-if="dashboardData.counts.missing">{{ dashboardData.counts.missing }}</span>
+                </button>
+
+                <button 
+                    class="tab-btn" 
+                    :class="{ active: activeListTab === 'anomaly' }"
+                    @click="activeListTab = 'anomaly'"
+                >
+                     <BaseIcon :path="mdiAlertCircle" class="tab-icon" />
+                    Unexpected 
+                    <span class="badge error" v-if="dashboardData.counts.anomaly">{{ dashboardData.counts.anomaly }}</span>
+                </button>
+
+                <button 
+                    class="tab-btn" 
+                    :class="{ active: activeListTab === 'active' }"
+                    @click="activeListTab = 'active'"
+                >
+                     <BaseIcon :path="mdiTable" class="tab-icon" />
+                    All Active
+                    <span class="badge neutral" v-if="dashboardData.counts.active">{{ dashboardData.counts.active }}</span>
+                </button>
             </div>
             
             <div class="table-container">
@@ -299,11 +361,12 @@ onUnmounted(() => {
                             <th>Program Name</th>
                             <th>ID</th>
                             <th>Leader</th>
+                            <th>Efforts</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="item in dashboardData.nonCompliantList" :key="item.id">
+                        <tr v-for="item in dashboardData.lists[activeListTab]" :key="item.id">
                             <td class="name-cell">
                                 <BaseIcon :path="mdiFolderOpen" class="icon-indicator" />
                                 {{ item.name }}
@@ -311,14 +374,21 @@ onUnmounted(() => {
                             <td class="id-cell">{{ item.id }}</td>
                             <td>{{ item.leader }}</td>
                             <td>
+                                <span v-if="item.count > 0" class="count-tag">{{ item.count }} assigned</span>
+                                <span v-else class="count-tag zero">None</span>
+                            </td>
+                            <td>
                                 <button class="btn-text" @click="navigateToProgram(item.rawNode)">
                                     Review <BaseIcon :path="mdiArrowRight" />
                                 </button>
                             </td>
                         </tr>
-                        <tr v-if="dashboardData.nonCompliantList.length === 0">
-                            <td colspan="4" class="empty-state">
-                                <BaseIcon :path="mdiCheckCircle" /> No concerns found. All programs are compliant.
+                        <tr v-if="dashboardData.lists[activeListTab].length === 0">
+                            <td colspan="5" class="empty-state">
+                                <BaseIcon :path="mdiCheckCircle" /> 
+                                <span v-if="activeListTab === 'missing'">No missing efforts! Compliance is 100%.</span>
+                                <span v-else-if="activeListTab === 'anomaly'">No configuration anomalies found.</span>
+                                <span v-else>No active programs found.</span>
                             </td>
                         </tr>
                     </tbody>
@@ -468,11 +538,13 @@ onUnmounted(() => {
 }
 
 /* Icons Colors */
-.card-icon.primary { background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+/* Icons Colors */
+.card-icon.primary { background-color: v-bind('STATUS_COLORS.active.bg'); color: v-bind('STATUS_COLORS.active.text'); }
 .card-icon.good { background-color: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
-.card-icon.warning { background-color: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
-.card-icon.neutral { background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
-.card-icon.neutral-light { background-color: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface-variant); }
+.card-icon.warning { background-color: v-bind('STATUS_COLORS.gap.bg'); color: v-bind('STATUS_COLORS.gap.text'); }
+.card-icon.neutral { background-color: v-bind('STATUS_COLORS.parent.bg'); color: v-bind('STATUS_COLORS.parent.text'); }
+.card-icon.neutral-light { background-color: v-bind('STATUS_COLORS.neutral.bg'); color: v-bind('STATUS_COLORS.neutral.border'); }
+.card-icon.error-container { background-color: v-bind('STATUS_COLORS.gap.bg'); color: v-bind('STATUS_COLORS.gap.text'); }
 
 .metric-content {
     display: flex;
@@ -535,12 +607,82 @@ onUnmounted(() => {
 }
 
 .badge.warning {
-    background: var(--md-sys-color-error-container);
-    color: var(--md-sys-color-on-error-container);
-    font-size: 12px;
-    padding: 4px 12px;
+    background: v-bind('STATUS_COLORS.gap.bg');
+    color: v-bind('STATUS_COLORS.gap.text');
+    font-size: 11px;
+    padding: 2px 8px;
     border-radius: 100px;
-    font-weight: 600;
+    font-weight: 700;
+}
+
+.badge.error {
+    background: v-bind('STATUS_COLORS.gap.border'); /* Dark red */
+    color: #FFFFFF;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-weight: 700;
+}
+
+.badge.neutral {
+    background: v-bind('STATUS_COLORS.neutral.bg');
+    color: v-bind('STATUS_COLORS.neutral.text');
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 100px;
+}
+
+/* Tabs */
+.tabs-header {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    background: var(--md-sys-color-surface-container-high);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.tab-btn.active {
+    color: var(--md-sys-color-primary);
+    border-bottom-color: var(--md-sys-color-primary);
+}
+
+.tab-icon {
+    font-size: 18px;
+}
+
+.count-tag {
+    font-size: 12px;
+    padding: 2px 8px;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.count-tag.zero {
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface-variant);
 }
 
 .table-container {

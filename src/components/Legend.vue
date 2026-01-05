@@ -3,17 +3,21 @@ import { ref, computed } from 'vue';
 import { useProgramData } from '../composables/useProgramData';
 import BaseIcon from './BaseIcon.vue';
 import { mdiInformation } from '@mdi/js';
+import { STATUS_COLORS } from '../styles/statusConstants';
 
 const { allNodes } = useProgramData();
 
 // Compute Counts
+// Compute Counts
 const counts = computed(() => {
+    // Filter out software efforts themselves, focus on programs
     const nodes = allNodes.value.filter(n => !n.isSoftwareEffort);
     
     return {
-        active: nodes.filter(n => n.hasSoftwareEffort).length,
-        parent: nodes.filter(n => n.has_descendant_expecting_software_effort && !n.hasSoftwareEffort).length,
-        neutral: nodes.filter(n => !n.hasSoftwareEffort && !n.has_descendant_expecting_software_effort).length
+        active: nodes.filter(n => n.expecting_software_efforts && n.softwareEfforts && n.softwareEfforts.length > 0).length,
+        gap: nodes.filter(n => n.expecting_software_efforts && (!n.softwareEfforts || n.softwareEfforts.length === 0)).length,
+        parent: nodes.filter(n => !n.expecting_software_efforts && n.has_descendant_expecting_software_effort).length,
+        neutral: nodes.filter(n => !n.expecting_software_efforts && !n.has_descendant_expecting_software_effort).length
     };
 });
 
@@ -22,19 +26,24 @@ const activeHelp = ref(null);
 
 const helpContent = {
     active: {
-        title: 'Program with Efforts',
-        desc: 'A program that directly manages one or more active Software Efforts.',
-        context: 'These nodes are heavily engaged in software delivery.'
+        title: 'Software Effort Active',
+        desc: 'A program that is expecting software efforts and currently has one or more assigned.',
+        context: 'These programs are actively tracking software work.'
+    },
+    gap: {
+        title: 'Software Effort Expected (Missing)',
+        desc: 'A program flagged to expect software efforts but currently has none assigned.',
+        context: 'Action Required: These programs represent a gap in data or assignment.'
     },
     parent: {
-        title: 'Parent Program',
-        desc: 'A program that does not have its own direct software efforts but contains sub-programs that do.',
-        context: 'These act as organizational containers for software work below them.'
+        title: 'Parent of Effort',
+        desc: 'A program with no direct software efforts of its own, but contains sub-programs that do.',
+        context: 'These function as organizational containers or oversight for software efforts below.'
     },
     neutral: {
         title: 'Neutral Program',
-        desc: 'A program or unit with no assigned software efforts and no descendants expecting efforts.',
-        context: 'These appear for organizational context only.'
+        desc: 'A program not expecting software efforts and has no descendants expecting them.',
+        context: 'Included primarily for organizational hierarchy and structure.'
     }
 };
 
@@ -52,7 +61,7 @@ const openHelp = (type) => {
           <span class="dot effort"></span>
       </div>
       <div class="text-content">
-          <span class="label">Active Program</span>
+          <span class="label">Software Active</span>
           <span class="count-badge">{{ counts.active }}</span>
       </div>
       <button class="icon-btn-tiny" @click.stop="openHelp('active')">
@@ -62,10 +71,23 @@ const openHelp = (type) => {
 
     <div class="legend-item">
       <div class="visual">
+          <span class="dot gap"></span>
+      </div>
+      <div class="text-content">
+          <span class="label">Expected (Missing)</span>
+          <span class="count-badge">{{ counts.gap }}</span>
+      </div>
+      <button class="icon-btn-tiny" @click.stop="openHelp('gap')">
+          <BaseIcon :path="mdiInformation" :size="14" />
+      </button>
+    </div>
+
+    <div class="legend-item">
+      <div class="visual">
           <span class="dot parent"></span>
       </div>
       <div class="text-content">
-          <span class="label">Parent Program</span>
+          <span class="label">Parent of Effort</span>
            <span class="count-badge">{{ counts.parent }}</span>
       </div>
       <button class="icon-btn-tiny" @click.stop="openHelp('parent')">
@@ -188,22 +210,29 @@ const openHelp = (type) => {
 
 /* Match OrgChart M3 Styles */
 .dot.effort {
-  /* Program with Efforts -> Blue Dot */
-  background-color: var(--md-sys-color-primary);
-  border-color: var(--md-sys-color-primary);
+  /* Active Effort */
+  background-color: v-bind('STATUS_COLORS.active.fill');
+  border-color: v-bind('STATUS_COLORS.active.border');
+}
+
+.dot.gap {
+  /* Expected but Missing */
+  background-color: v-bind('STATUS_COLORS.gap.fill');
+  border-color: v-bind('STATUS_COLORS.gap.border');
+  border-width: 1px;
 }
 
 .dot.parent {
-  /* Parent -> Outlined Blue */
-  background-color: var(--md-sys-color-surface);
-  border-color: var(--md-sys-color-primary);
-  border-width: 2px;
+  /* Parent */
+  background-color: v-bind('STATUS_COLORS.parent.fill');
+  border-color: v-bind('STATUS_COLORS.parent.border');
+  border-width: 1px;
 }
 
 .dot.neutral {
-  /* Neutral -> Light Grey */
-  background-color: #E0E0E0;
-  border-color: #BDBDBD;
+  /* Neutral */
+  background-color: v-bind('STATUS_COLORS.neutral.fill');
+  border-color: v-bind('STATUS_COLORS.neutral.border');
   border-width: 1px;
 }
 

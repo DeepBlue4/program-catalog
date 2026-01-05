@@ -21,6 +21,27 @@ async function fetchItems() {
             state.error = "Could not connect to the backend";
         } else {
             console.log('[Store] Items fetched, count:', response.data ? (Array.isArray(response.data) ? response.data.length : 1) : 0);
+
+            // DUMMY DATA INJECTION for "Missing Efforts" verification
+            // This node strictly matches the "Expected (Missing)" criteria:
+            // expecting_software_efforts = true AND (softwareEfforts is missing or empty)
+            const dummyNode = {
+                program_id: 9991234,
+                name: "Test Program (Missing Efforts)",
+                value: 9991234,
+                expecting_software_efforts: true,
+                hasSoftwareEffort: false,
+                softwareEfforts: [], // Explicitly empty
+                details: { programLeader: "TEST ADMIN" },
+                children: []
+            };
+
+            if (Array.isArray(response.data)) {
+                response.data.push(dummyNode);
+            } else if (response.data && response.data.children) {
+                response.data.children.push(dummyNode);
+            }
+
             state.items = response.data;
         }
     } catch (err) {

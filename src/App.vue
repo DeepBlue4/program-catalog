@@ -1,11 +1,14 @@
 <script setup>
-import { computed, ref, watch, onUnmounted } from 'vue';
+import { computed, ref, watch, onUnmounted, provide, onErrorCaptured } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import SearchBox from './components/SearchBox.vue';
 import UserMenu from './components/UserMenu.vue';
 import { useProgramData } from './composables/useProgramData.js';
+import { useProgramCatalogStore } from './store/programCatalogStore';
 import BaseIcon from './components/BaseIcon.vue';
 import { mdiChevronDown } from '@mdi/js';
+import { STATUS_COLORS } from './styles/statusConstants'; // Import Colors
+import MultiSelectDropdown from './components/MultiSelectDropdown.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -227,10 +230,13 @@ const currentEnvironment = computed(() => {
            <div class="sidebar-header">
                <span class="type-overline">Selected Program</span>
                <h2>{{ selectedNode.name }}</h2>
-               <div class="status-tags">
-                   <span class="tag" v-if="selectedNode.hasSoftwareEffort">Software Active</span>
+                <div class="status-tags">
+                   <!-- Primary Status -->
+                   <span class="tag active" v-if="selectedNode.hasSoftwareEffort">Software Active</span>
+                   <span class="tag gap" v-else-if="selectedNode.expecting_software_efforts">Expected (Missing)</span>
                    <span class="tag neutral" v-else>Neutral</span>
                    
+                   <!-- Secondary Context -->
                    <span class="tag parent" v-if="selectedNode.has_descendant_expecting_software_effort">Parent of Effort</span>
                </div>
            </div>
@@ -550,19 +556,27 @@ const currentEnvironment = computed(() => {
     font-size: 0.75rem;
     padding: 4px 12px;
     border-radius: 16px;
-    background: var(--md-sys-color-tertiary-container);
-    color: var(--md-sys-color-on-tertiary-container);
     font-weight: 500;
 }
 
+.tag.active {
+    background: v-bind('STATUS_COLORS.active.bg');
+    color: v-bind('STATUS_COLORS.active.text');
+}
+
+.tag.gap {
+    background: v-bind('STATUS_COLORS.gap.bg');
+    color: v-bind('STATUS_COLORS.gap.text');
+}
+
 .tag.neutral {
-    background: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-on-surface-variant);
+    background: v-bind('STATUS_COLORS.neutral.bg');
+    color: v-bind('STATUS_COLORS.neutral.text');
 }
 
 .tag.parent {
-    background: var(--md-sys-color-secondary-container);
-    color: var(--md-sys-color-on-secondary-container);
+    background: v-bind('STATUS_COLORS.parent.bg');
+    color: v-bind('STATUS_COLORS.parent.text');
 }
 
 .sidebar-body {
