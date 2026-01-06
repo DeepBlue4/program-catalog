@@ -367,6 +367,7 @@ const handleCancel = () => {
 
 // --- Constants ---
 const PROGRAM_PHASES = ['Design', 'Legacy', 'Production', 'Development', 'N/A'];
+const EFFORT_TYPES = ['System', 'Service', 'Component', 'Application', 'Library', 'Team', 'Other'];
 const SAFETY_LEVELS = ['None', 'DAL A / LOR 1', 'DAL B / LOR 2', 'DAL C / LOR 3', 'DAL D / LOR 4', 'DAL E / LOR 5'];
 const SECURITY_CLEARANCES = ['None', 'Other', 'CUI', 'Secret', 'Top Secret'];
 
@@ -561,12 +562,16 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                 
                 <div class="form-fields-grid" :class="{ 'is-inherited': formData.inherit_statement_of_work_profile }">
                      <div class="field-group span-2">
-                        <label>Description / Description of Work</label>
-                        <textarea 
-                            :value="sv('statement_of_work_profile', 'description')" 
-                            @input="e => updateLocal('statement_of_work_profile', 'description', e.target.value)"
+                        <label>Type</label>
+                         <select 
+                            class="clean-select" 
+                            :value="sv('statement_of_work_profile', 'type')"
+                            @change="e => updateLocal('statement_of_work_profile', 'type', e.target.value)"
                             :disabled="formData.inherit_statement_of_work_profile"
-                            class="clean-textarea" rows="4"></textarea>
+                        >
+                            <option value="" disabled selected>Select Effort Type...</option>
+                            <option v-for="type in EFFORT_TYPES" :key="type" :value="type">{{ type }}</option>
+                        </select>
                     </div>
                     
                     <div class="field-group span-2">

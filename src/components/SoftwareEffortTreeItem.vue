@@ -53,15 +53,8 @@ const handleSelect = () => {
 const hasChildren = computed(() => props.effort.children && props.effort.children.length > 0);
 const isSelected = computed(() => String(props.effort.id) === String(props.selectedId));
 
-// Helper for status colors
-const getStatusLabel = (effort) => effort.status || 'Active';
 
-const getStatusColor = (status) => {
-    const s = (status || '').toLowerCase();
-    if (s === 'active') return '#005AC1'; /* primary */
-    if (s === 'maintenance') return '#625B71'; /* secondary */
-    return '#79747E'; /* outline - Dot color */
-};
+
 </script>
 
 <template>
@@ -78,7 +71,6 @@ const getStatusColor = (status) => {
                 <BaseIcon v-else :path="mdiMenuRight" :size="20" />
              </div>
              
-             <div class="status-dot" :style="{ backgroundColor: getStatusColor(effort.status) }"></div>
 
              <div class="info">
                  <span class="name">{{ effort.name }}</span>
@@ -153,12 +145,7 @@ const getStatusColor = (status) => {
     background: rgba(0,0,0,0.1);
 }
 
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
+
 
 .info {
     display: flex;

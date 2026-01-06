@@ -297,12 +297,10 @@ export class CompassAPIService {
                     softwareEfforts.push({
                         id: effId,
                         name: effName,
-                        type: effType,
                         status: pick(effortStatuses),
-                        description: `Mock effort ${j + 1} for ${name}, managing ${effType.toLowerCase()} lifecycle.`,
                         parent: null,
                         inherit_statement_of_work_profile: false,
-                        local_statement_of_work_profile: { description: 'Governing SOW for this effort.' },
+                        local_statement_of_work_profile: { type: effType },
                         inherit_technical_points_of_contact: false,
                         local_technical_points_of_contact: { names: `Tech Lead: User ${j}` },
                         inherit_developer_setup: false,

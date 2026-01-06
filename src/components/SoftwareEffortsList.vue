@@ -609,10 +609,6 @@ const showHelpModal = ref(false);
                         <span class="stat-num">{{ efforts.length }}</span>
                         <span class="stat-label">Software Efforts</span>
                     </div>
-                    <div class="stat">
-                        <span class="stat-num">{{ efforts.filter(e => e.status === 'Active').length }}</span>
-                        <span class="stat-label">Active</span>
-                    </div>
                 </div>
             </div>
             <div class="info-footer">
