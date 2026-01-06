@@ -9,7 +9,7 @@ import { useProgramData } from '../composables/useProgramData.js';
 
 const router = useRouter();
 const route = useRoute();
-const { chartData: rawChartData, selectedNode, selectNode, findNodeById } = useProgramData();
+const { chartData: rawChartData, sweChartData, selectedNode, selectNode, findNodeById } = useProgramData();
 // We also need access to the store functions exposed via composable or import
 // To avoid breaking useProgramData, let's import store directly for advanced features
 import { useProgramCatalogStore } from '../store/programCatalogStore';
@@ -19,10 +19,8 @@ const filterMode = ref('ALL'); // 'ALL' or 'SWE'
 
 const chartData = computed(() => {
     if (filterMode.value === 'SWE') {
-        const filtered = store.getSWEItems();
-        // If filtered is empty/null, we might want to handle it, but OrgChart expects object.
-        // If the filtering returns null (no match) and rawData is present, pass null/empty to chart.
-        return filtered;
+        // Use normalized SWE data from composable
+        return sweChartData.value;
     }
     return rawChartData.value;
 });

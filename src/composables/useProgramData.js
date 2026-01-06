@@ -15,7 +15,32 @@ export function useProgramData() {
         console.log('[useProgramData] Items available or loading:', !!store.state.items, store.state.loading);
     }
 
-    const chartData = computed(() => store.state.items);
+    // Helper to ensure data structure matches OrgChart requirements (specifically 'value' key)
+    const normalizeTree = (node) => {
+        if (!node) return null;
+
+        // Handle array root
+        if (Array.isArray(node)) {
+            return node.map(n => normalizeTree(n));
+        }
+
+        const newNode = { ...node };
+
+        // Ensure 'value' exists for OrgChart ID matching and ECharts uniqueness
+        // Fallback to program_id if value is missing (common in production data vs mock)
+        if (newNode.value === undefined || newNode.value === null) {
+            newNode.value = newNode.program_id;
+        }
+
+        if (newNode.children && Array.isArray(newNode.children)) {
+            newNode.children = newNode.children.map(c => normalizeTree(c));
+        }
+
+        return newNode;
+    };
+
+    const chartData = computed(() => normalizeTree(store.state.items));
+    const sweChartData = computed(() => normalizeTree(store.getSWEItems()));
 
     const flattenNodes = (nodes, acc = []) => {
         if (!nodes) return acc;
@@ -82,6 +107,7 @@ export function useProgramData() {
 
     return {
         chartData,
+        sweChartData,
         allNodes,
         selectedNode,
         loading: computed(() => store.state.loading),
