@@ -316,8 +316,8 @@ const currentEnvironment = computed(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: #FEF7FF; /* surface */
-    color: #1D1B20; /* on-surface */
+    background-color: #0039A6; /* Boeing Blue */
+    color: #FFFFFF; /* on-primary (white) */
     z-index: 10;
     position: relative;
 }
@@ -336,7 +336,7 @@ const currentEnvironment = computed(() => {
     align-items: center;
     gap: 0.75rem;
     padding-right: 1.5rem;
-    border-right: 1px solid #C4C7C5; /* outline-variant */
+    border-right: 1px solid rgba(255, 255, 255, 0.3); /* outline-variant (on-dark) */
 }
 
 .env-badge {
@@ -393,7 +393,7 @@ const currentEnvironment = computed(() => {
 .icon-btn-small {
     background: transparent;
     border: none;
-    color: #625B71; /* secondary */
+    color: rgba(255, 255, 255, 0.7); /* secondary (on-dark) */
     cursor: pointer;
     padding: 4px;
     border-radius: 50%;
@@ -405,8 +405,8 @@ const currentEnvironment = computed(() => {
 }
 
 .icon-btn-small:hover {
-    background: #ECE6F0; /* surface-container-high */
-    color: #1D1B20; /* on-surface */
+    background: rgba(255, 255, 255, 0.1); /* surface-container-high (on-dark overlay) */
+    color: #FFFFFF; /* on-surface */
 }
 
 .dropdown-menu {
@@ -459,7 +459,7 @@ const currentEnvironment = computed(() => {
 }
 
 .crumb {
-    color: #625B71; /* secondary */
+    color: rgba(255, 255, 255, 0.7); /* secondary (on-dark) */
     cursor: pointer;
     transition: color 0.2s;
     max-width: 200px;
@@ -470,30 +470,30 @@ const currentEnvironment = computed(() => {
 }
 
 .crumb:hover:not(.active):not(.ellipsis) {
-    color: #005AC1; /* primary */
+    color: #FFFFFF; /* primary/highlight (on-dark) */
     text-decoration: underline;
 }
 
 .crumb.active {
-    color: #1D1B20; /* on-surface */
+    color: #FFFFFF; /* on-surface (on-dark) */
     font-weight: 600;
     cursor: default;
 }
 
 .crumb.ellipsis {
     cursor: default;
-    color: #79747E; /* outline */
+    color: rgba(255, 255, 255, 0.5); /* outline (on-dark) */
     letter-spacing: 2px;
 }
 
 .separator {
-    color: #79747E; /* outline */
+    color: rgba(255, 255, 255, 0.4); /* outline (on-dark) */
     font-size: 12px;
 }
 
 .root-crumb-icon {
     transform: rotate(270deg);
-    color: #005AC1; /* primary */
+    color: #FFFFFF; /* primary (on-dark) */
 }
 
 /* Main Content Layout */

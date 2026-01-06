@@ -105,7 +105,7 @@ onUnmounted(() => {
 
 .trigger-icon {
   font-size: 36px;
-  color: #005AC1; /* primary */
+  color: #FFFFFF; /* on-primary (for dark header) */
 }
 
 .avatar {
