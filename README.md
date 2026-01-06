@@ -4,11 +4,12 @@ The **Program Catalog** is a modern Vue 3 application designed to visualize and 
 
 ## 🚀 Key Features
 
-*   **Interactive Organization Chart**: A dynamic tree visualization (D3-like) representing the enterprise hierarchy from Divisions down to Teams.
+*   **Executive Dashboard**: High-level overview featuring "Big Stat" metric cards, compliance charts (ECharts), and program status distribution.
+*   **Interactive Organization Chart**: A dynamic tree visualization representing the enterprise hierarchy from Divisions down to Teams.
+*   **Master-Detail Effort Management**: A comprehensive interface to create, edit, and link software efforts. Features vertical tabs for Statement of Work, POCs, and Developer Setup.
+*   **Contextual Help System**: Integrated "Info" buttons within forms that toggle detailed explanations for specific form sections (SOW, POCs, etc.), guiding users on data requirements.
 *   **Search & Deep Linking**: Global search with autocomplete that deep-links directly to specific programs or software efforts, preserving state via URL.
-*   **Contextual Details**: Interactive sidebars and modals provide detailed metadata for selected nodes (Leaders, Locations, Value).
-*   **Software Effort Management**: A master-detail view for creating, editing, and linking software efforts (SOWs, POCs, etc.) to specific program nodes.
-*   **Responsive Design**: Material Design 3 (M3) styling with responsive layouts and dark-mode compatible CSS variables.
+*   **Consistent UX**: Material Design 3 (M3) styling, inclusive of a "clean" aesthetic and responsive layouts.
 
 ## 🛠 Technology Stack
 
@@ -16,8 +17,9 @@ The **Program Catalog** is a modern Vue 3 application designed to visualize and 
 *   **Build Tool**: [Vite](https://vitejs.dev/)
 *   **State Management**: [Pinia](https://pinia.vuejs.org/) (Reactive Store)
 *   **Routing**: [Vue Router](https://router.vuejs.org/)
+*   **Visualization**: [Apache ECharts](https://echarts.apache.org/) (Dashboard) & Custom SVG (OrgChart).
 *   **Styling**: Vanilla CSS with CSS Variables (Theming) & Material Design 3 tokens.
-*   **Icons**: FontAwesome
+*   **Icons**: [@mdi/js](https://pictogrammers.com/library/mdi/) (SVG Paths).
 
 ## 📦 Setup & Installation
 
@@ -40,8 +42,8 @@ The **Program Catalog** is a modern Vue 3 application designed to visualize and 
 
 ## 🏗 Architecture & Design
 
-### Component Architecture
-High-level overview of the application structure and component relationships.
+### Component Structure
+The application simulates a routed Single Page Application (SPA) with three main views.
 
 ```mermaid
 classDiagram
@@ -50,89 +52,102 @@ classDiagram
         +RouterView
         +Sidebar
         +Breadcrumbs
+        +GlobalSearch
+    }
+    class Dashboard {
+        +MetricCards
+        +ComplianceChart
+        +StatusPieChart
+        +InventoryGrid
     }
     class ProgramTreeView {
+        +OrgChart
+        +Legend
         +FilterState
-        +SelectionLogic
     }
-    class OrgChart {
-        +D3TreeVisualization
-        +Zoom/Pan
-    }
-    class SoftwareEffortsView {
+    class ProgramEffortsView {
         +MasterDetailLayout
+        +LoadingState
     }
     class SoftwareEffortsList {
         +TreeNavigation
-        +SearchFiltering
+        +Pagination
     }
     class SoftwareEffortForm {
         +EditForm
         +TabNavigation
-        +Validation
+        +ContextualHelp
     }
     class Store {
-        +State: Items
+        +State: items (Tree)
         +Action: fetchItems()
-        +Getter: getSWEItems()
+        +Getter: findByOrgId()
     }
 
-    App *-- ProgramTreeView
-    App *-- SoftwareEffortsView
-    ProgramTreeView *-- OrgChart
-    ProgramTreeView *-- Legend
-    SoftwareEffortsView *-- SoftwareEffortsList
-    SoftwareEffortsView *-- SoftwareEffortForm
-    ProgramTreeView ..> Store : Uses
-    SoftwareEffortsList ..> Store : Uses
+    App --> Dashboard : Route /dashboard
+    App --> ProgramTreeView : Route /
+    App --> ProgramEffortsView : Route /efforts/:id
+    
+    ProgramEffortsView *-- SoftwareEffortsList
+    SoftwareEffortsList *-- SoftwareEffortForm
+    
+    Dashboard ..> Store : Reads Data
+    ProgramTreeView ..> Store : Reads Data
+    ProgramEffortsView ..> Store : Syncs Selection
 ```
 
 ### Data Flow
-How data moves from the Mock API through the Store to the UI.
+The application uses a **Mock API Layer** (`api.js`) to simulate backend calls with artificial latency and deterministic data generation.
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant View as ProgramTreeView
+    participant View as View Component
     participant Hook as useProgramData
     participant Store as ProgramCatalogStore
     participant API as CompassAPIService
 
-    User->>View: Loads Page / Search
+    User->>View: Navigates / Refreshes
     View->>Hook: useProgramData()
     Hook->>Store: fetchItems()
     alt Data Cached
         Store-->>Hook: Return State.items
     else Data Missing
         Store->>API: getEnterpriseHierarchy()
-        API-->>Store: JSON Graph Data
+        API->>API: Generate Deterministic Mock Tree
+        API-->>Store: JSON Tree Data
         Store-->>Hook: Updates Reactive State
     end
-    Hook-->>View: Computes allNodes & chartData
-    View->>View: Renders OrgChart
+    Hook-->>View: Computes currentProgram / chartData
+    View->>View: Renders (Charts/Tree/Forms)
 ```
 
-### Entity Relationship
-Simplified data model showing the relationship between Hierarchy Nodes and Software Efforts.
+### Contextual Help Breakdown
+The application includes a helper system for complex forms.
+
+*   **Mechanism**: Toggleable "Info" icons (`mdiInformation`) in section headers.
+*   **Content**: Defined in `SoftwareEffortForm.vue` (`helpContent` object).
+*   **UI**: Renders an expandable card (`help-card`) with a title and detailed description of the section's purpose (e.g., explaining why "Statement of Work" is critical).
+
+### Entity Relationship (Simplified)
 
 ```mermaid
 erDiagram
     PROGRAM_NODE ||--o{ PROGRAM_NODE : "Children"
     PROGRAM_NODE ||--o{ SOFTWARE_EFFORT : "Owns"
-    SOFTWARE_EFFORT }|..|{ SOFTWARE_EFFORT : "Deep Links (Dependencies)"
     
     PROGRAM_NODE {
         string id PK
         string name
-        string details_programLeader
-        string details_primaryLocation
-        boolean hasSoftwareEffort
+        string leader
+        string location
+        boolean expecting_efforts
     }
 
     SOFTWARE_EFFORT {
         string id PK
         string name
-        string type "System | Service | Lib"
+        object local_sow_profile "Contains Type"
         string status "Active | Planned"
         string parent_ref FK "Parent Effort"
     }
@@ -143,20 +158,24 @@ erDiagram
 ```text
 src/
 ├── components/          # GUI Components
-│   ├── OrgChart.vue     # Tree Visualization
-│   ├── Legend.vue       # Interactive Status Key
-│   ├── SearchBox.vue    # Global Search
+│   ├── OrgChart.vue             # D3-like Tree Visualization
+│   ├── SoftwareEffortsList.vue  # Master list logic for efforts
+│   ├── SoftwareEffortForm.vue   # Complex edit form with Help System
+│   ├── SoftwareEffortTreeItem.vue # Recursive tree item for effort lists
+│   ├── MetricCard.vue           # (Concept) Dashboard stats
+│   ├── SearchBox.vue            # Global Search
 │   └── ...
-├── composables/         # Shared Logic (Hooks)
-│   └── useProgramData.js
-├── services/            # API & Mock Data Layers
-│   └── api.js
+├── composables/         # Shared Logic
+│   └── useProgramData.js        # Data binding hook
+├── services/            # API Layer
+│   └── api.js                   # Deterministic Mock Data Generator
 ├── store/               # State Management
-│   └── programCatalogStore.js
-├── views/               # Page Views (Router Targets)
-│   ├── ProgramTreeView.vue
-│   └── ProgramEffortsView.vue
-├── App.vue              # Root Component
+│   └── programCatalogStore.js   # Pinia-like Reactive Store
+├── views/               # Page Views
+│   ├── Dashboard.vue            # Metrics & Charts
+│   ├── ProgramTreeView.vue      # Hierarchy Explorer
+│   └── ProgramEffortsView.vue   # Effort Management (Master-Detail)
+├── App.vue              # Root Layout, Header, Breadcrumbs
 └── main.js              # Entry Point
 ```
 

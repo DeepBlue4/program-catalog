@@ -562,7 +562,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                 
                 <div class="form-fields-grid" :class="{ 'is-inherited': formData.inherit_statement_of_work_profile }">
                      <div class="field-group span-2">
-                        <label>Type</label>
+                        <label>Effort Type</label>
                          <select 
                             class="clean-select" 
                             :value="sv('statement_of_work_profile', 'type')"
