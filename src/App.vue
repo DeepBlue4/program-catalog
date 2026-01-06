@@ -29,8 +29,10 @@ const handleNodeSelect = (node) => {
             query: { effort_id: node.value }
         });
     } else {
-        // Always select the node to update global state
-        selectNode(node);
+        // Do NOT select the node here. 
+        // We navigate to the route, and let ProgramEffortsView handle the selection logic/data fetching.
+        // This ensures that if we are currently on a page with unsaved changes, 
+        // the router guards act BEFORE the state changes and component destroys.
         
         // Always navigate to the program's efforts view when selected via search
         // This ensures the Search function acts as a navigation tool to the details page
