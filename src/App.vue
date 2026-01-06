@@ -6,7 +6,7 @@ import UserMenu from './components/UserMenu.vue';
 import { useProgramData } from './composables/useProgramData.js';
 import { useProgramCatalogStore } from './store/programCatalogStore';
 import BaseIcon from './components/BaseIcon.vue';
-import { mdiChevronDown } from '@mdi/js';
+import { mdiChevronDown, mdiSitemap } from '@mdi/js';
 import { STATUS_COLORS } from './styles/statusConstants'; // Import Colors
 import MultiSelectDropdown from './components/MultiSelectDropdown.vue';
 
@@ -54,7 +54,8 @@ const handleBackToCatalog = () => {
 
 // --- Breadcrumb Logic ---
 const breadcrumbs = computed(() => {
-    const crumbs = [{ name: 'Home', id: null, path: '/' }]; // Root
+    // UPDATED: Default to Icon instead of Text 'Home'
+    const crumbs = [{ icon: mdiSitemap, name: 'Program Tree', id: null, path: '/' }]; 
     
     // Reset to default on specific pages
     if (['Dashboard', 'PermissionDenied'].includes(route.name)) {
@@ -179,10 +180,12 @@ const currentEnvironment = computed(() => {
                 <span v-if="index > 0 && !crumb.isEllipsis" class="separator">/</span>
                 <span 
                     class="crumb" 
-                    :class="{ 'active': index === displayedBreadcrumbs.length - 1 && !crumb.isEllipsis, 'ellipsis': crumb.isEllipsis }"
+                    :class="{ 'active': index === displayedBreadcrumbs.length - 1 && !crumb.isEllipsis, 'ellipsis': crumb.isEllipsis, 'icon-crumb': crumb.icon }"
                     @click="handleBreadcrumbClick(crumb)"
+                    :title="crumb.icon ? crumb.name : ''"
                 >
-                    {{ crumb.name }}
+                    <BaseIcon v-if="crumb.icon" :path="crumb.icon" :size="22" class="root-crumb-icon" />
+                    <template v-else>{{ crumb.name }}</template>
                 </span>
 
                 <!-- Dropdown for Active/Last Crumb with Children -->
@@ -462,6 +465,8 @@ const currentEnvironment = computed(() => {
     max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
 }
 
 .crumb:hover:not(.active):not(.ellipsis) {
@@ -484,6 +489,11 @@ const currentEnvironment = computed(() => {
 .separator {
     color: #79747E; /* outline */
     font-size: 12px;
+}
+
+.root-crumb-icon {
+    transform: rotate(270deg);
+    color: #005AC1; /* primary */
 }
 
 /* Main Content Layout */

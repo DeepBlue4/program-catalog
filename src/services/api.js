@@ -281,29 +281,38 @@ export class CompassAPIService {
             const softwareEfforts = [];
 
             if (isLeafCandidate && !isTargetNeutral && Math.random() > 0.3) {
-                // ... (Same effort creation logic) ...
-                // Simplified for brevity in replace block, keep existing logic if possible or rewrite
-                // I need to include the effort creation logic here to be safe
-                // Create a root effort
-                const rootId = `EFF-${id}-root`;
-                softwareEfforts.push({
-                    id: rootId,
-                    name: `${name.split(' ')[0]} Platform`,
-                    type: 'System',
-                    status: 'Active',
-                    description: 'Main platform system.',
-                    parent: null,
-                    inherit_statement_of_work_profile: false,
-                    local_statement_of_work_profile: { description: 'Governing SOW for the entire platform lifecycle.' },
-                    inherit_technical_points_of_contact: false,
-                    local_technical_points_of_contact: { names: 'Chief Architect: Jane Doe' },
-                    inherit_developer_setup: false,
-                    local_developer_setup: { details: 'See Wiki: /platform-setup' },
-                    inherit_work_location: false,
-                    local_work_location: { location: primaryLocation },
-                    children: [],
-                    linked_software_efforts: []
-                });
+                // Generate 1 to 5 efforts to ensure "more than just 1" is common
+                const numEfforts = Math.floor(Math.random() * 5) + 1;
+
+                for (let j = 0; j < numEfforts; j++) {
+                    const effId = `EFF-${id}-${j}`;
+                    // Use closure-safe pick or the one defined above
+                    const effType = pick(effortTypes);
+                    // Differentiate names slightly
+                    const baseName = name.split(' ')[0] || 'Project';
+                    const effName = j === 0
+                        ? `${baseName} Platform`
+                        : `${baseName} ${effType} ${j + 1}`;
+
+                    softwareEfforts.push({
+                        id: effId,
+                        name: effName,
+                        type: effType,
+                        status: pick(effortStatuses),
+                        description: `Mock effort ${j + 1} for ${name}, managing ${effType.toLowerCase()} lifecycle.`,
+                        parent: null,
+                        inherit_statement_of_work_profile: false,
+                        local_statement_of_work_profile: { description: 'Governing SOW for this effort.' },
+                        inherit_technical_points_of_contact: false,
+                        local_technical_points_of_contact: { names: `Tech Lead: User ${j}` },
+                        inherit_developer_setup: false,
+                        local_developer_setup: { details: 'See Wiki for setup.' },
+                        inherit_work_location: false,
+                        local_work_location: { location: primaryLocation },
+                        children: [],
+                        linked_software_efforts: []
+                    });
+                }
             }
 
             const children = [];
