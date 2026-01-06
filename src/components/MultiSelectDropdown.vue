@@ -173,7 +173,7 @@ const removeOption = (option) => {
 .select-trigger {
     background: #FFFFFF; /* surface-container-lowest */
     border: 1px solid #79747E; /* outline */
-    border-radius: 6px;
+    border-radius: 8px; /* Consistent 8px */
     padding: 6px 36px 6px 8px; /* Right padding for arrow */
     min-height: 42px;
     display: flex;
@@ -190,7 +190,7 @@ const removeOption = (option) => {
 
 .select-trigger.active {
     border-color: #005AC1; /* primary */
-    box-shadow: 0 0 0 1px #005AC1; /* primary */
+    box-shadow: 0 0 0 3px rgba(0, 90, 193, 0.15); /* primary-container w/ opacity */
     background: #FEF7FF; /* surface */
 }
 

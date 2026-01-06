@@ -414,7 +414,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
         <div class="header-meta">
             <div class="meta-field">
                  <label>Parent:</label>
-                 <select v-model="formData.parent" class="clean-select-sm">
+                 <select v-model="formData.parent" class="std-select">
                     <option :value="null">None (Root)</option>
                     <option v-for="p in validParents" :key="p.id" :value="p.id">{{ p.name }}</option>
                  </select>
@@ -473,21 +473,24 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                 </transition>
 
                 <div class="field-section">
-                    <label class="section-label">Linked Efforts</label>
-                    <div class="help-text">Search and select other efforts to link across the entire catalog.</div>
+                    <div class="section-header-modern">
+                        <label class="section-label-lg">Linked Software Efforts</label>
+                        <p class="section-desc">Connect this software to other components, dependent services, or related libraries across the catalog.</p>
+                    </div>
                     
-                    <div class="link-manager">
-                        <!-- Search Box -->
-                        <div class="link-search-wrapper">
-                            <BaseIcon :path="mdiMagnify" class="search-icon" />
-                            <input 
-                                v-model="linkSearchQuery" 
-                                type="text" 
-                                class="clean-input with-icon" 
-                                placeholder="Search efforts by name or program..."
-                            >
-                            
-                            <!-- Dropdown Results -->
+                    <div class="link-manager link-card">
+                        <!-- Search Header -->
+                        <div class="link-manager-header">
+                            <div class="link-search-wrapper">
+                                <BaseIcon :path="mdiMagnify" class="search-icon" />
+                                <input 
+                                    v-model="linkSearchQuery" 
+                                    type="text" 
+                                    class="std-input with-icon search-input-modern" 
+                                    placeholder="Add link..."
+                                >
+                            </div>
+                             <!-- Dropdown Results (Absolute) -->
                             <div v-if="filteredLinkCandidates.length > 0" class="search-dropdown m3-card elevated">
                                 <div 
                                     v-for="cand in filteredLinkCandidates" 
@@ -516,19 +519,30 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                             </div>
                         </div>
 
-                        <!-- Selected Chips -->
-                        <div class="linked-chips-container">
-                            <div v-for="link in linkedEffortObjects" :key="link.id" class="link-chip">
-                                <span class="chip-icon"><BaseIcon :path="mdiLink" :size="12" /></span>
-                                <div class="chip-info">
-                                    <div class="chip-label">{{ link.name }}</div>
-                                    <div class="chip-meta">{{ link._programName || 'Unknown Program' }}</div>
+                        <!-- Selected Chips List -->
+                        <div class="linked-items-list-modern">
+                            <div v-for="link in linkedEffortObjects" :key="link.id" class="link-item-row">
+                                <div class="row-icon">
+                                     <BaseIcon :path="mdiLink" :size="20" />
                                 </div>
-                                <button class="chip-remove" @click.stop="removeLink(link.id)">
-                                    <BaseIcon :path="mdiClose" :size="12" />
+                                <div class="row-content">
+                                    <div class="row-main">{{ link.name }}</div>
+                                    <div class="row-sub">
+                                        <span class="program-tag">{{ link._programName || 'Unknown Program' }}</span>
+                                        <span class="id-text">{{ link.id }}</span>
+                                    </div>
+                                </div>
+                                <button class="btn-icon-danger" @click.stop="removeLink(link.id)" title="Remove Link">
+                                    <BaseIcon :path="mdiClose" :size="18" />
                                 </button>
                             </div>
-                            <div v-if="linkedEffortObjects.length === 0" class="empty-msg">No linked efforts.</div>
+                            
+                            <div v-if="linkedEffortObjects.length === 0" class="empty-state-modern">
+                                <div class="empty-icon-circle">
+                                    <BaseIcon :path="mdiLink" :size="24" />
+                                </div>
+                                <span class="empty-text">No linked efforts yet. Search above to add dependencies.</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -564,7 +578,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                      <div class="field-group span-2">
                         <label>Effort Type</label>
                          <select 
-                            class="clean-select" 
+                            class="std-select" 
                             :value="sv('statement_of_work_profile', 'type')"
                             @change="e => updateLocal('statement_of_work_profile', 'type', e.target.value)"
                             :disabled="formData.inherit_statement_of_work_profile"
@@ -590,7 +604,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                              :value="sv('statement_of_work_profile', 'program_manager_email')"
                              @input="e => updateLocal('statement_of_work_profile', 'program_manager_email', e.target.value)"
                              :disabled="formData.inherit_statement_of_work_profile"
-                             type="email" class="clean-input" placeholder="manager@example.com">
+                             type="email" class="std-input" placeholder="manager@example.com">
                          <span v-if="errors.program_manager_email" class="error-msg">{{ errors.program_manager_email }}</span>
                     </div>
 
@@ -618,7 +632,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                     <div class="field-group" :class="{ 'has-error': errors.allow_non_us }">
                          <label>Allow Non-US Personnel <span class="required-star">*</span></label>
                          <select 
-                            class="clean-select" 
+                            class="std-select" 
                             :value="sv('statement_of_work_profile', 'allow_non_us')"
                             @change="e => updateLocal('statement_of_work_profile', 'allow_non_us', e.target.value === 'true')"
                             :disabled="formData.inherit_statement_of_work_profile"
@@ -633,7 +647,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                     <div class="field-group">
                          <label>Mission Critical</label>
                          <select 
-                            class="clean-select" 
+                            class="std-select" 
                             :value="sv('statement_of_work_profile', 'mission_critical')"
                             @change="e => updateLocal('statement_of_work_profile', 'mission_critical', e.target.value === 'true')"
                             :disabled="formData.inherit_statement_of_work_profile"
@@ -678,7 +692,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                             :value="sv('technical_points_of_contact', 'software_lead')"
                             @input="e => updateLocal('technical_points_of_contact', 'software_lead', e.target.value)"
                             :disabled="formData.inherit_technical_points_of_contact"
-                            type="email" class="clean-input" placeholder="lead@example.com">
+                            type="email" class="std-input" placeholder="lead@example.com">
                         <span v-if="errors.software_lead" class="error-msg">{{ errors.software_lead }}</span>
                     </div>
                      <div class="field-group">
@@ -687,7 +701,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                             :value="sv('technical_points_of_contact', 'security_focal')"
                             @input="e => updateLocal('technical_points_of_contact', 'security_focal', e.target.value)"
                             :disabled="formData.inherit_technical_points_of_contact"
-                            type="text" class="clean-input" placeholder="Name or Email">
+                            type="text" class="std-input" placeholder="Name or Email">
                     </div>
                      <div class="field-group span-2">
                         <label>Other Contacts (Legacy)</label>
@@ -695,7 +709,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                             :value="sv('technical_points_of_contact', 'names')"
                             @input="e => updateLocal('technical_points_of_contact', 'names', e.target.value)"
                             :disabled="formData.inherit_technical_points_of_contact"
-                            type="text" class="clean-input">
+                            type="text" class="std-input">
                     </div>
                 </div>
             </div>
@@ -790,12 +804,12 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                         />
                     </div>
                     <div class="field-group">
-                        <label>Data Protection Assessment</label>
+                        <label>Design Practice Assessment</label>
                         <input 
                             :value="sv('developer_setup', 'dp_assessment_name')"
                             @input="e => updateLocal('developer_setup', 'dp_assessment_name', e.target.value)"
                             :disabled="formData.inherit_developer_setup"
-                            type="text" class="clean-input">
+                            type="text" class="std-input">
                     </div>
                 </div>
             </div>
@@ -833,7 +847,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                              :value="fromArray(sv('work_location', 'locations'))" 
                              @input="e => updateLocal('work_location', 'locations', toArray(e.target.value))"
                              :disabled="formData.inherit_work_location"
-                             class="clean-textarea" rows="3" placeholder="Building 40, Remote, etc..."
+                             class="std-textarea" rows="3" placeholder="Building 40, Remote, etc..."
                         ></textarea>
                     </div>
                 </div>
@@ -932,19 +946,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     font-family: monospace;
 }
 
-.clean-select-sm {
-    background: transparent;
-    border: none;
-    font-size: 13px;
-    color: #1D1B20; /* on-surface */
-    padding: 2px;
-    cursor: pointer;
-}
 
-.clean-select-sm:hover {
-    background: #ECE6F0; /* surface-container-high */
-    border-radius: 4px;
-}
 
 /* Actions */
 .form-actions-top {
@@ -1136,32 +1138,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     text-transform: uppercase;
 }
 
-.clean-input, .clean-textarea {
-    width: 100%;
-    padding: 10px 12px;
-    font-size: 14px;
-    color: #1D1B20; /* on-surface */
-    background: #FFFFFF; /* surface-container-lowest */
-    border: 1px solid #79747E; /* outline */
-    border-radius: 6px;
-    font-family: inherit;
-    box-sizing: border-box;
-    transition: 0.2s;
-}
-
-.clean-input:focus, .clean-textarea:focus {
-    outline: none;
-    border-color: #005AC1; /* primary */
-    background: #FEF7FF; /* surface */
-    box-shadow: 0 0 0 3px #D8E2FF; /* primary-container */
-}
-
-.clean-input:disabled, .clean-textarea:disabled {
-    background: rgba(0,0,0,0.02);
-    border-color: transparent;
-    color: #49454F; /* on-surface-variant */
-    cursor: default;
-}
+/* Clean Input Removed - Using .std-input globally */
 
 .checkbox-row {
     flex-direction: row;
@@ -1231,126 +1208,146 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     cursor: not-allowed;
 }
 
-/* Link Manager Styles */
-.link-search-wrapper {
-    position: relative;
-    margin-bottom: 1rem;
+/* Modern General Tab Styles */
+.section-header-modern {
+    margin-bottom: 1.5rem;
 }
 
-.with-icon {
-    padding-left: 36px;
+.section-label-lg {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1D1B20;
+    display: block;
+    margin-bottom: 4px;
 }
 
-.search-icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #625B71; /* secondary */
+.section-desc {
     font-size: 14px;
+    color: #49454F;
+    margin: 0;
+    line-height: 1.5;
 }
 
-.search-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
+.link-card {
+    background: #FFFFFF;
+    border: 1px solid #C4C7C5;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.link-manager-header {
+    padding: 1rem;
     background: #F7F2FA; /* surface-container-low */
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 10;
-    border-radius: 8px;
-    margin-top: 4px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    border: 1px solid #C4C7C5; /* outline-variant */
+    border-bottom: 1px solid #C4C7C5;
+    position: relative;
 }
 
-.dropdown-item {
-    padding: 8px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid #C4C7C5; /* outline-variant */
+.search-input-modern {
+    background: #FEF7FF;
+    border-radius: 100px !important; /* Pill shape for this search */
 }
 
-.dropdown-item:last-child {
+/* Link List */
+.linked-items-list-modern {
+    padding: 0.5rem 0;
+}
+
+.link-item-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 16px;
+    border-bottom: 1px solid #E7E0EC;
+}
+
+.link-item-row:last-child {
     border-bottom: none;
 }
 
-.dropdown-item:hover {
-    background: #ECE6F0; /* surface-container-high */
-}
-
-.item-main {
-    font-size: 14px;
-    font-weight: 500;
-    color: #1D1B20; /* on-surface */
-}
-
-.item-sub {
-    font-size: 11px;
-    color: #625B71; /* secondary */
-}
-
-.linked-chips-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.link-chip {
-    display: flex;
-    align-items: center;
-    background: #DBE2F9; /* secondary-container */
-    color: #1D192B; /* on-secondary-container */
-    padding: 6px 12px;
-    border-radius: 16px;
-    gap: 8px;
-    max-width: 100%;
-}
-
-.chip-icon {
-    font-size: 12px;
-    opacity: 0.7;
-}
-
-.chip-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.chip-label {
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.chip-meta {
-    font-size: 10px;
-    opacity: 0.8;
-}
-
-.chip-remove {
-    background: transparent;
-    border: none;
-    color: inherit;
-    cursor: pointer;
-    padding: 4px;
+.row-icon {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
+    background: #E8DEF8; /* primary-container-low */
+    color: #1D192B;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.6;
+}
+
+.row-content {
+    flex: 1;
+}
+
+.row-main {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1D1B20;
+}
+
+.row-sub {
+    font-size: 12px;
+    color: #49454F;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.program-tag {
+    background: #E7E0EC;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.id-text {
+    font-family: monospace;
+    opacity: 0.7;
+}
+
+.btn-icon-danger {
+    background: transparent;
+    border: none;
+    color: #BA1A1A;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
     transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.chip-remove:hover {
-    background: rgba(0,0,0,0.1);
-    opacity: 1;
+.btn-icon-danger:hover {
+    background: #FFDAD6;
 }
 
-.empty-msg {
-    font-size: 13px;
-    color: #625B71; /* secondary */
-    font-style: italic;
-    padding: 0.5rem 0;
+.empty-state-modern {
+    padding: 3rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    text-align: center;
+    color: #49454F;
+}
+
+.empty-icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #F2F2F2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.empty-text {
+    font-size: 14px;
+    max-width: 250px;
 }
 
 .fade-in {
@@ -1385,31 +1382,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     display: block;
 }
 
-/* Clean Select (Dropdowns) */
-.clean-select {
-    width: 100%;
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: 1px solid #79747E; /* outline */
-    background: #FEF7FF; /* surface */
-    color: #1D1B20; /* on-surface */
-    font-size: 14px;
-    font-family: inherit;
-    transition: 0.2s;
-    box-sizing: border-box;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px top 50%;
-    background-size: 10px auto;
-    padding-right: 32px;
-}
-
-.clean-select:focus {
-    outline: none;
-    border-color: #005AC1; /* primary */
-    box-shadow: 0 0 0 1px #005AC1; /* primary */
-}
+/* Clean Select Removed - Using .std-select globally */
 
 /* Updated Tab UX */
 .tab-btn {
@@ -1577,5 +1550,113 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     font-family: monospace;
     opacity: 0.8;
     font-size: 11px;
+}
+
+/* Responsive Implementation */
+@media (max-width: 768px) {
+    .form-wrapper {
+        border-radius: 0; /* Full screen on mobile usually looks better without corners */
+        border: none;
+    }
+
+    /* Stack Header */
+    .header-main {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .name-input-wrapper {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-actions-top {
+        justify-content: flex-end;
+    }
+
+    .header-meta {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .meta-field {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Change Body Layout */
+    .form-body {
+        flex-direction: column;
+    }
+
+    /* Horizontal Scrollable Tabs */
+    .tabs-vertical {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: none;
+        border-bottom: 1px solid #C4C7C5;
+        padding: 0;
+        scroll-behavior: smooth;
+        /* Hide scrollbar structure but keep functionality */
+        scrollbar-width: none; 
+        -ms-overflow-style: none;
+    }
+
+    .tabs-vertical::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab-btn {
+        flex: 0 0 auto; /* Don't shrink */
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        padding: 12px 16px;
+        justify-content: center;
+    }
+
+    .tab-btn.active {
+        background: transparent; /* Or keep slight tint */
+        border-bottom-color: #005AC1;
+        border-left-color: transparent;
+    }
+    
+    .tab-info {
+        display: none; /* Hide labels if very small, or keep? Let's keep labels but make text smaller if needed. */
+        /* For better horizontal fit, let's just show icons? 
+           User asked for layout help. Horizontal tabs usually have text. 
+           Let's keep text but ensure it flows. 
+        */
+        display: flex;
+    }
+
+    /* Content Area Adjustment */
+    .content-area {
+        padding: 1.5rem 1rem; /* Reduce padding */
+    }
+
+    /* Stack Form Fields */
+    .form-fields-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .field-group.span-2 {
+        grid-column: span 1;
+    }
+    
+    /* Adjust controls in tab header */
+    .tab-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .header-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
 }
 </style>

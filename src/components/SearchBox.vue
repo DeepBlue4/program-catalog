@@ -49,7 +49,7 @@ const handleBlur = () => {
         v-model="query" 
         type="text" 
         placeholder="Search Programs or Efforts..." 
-        class="search-input"
+        class="std-input search-input-override"
         @input="handleInput"
         @focus="isOpen = true"
         @blur="handleBlur"
@@ -91,24 +91,10 @@ const handleBlur = () => {
   position: relative;
 }
 
-.search-input {
-  width: 100%;
-  padding: 10px 16px 10px 40px;
-  background: #FEF7FF; /* surface */
-  color: #1D1B20; /* on-surface */
-  border: 1px solid #79747E; /* outline */
-  border-radius: 24px;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.2s;
-  box-sizing: border-box;
-  height: 44px;
-}
-
-.search-input:focus {
-  border-color: #005AC1; /* primary */
-  background: #F7F2FA; /* surface-container-low */
-  box-shadow: 0 0 0 1px #005AC1; /* primary */
+.search-input-override {
+  padding-left: 40px !important; /* Space for icon */
+  border-radius: 24px; /* Maintain pill shape for search, or use 8px for strict consistency? strict consistency = 8px */
+  border-radius: 8px !important;
 }
 
 .search-icon {

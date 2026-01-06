@@ -304,21 +304,53 @@ export class CompassAPIService {
                         ? `${baseName} Platform`
                         : `${baseName} ${effType} ${j + 1}`;
 
+                    // Hierarchy Logic:
+                    // If not the first effort (j > 0), potentially make it a child of a previous effort
+                    // Simple chain: each effort is child of previous? Or random?
+                    // Let's do: j=0 is root. j=1 is child of j=0. j=2 is child of j=0. j=3 is root. etc.
+                    let parentId = null;
+                    if (j > 0 && random() > 0.3) {
+                        // Pick a random parent from 0 to j-1
+                        const parentIndex = Math.floor(random() * j);
+                        parentId = `EFF-${id}-${parentIndex}`;
+                    }
+
                     softwareEfforts.push({
                         id: effId,
                         name: effName,
 
                         status: pick(effortStatuses),
-                        parent: null,
+                        parent: parentId,
                         inherit_statement_of_work_profile: false,
-                        local_statement_of_work_profile: { type: effType },
+                        local_statement_of_work_profile: {
+                            type: effType,
+                            program_manager_email: `manager.${j}@example.com`,
+                            allow_non_us: random() > 0.5,
+                            mission_critical: random() > 0.8,
+                            program_phase: [pick(['Design', 'Development', 'Production'])],
+                            security_clearance: [pick(['None', 'Secret'])],
+                            safety_criticality: [pick(['None', 'DAL D / LOR 4'])]
+                        },
                         inherit_technical_points_of_contact: false,
-                        local_technical_points_of_contact: { names: `Tech Lead: User ${j}` },
+                        local_technical_points_of_contact: {
+                            names: `Tech Lead: User ${j}`,
+                            software_lead: `lead.${j}@example.com`,
+                            security_focal: `sec.${j}@example.com`
+                        },
                         inherit_developer_setup: false,
-                        local_developer_setup: { details: 'See Wiki for setup.' },
+                        local_developer_setup: {
+                            details: 'See Wiki for setup.',
+                            programming_languages: [pick(['Python', 'C++', 'Java'])],
+                            operating_systems: [pick(['Linux', 'Windows'])],
+                            development_environments: [pick(['BSF-Global', 'BSF-US'])],
+                            source_control_tools: [pick(['GitLab', 'Bitbucket'])],
+                            issue_tracking_tools: [pick(['Jira', 'GitLab'])]
+                        },
                         inherit_work_location: false,
-                        local_work_location: { location: primaryLocation },
-                        children: [],
+                        local_work_location: {
+                            locations: [primaryLocation, 'Remote']
+                        },
+                        children: [], // will be computed by frontend usually, but good to have
                         linked_software_efforts: []
                     });
                 }

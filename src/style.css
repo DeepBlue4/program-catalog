@@ -12,6 +12,101 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Standardized Form Elements */
+.std-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #625B71;
+  /* secondary */
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.std-input,
+.std-textarea,
+.std-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #1D1B20;
+  /* on-surface */
+  background: #FFFFFF;
+  /* surface-container-lowest */
+  border: 1px solid #79747E;
+  /* outline */
+  border-radius: 8px;
+  /* Consistent rounded corners */
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.std-input:focus,
+.std-textarea:focus,
+.std-select:focus {
+  outline: none;
+  border-color: #005AC1;
+  /* primary */
+  background: #FEF7FF;
+  /* surface */
+  box-shadow: 0 0 0 3px rgba(0, 90, 193, 0.15);
+  /* primary-container w/ opacity */
+}
+
+.std-input::placeholder,
+.std-textarea::placeholder,
+.std-select::placeholder {
+  color: #49454F;
+  /* on-surface-variant */
+  opacity: 0.6;
+}
+
+.std-input:disabled,
+.std-textarea:disabled,
+.std-select:disabled {
+  background: #E7E0EC;
+  /* surface-variant (disabled look) */
+  border-color: transparent;
+  color: #49454F;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Specific Select Styling */
+.std-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22%23625B71%22%20d%3D%22M7%2010l5%205%205-5z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 24px;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.std-select:hover {
+  background-color: #F7F2FA;
+  /* surface-container-low */
+}
+
+/* Error States */
+.has-error .std-input,
+.has-error .std-textarea,
+.has-error .std-select {
+  border-color: #BA1A1A;
+  /* error */
+}
+
+.has-error .std-input:focus,
+.has-error .std-textarea:focus,
+.has-error .std-select:focus {
+  box-shadow: 0 0 0 3px rgba(186, 26, 26, 0.15);
+  /* error container shadow */
+  border-color: #BA1A1A;
+}
+
+
 #app {
   width: 100vw;
   height: 100vh;
