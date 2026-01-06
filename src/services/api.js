@@ -247,9 +247,18 @@ export class CompassAPIService {
     }
 
     static generateMockHierarchy() {
+        // Deterministic Random Generator (Seeded)
+        let seed = 5678;
+        const random = () => {
+            seed = (seed * 9301 + 49297) % 233280;
+            return seed / 233280;
+        };
+
         const effortTypes = ['System', 'Service', 'Component', 'Application', 'Library'];
         const effortStatuses = ['Active', 'Maintenance', 'Planned', 'Deprecated'];
-        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        // Updated pick to use deterministic random
+        const pick = (arr) => arr[Math.floor(random() * arr.length)];
 
         // Scale Factor: Increase for larger tree
         const MAX_DEPTH = 4; // 0-indexed, so 5 levels
@@ -257,7 +266,8 @@ export class CompassAPIService {
         const MAX_CHILDREN = 5;
 
         const createNode = (depth, parentName, forceName = null) => {
-            const id = Math.floor(Math.random() * 10000000);
+            // Deterministic ID generation logic
+            const id = Math.floor(random() * 10000000);
             let name;
 
             if (forceName) {
@@ -266,7 +276,7 @@ export class CompassAPIService {
             else if (depth === 1) name = `${pick(['Space', 'Defense', 'Commercial', 'Global'])} Division ${id.toString().slice(-2)}`;
             else if (depth === 2) name = `${pick(['X', 'Y', 'Z', 'Alpha', 'Beta', 'Gamma', 'Delta'])} Program ${id.toString().slice(-3)}`;
             else if (depth === 3) name = `${pick(['Avionics', 'Propulsion', 'Software', 'Logistics', 'Mission', 'Ground'])} Team ${id.toString().slice(-3)}`;
-            else name = `Unit ${Math.floor(Math.random() * 1000)}`;
+            else name = `Unit ${Math.floor(random() * 1000)}`;
 
             const isTargetNeutral = name === "Commercial Division 37";
 
@@ -275,18 +285,18 @@ export class CompassAPIService {
             const chiefEngineer = `Eng. ${pick(['Davis', 'Miller', 'Wilson', 'Moore'])}`;
             const primaryLocation = pick(['Seattle, WA', 'St. Louis, MO', 'Huntsville, AL', 'Arlington, VA']);
             const primaryType = pick(['Production', 'Development', 'Sustainment', 'R&D']);
-            const programValue = `$${(Math.random() * 100 + 10).toFixed(1)}M`;
+            const programValue = `$${(random() * 100 + 10).toFixed(1)}M`;
 
             const isLeafCandidate = depth >= 3;
             const softwareEfforts = [];
 
-            if (isLeafCandidate && !isTargetNeutral && Math.random() > 0.3) {
+            if (isLeafCandidate && !isTargetNeutral && random() > 0.3) {
                 // Generate 1 to 5 efforts to ensure "more than just 1" is common
-                const numEfforts = Math.floor(Math.random() * 5) + 1;
+                const numEfforts = Math.floor(random() * 5) + 1;
 
                 for (let j = 0; j < numEfforts; j++) {
                     const effId = `EFF-${id}-${j}`;
-                    // Use closure-safe pick or the one defined above
+                    // Use closure-safe pick
                     const effType = pick(effortTypes);
                     // Differentiate names slightly
                     const baseName = name.split(' ')[0] || 'Project';
@@ -297,6 +307,7 @@ export class CompassAPIService {
                     softwareEfforts.push({
                         id: effId,
                         name: effName,
+
                         status: pick(effortStatuses),
                         parent: null,
                         inherit_statement_of_work_profile: false,
@@ -316,7 +327,7 @@ export class CompassAPIService {
             const children = [];
             if (depth < MAX_DEPTH && !isTargetNeutral) {
                 // If Root, ensure one child is Commercial Division 37
-                const numChildren = Math.floor(Math.random() * (MAX_CHILDREN - MIN_CHILDREN + 1)) + MIN_CHILDREN;
+                const numChildren = Math.floor(random() * (MAX_CHILDREN - MIN_CHILDREN + 1)) + MIN_CHILDREN;
 
                 let forcedChildCreated = false;
 
@@ -333,7 +344,7 @@ export class CompassAPIService {
 
             // NEW: Compliance Requirement simulation
             // Randomly assign expectation (e.g., 60% of leaf candidates expect efforts)
-            const expectsEffort = isLeafCandidate && Math.random() > 0.4;
+            const expectsEffort = isLeafCandidate && random() > 0.4;
 
             return {
                 value: id,

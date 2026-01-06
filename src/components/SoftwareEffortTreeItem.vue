@@ -53,6 +53,10 @@ const handleSelect = () => {
 const hasChildren = computed(() => props.effort.children && props.effort.children.length > 0);
 const isSelected = computed(() => String(props.effort.id) === String(props.selectedId));
 
+const effortType = computed(() => {
+    return props.effort.local_statement_of_work_profile?.type || props.effort.type;
+});
+
 
 
 </script>
@@ -74,7 +78,7 @@ const isSelected = computed(() => String(props.effort.id) === String(props.selec
 
              <div class="info">
                  <span class="name">{{ effort.name }}</span>
-                 <span class="type-badge">{{ effort.type }}</span>
+                 <span class="type-badge">{{ effortType }}</span>
              </div>
         </div>
     </div>
