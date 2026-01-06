@@ -1,6 +1,6 @@
 export class CompassAPIService {
-    static pathPrefix = "/ui/swe-program-catalog/";
-    static useTestData = true;
+    static pathPrefix = import.meta.env.VITE_API_BASE_URL || "/ui/swe-program-catalog/";
+    static useTestData = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
     /**
      * API Response
