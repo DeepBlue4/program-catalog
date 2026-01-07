@@ -160,6 +160,20 @@ class ProgramCatalogService:
             logger.warning("save_efforts_for_program called with None or empty effort data")
             return
 
+        # Resolve Program Instance
+        # The 'id' passed might be a UUID (PK) or an Integer (program_id).
+        # We need the actual instance to set the Foreign Key correctly.
+        program_instance = ProgramCatalogInfoModel.objects.filter(id=id).first()
+        if not program_instance:
+             # Fallback: Try looking up by program_id (Legacy ID)
+             program_instance = ProgramCatalogInfoModel.objects.filter(program_id=id).first()
+        
+        if not program_instance:
+            logger.error("save_efforts_for_program: Program not found for id=%s", id)
+            # Depending on requirements, raise error or return
+            # raise ValueError(f"Program not found for id {id}")
+            return
+
         with transaction.atomic():
             # 1. Resolve Parent Instance (if provided)
             # ----------------------------------------
@@ -236,7 +250,7 @@ class ProgramCatalogService:
                 
                 # Update scalars
                 instance.name = new_effort_data.name
-                instance.program_catalog_info_id = id
+                instance.program_catalog_info = program_instance # Use resolved instance
                 
                 # Update inheritance flags
                 instance.inherit_statement_of_work_profile = new_effort_data.inherit_statement_of_work_profile
@@ -315,7 +329,7 @@ class ProgramCatalogService:
                     )
 
                 instance = SoftwareEffortModel.objects.create(
-                    program_catalog_info_id=id,
+                    program_catalog_info=program_instance, # Use resolved instance
                     name=new_effort_data.name,
                     parent=parent_instance,
                     # Inheritance flags
@@ -328,17 +342,7 @@ class ProgramCatalogService:
                     local_technical_points_of_contact=tech_contacts,
                     local_developer_setup=developer_setup,
                     local_work_location=work_location,
-                    # If uuid was provided by client, we might want to respect it:
-                    # uuid=effort_uuid if effort_uuid else uuid.uuid4() 
-                    # (Django usually auto-generates uuid field if using AutoField/UUIDField with default,
-                    # but if we want to sync with client ID...)
-                )
-                # If the model allows setting UUID manually
-                if effort_uuid:
-                    # Some setups don't allow setting this on create if it's auto_now_add equivalent. 
-                    # Assuming we can force it or it's handled. 
-                    # If creating normally, it gets a new one.
-                    pass 
+                ) 
 
             # 3. Handle Linked Software Efforts (Third Pass logic equivalent)
             # -------------------------------------------------------------
