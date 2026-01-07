@@ -287,14 +287,14 @@ const confirmDelete = async () => {
     if (itemToDelete.value) {
         const index = props.efforts.findIndex(e => e.id === itemToDelete.value.id);
         if (index !== -1) {
-            // Optimistic update
             const deletedItem = props.efforts[index];
-            props.efforts.splice(index, 1);
             
-            // API Call
-            const res = await CompassAPIService.updateSoftwareEffortsForNode(props.programId, props.efforts);
+            // Call API with Granular Delete
+            const res = await CompassAPIService.deleteSoftwareEffort(props.programId, deletedItem.id);
             
             if (res.success) {
+                // Remove from local list upon success
+                props.efforts.splice(index, 1);
                 showNotification(`Deleted '${deletedItem.name}' successfully.`);
                 if (String(props.selectedId) === String(deletedItem.id)) {
                     // Emit null to clear selection via parent
@@ -302,8 +302,6 @@ const confirmDelete = async () => {
                     isFormDirty.value = false;
                 }
             } else {
-                // Revert
-                props.efforts.splice(index, 0, deletedItem);
                 showNotification('Failed to delete effort. Please try again.', 'error');
             }
         }
@@ -314,39 +312,50 @@ const confirmDelete = async () => {
 };
 
 const saveEffort = async (effortData) => {
-    // Clone to prepare for API
-    const newEffortsList = [...props.efforts];
     let isNew = false;
     let oldItem = null;
     let index = -1;
 
+    // Prepare data for API (single item)
+    // If it's new, we might need a temp ID for internal logic, but API might assign one.
+    // Ideally we wait for API to give back ID.
+    // For now we preserve the logic of generating one if missing for the call.
+
     if (effortData.id) {
         // Update existing
-        index = newEffortsList.findIndex(e => e.id === effortData.id);
+        index = props.efforts.findIndex(e => e.id === effortData.id);
         if (index !== -1) {
-             oldItem = { ...newEffortsList[index] };
-             Object.assign(newEffortsList[index], effortData);
+             oldItem = { ...props.efforts[index] };
+             // Do NOT mutate prop yet, wait for success
         }
     } else {
         // Create new
         isNew = true;
-        const newId = `EFF-${props.programId}-${Date.now()}`;
-        const newEffort = { ...effortData, id: newId };
-        newEffortsList.push(newEffort);
-        effortData.id = newId; // Update so form has ID
+        // Generate a temporary ID if one isn't provided, or let backend handle it?
+        // The form usually emits without ID for new items?
+        // The mock logic in Form creates 'EFF-...' but let's ensure we have a fallback or let backend assign.
+        // If we want backend to assign, we pass without ID? 
+        // For 'save_efforts_for_program' Python logic, it looks for UUID.
+        // Let's ensure we pass what we have.
     }
 
-    // Call API with new list
-    const res = await CompassAPIService.updateSoftwareEffortsForNode(props.programId, newEffortsList);
+    // Call Granular API
+    const res = await CompassAPIService.saveSoftwareEffort(props.programId, effortData);
 
     if (res.success) {
-         // Apply changes to prop (mutable array)
+         // The backed might return the FULL updated object (including new ID if created)
+         // Our mock returns `effortData`.
+         const savedEffort = res.data || effortData;
+         
          if (isNew) {
-             props.efforts.push(newEffortsList[newEffortsList.length - 1]);
-             // selectedEffortId.value = effortData.id; // Removed ref
-             emit('selection-change', effortData.id);
+             // If ID was missing and backend assigned one, ensuring we use it.
+             // If mock didn't assign, we might need to gen one to avoid issues.
+             if (!savedEffort.id) savedEffort.id = `EFF-${props.programId}-${Date.now()}`;
+             
+             props.efforts.push(savedEffort);
+             emit('selection-change', savedEffort.id);
          } else if (index !== -1) {
-             Object.assign(props.efforts[index], effortData);
+             Object.assign(props.efforts[index], savedEffort);
          }
          
          showNotification(isNew ? 'Effort created successfully.' : 'Changes saved successfully.');

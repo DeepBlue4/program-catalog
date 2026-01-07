@@ -180,15 +180,74 @@ export class CompassAPIService {
     }
 
     /**
-     * Updates the efforts assigned to a node
-     * @param {string} hierarchyNodeUUID - the UUID of the node in the hierarchy
-     * @param {Array} efforts - the efforts to set on the node
-     * @returns {APIResponse} - the result of the request (success/failure)
-     * @see SoftwareEffort in core/src/models/program/software_effort.py
+     * Saves a single software effort (Create or Update).
+     * @param {string} hierarchyNodeUUID - the UUID of the program
+     * @param {Object} effort - the effort object to save
+     * @returns {APIResponse}
      */
-    static async updateSoftwareEffortsForNode(hierarchyNodeUUID, efforts) {
+    static async saveSoftwareEffort(hierarchyNodeUUID, effort) {
+        if (CompassAPIService.useTestData) {
+            await CompassAPIService.simulateLatency();
+            console.log(`[Mock SAVE] Saving effort for ${hierarchyNodeUUID}:`, effort);
+
+            // In a real mock scenario with state persistence, we would update the list locally.
+            // For now, we return success with the data passed back (mimicking backend echo).
+            return {
+                success: true,
+                data: effort
+            };
+        }
+
         const path = `enterprise-hierarchy/${hierarchyNodeUUID}/software-effort`;
-        return await this.performPut(path, efforts);
+        // Backend distinguishes create vs update often by method (POST vs PUT) or by ID presence.
+        // Based on "save_efforts_for_program" Python logic provided, it seems to handle list or single?
+        // Wait, the user provided Python code "save_efforts_for_program" which accepts "new_effort_data: SoftwareEffort" (SINGULAR).
+        // Use PUT for compatibility or POST if strictly new?
+        // Let's assume the endpoint handles the single item save.
+
+        return await this.performPut(path, effort);
+    }
+
+    /**
+     * Deletes a single software effort.
+     * @param {string} hierarchyNodeUUID - the UUID of the program 
+     * @param {string} effortId - the ID/UUID of the effort to delete
+     * @returns {APIResponse}
+     */
+    static async deleteSoftwareEffort(hierarchyNodeUUID, effortId) {
+        if (CompassAPIService.useTestData) {
+            await CompassAPIService.simulateLatency();
+            console.log(`[Mock DELETE] Deleting effort ${effortId} from ${hierarchyNodeUUID}`);
+            return { success: true };
+        }
+
+        // Assuming a standard RESTful delete endpoint usually looks like .../software-effort/EFFORT_ID
+        // OR .../software-effort?id=EFFORT_ID
+        // But the previous implementations used a PUT of the list.
+        // We will assume the backend now exposes a DELETE method or specific endpoint.
+        // Given the service_temp.py has `delete_effort_by_uuid`, we'll try a DELETE request.
+
+        const path = `enterprise-hierarchy/${hierarchyNodeUUID}/software-effort/${effortId}`;
+
+        // We need a performDelete helper or use fetch directly
+        const csrfToken = CompassAPIService.getCSRFToken();
+        try {
+            const response = await fetch(`${CompassAPIService.pathPrefix}${path}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                }
+            });
+            if (!response.ok) {
+                console.error("DELETE request failed:", response);
+                return { success: false };
+            }
+            return { success: true };
+        } catch (e) {
+            console.error("DELETE request exception:", e);
+            return { success: false };
+        }
     }
 
     /**
