@@ -121,12 +121,49 @@ export class CompassAPIService {
             const count = 45; // Test pagination
             const efforts = [];
             for (let i = 0; i < count; i++) {
+                const effId = `eff-${hierarchyNodeUUID}-${i}`;
+                const effType = i % 3 === 0 ? 'System' : 'Service';
+
                 efforts.push({
-                    id: `eff-${hierarchyNodeUUID}-${i}`,
+                    id: effId,
                     name: `Mock Effort ${i + 1}`,
-                    type: i % 3 === 0 ? 'System' : 'Service',
-                    status: 'Active',
-                    description: `Automated mock effort ${i + 1} description.`,
+                    parent: null, // Flat list for this mock scope usually
+
+                    inherit_statement_of_work_profile: false,
+                    local_statement_of_work_profile: {
+                        type: effType, // Kept per user request
+                        program_manager_email: `manager.${i}@example.com`,
+                        allow_non_us: i % 2 === 0,
+                        mission_critical: i % 4 === 0,
+                        program_phase: 'Development', // String to match Django text
+                        security_clearance: ['None'],
+                        safety_criticality: ['None']
+                    },
+
+                    inherit_technical_points_of_contact: false,
+                    local_technical_points_of_contact: {
+                        software_lead: `lead.${i}@example.com`,
+                        security_focal: `sec.${i}@example.com`
+                    },
+
+                    inherit_developer_setup: false,
+                    local_developer_setup: {
+                        programming_languages: ['Python', 'Java'],
+                        operating_systems: ['Linux'],
+                        development_environments: ['BSF-Global'],
+                        source_control_tools: ['GitLab'],
+                        issue_tracking_tools: ['Jira'],
+                        dp_assessment_name: `DP-Assess-${i}`,
+                        sbom_location: ['Artifactory']
+                    },
+
+                    inherit_work_location: false,
+                    local_work_location: {
+                        locations: ['Seattle, WA', 'Remote']
+                    },
+
+                    children: [],
+                    linked_software_efforts: []
                 });
             }
             return {
@@ -265,7 +302,7 @@ export class CompassAPIService {
         const MIN_CHILDREN = 2;
         const MAX_CHILDREN = 5;
 
-        const createNode = (depth, parentName, forceName = null) => {
+        const createNode = (depth, parentName, parentPath = '', forceName = null) => {
             // Deterministic ID generation logic
             const id = Math.floor(random() * 10000000);
             let name;
@@ -280,12 +317,18 @@ export class CompassAPIService {
 
             const isTargetNeutral = name === "Commercial Division 37";
 
-            // Program Properties (Flattned)
-            const programLeader = `Leader ${pick(['Smith', 'Johnson', 'Williams', 'Brown'])}`;
-            const chiefEngineer = `Eng. ${pick(['Davis', 'Miller', 'Wilson', 'Moore'])}`;
-            const primaryLocation = pick(['Seattle, WA', 'St. Louis, MO', 'Huntsville, AL', 'Arlington, VA']);
-            const primaryType = pick(['Production', 'Development', 'Sustainment', 'R&D']);
-            const programValue = `$${(random() * 100 + 10).toFixed(1)}M`;
+            // Program Properties
+            const organization_leader_name = `Leader ${pick(['Smith', 'Johnson', 'Williams', 'Brown'])}`;
+            const chief_engineer_name = `Eng. ${pick(['Davis', 'Miller', 'Wilson', 'Moore'])}`;
+            const primary_location = pick(['Seattle, WA', 'St. Louis, MO', 'Huntsville, AL', 'Arlington, VA']);
+            const program_allow_non_us = random() > 0.5;
+            const program_type = pick(['Production', 'Development', 'Sustainment', 'R&D']);
+            const program_value = `$${(random() * 100 + 10).toFixed(1)}M`;
+            const description = `This is a mock description for ${name}. It contains generic information.`;
+            const aliases = random() > 0.7 ? `Alias-${id}` : null;
+            const status = "Green";
+
+            const currentPath = parentPath ? `${parentPath}.${id}` : `${id}`;
 
             const isLeafCandidate = depth >= 3;
             const softwareEfforts = [];
@@ -304,10 +347,6 @@ export class CompassAPIService {
                         ? `${baseName} Platform`
                         : `${baseName} ${effType} ${j + 1}`;
 
-                    // Hierarchy Logic:
-                    // If not the first effort (j > 0), potentially make it a child of a previous effort
-                    // Simple chain: each effort is child of previous? Or random?
-                    // Let's do: j=0 is root. j=1 is child of j=0. j=2 is child of j=0. j=3 is root. etc.
                     let parentId = null;
                     if (j > 0 && random() > 0.3) {
                         // Pick a random parent from 0 to j-1
@@ -318,81 +357,115 @@ export class CompassAPIService {
                     softwareEfforts.push({
                         id: effId,
                         name: effName,
-
-                        status: pick(effortStatuses),
                         parent: parentId,
+
                         inherit_statement_of_work_profile: false,
                         local_statement_of_work_profile: {
-                            type: effType,
+                            type: effType, // Kept per user request
                             program_manager_email: `manager.${j}@example.com`,
                             allow_non_us: random() > 0.5,
                             mission_critical: random() > 0.8,
-                            program_phase: [pick(['Design', 'Development', 'Production'])],
+                            program_phase: pick(['Design', 'Development', 'Production']), // Django CharField match (string)
                             security_clearance: [pick(['None', 'Secret'])],
                             safety_criticality: [pick(['None', 'DAL D / LOR 4'])]
                         },
+
                         inherit_technical_points_of_contact: false,
                         local_technical_points_of_contact: {
-                            names: `Tech Lead: User ${j}`,
                             software_lead: `lead.${j}@example.com`,
                             security_focal: `sec.${j}@example.com`
                         },
+
                         inherit_developer_setup: false,
                         local_developer_setup: {
-                            details: 'See Wiki for setup.',
                             programming_languages: [pick(['Python', 'C++', 'Java'])],
                             operating_systems: [pick(['Linux', 'Windows'])],
                             development_environments: [pick(['BSF-Global', 'BSF-US'])],
                             source_control_tools: [pick(['GitLab', 'Bitbucket'])],
-                            issue_tracking_tools: [pick(['Jira', 'GitLab'])]
+                            issue_tracking_tools: [pick(['Jira', 'GitLab'])],
+                            dp_assessment_name: `DP-Assess-${j}`,
+                            sbom_location: [pick(['Artifactory', 'Nexus'])]
                         },
+
                         inherit_work_location: false,
                         local_work_location: {
-                            locations: [primaryLocation, 'Remote']
+                            locations: [primary_location, 'Remote']
                         },
-                        children: [], // will be computed by frontend usually, but good to have
+
+                        children: [],
                         linked_software_efforts: []
                     });
                 }
             }
 
             const children = [];
+            let hasDescendantExpecting = false;
+
             if (depth < MAX_DEPTH && !isTargetNeutral) {
                 // If Root, ensure one child is Commercial Division 37
                 const numChildren = Math.floor(random() * (MAX_CHILDREN - MIN_CHILDREN + 1)) + MIN_CHILDREN;
 
-                let forcedChildCreated = false;
-
                 for (let i = 0; i < numChildren; i++) {
+                    let childNode;
                     // Force the neutral node as the FIRST child of Root
                     if (depth === 0 && i === 0) {
-                        children.push(createNode(depth + 1, name, "Commercial Division 37"));
-                        forcedChildCreated = true;
+                        childNode = createNode(depth + 1, name, currentPath, "Commercial Division 37");
                     } else {
-                        children.push(createNode(depth + 1, name));
+                        childNode = createNode(depth + 1, name, currentPath);
+                    }
+                    children.push(childNode);
+                    if (childNode.hasSoftwareEffort || childNode.has_descendant_expecting_software_effort) {
+                        hasDescendantExpecting = true;
                     }
                 }
             }
 
-            // NEW: Compliance Requirement simulation
-            // Randomly assign expectation (e.g., 60% of leaf candidates expect efforts)
+            // Compliance Requirement simulation
             const expectsEffort = isLeafCandidate && random() > 0.4;
+            if (expectsEffort) hasDescendantExpecting = true; // Logic check: if self expects, does it count for parent? 
+            // In Django model: has_descendant_expecting_software_effort checks descendants.
+            // But strict implementation: a node might expect effort itself. 
+            // The method name is has_descendant... so strictly checks descendants.
+            // But let's assume if children have it, true.
 
             return {
-                value: id,
+                // ProgramCatalogModel fields (implied/merged)
+                id: id,
+                program_id: id, // Replaces value for OrgChart/Frontend ID
+                active: true,
+                critical: random() > 0.9,
+
+                // ProgramCatalogInfoModel fields
+                date: new Date().toISOString().split('T')[0],
                 name: name,
+                program_path: currentPath,
+                expect_software_effort: expectsEffort,
+                description: description,
+                aliases: aliases,
+                status: status,
+                primary_location: primary_location,
+                organization_leader_name: organization_leader_name,
+                chief_engineer_name: chief_engineer_name,
+                program_affiliation: parentName, // Rough approx
+                program_value: program_value,
+                program_type: program_type,
+
+                // Tree structure
                 children: children,
-                // Flattened properties for Sidebar
-                programLeader,
-                chiefEngineer,
-                primaryLocation,
-                primaryType,
-                programValue,
+
+                // Helper / Flattened properties for UI convenience if needed, 
+                // but trying to match model structure more closely.
+                // The frontend likely relies on these:
+                programLeader: organization_leader_name, // Map for UI compatibility if needed by existing views?
+                chiefEngineer: chief_engineer_name,      // Map for UI compatibility
+                primaryLocation: primary_location,       // Map for UI compatibility
+                primaryType: program_type,               // Map for UI compatibility
+                programValue: program_value,             // Map for UI compatibility
 
                 softwareEfforts: softwareEfforts,
                 hasSoftwareEffort: softwareEfforts.length > 0,
                 expecting_software_efforts: expectsEffort,
-                has_descendant_expecting_software_effort: children.some(c => c.hasSoftwareEffort || c.has_descendant_expecting_software_effort)
+                has_descendant_expecting_software_effort: hasDescendantExpecting
             };
         };
 

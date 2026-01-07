@@ -26,7 +26,7 @@ const handleNodeSelect = (node) => {
         router.push({ 
             name: 'ProgramEfforts', 
             params: { programId: node.parentId },
-            query: { effort_id: node.value }
+            query: { effort_id: node.program_id }
         });
     } else {
         // Do NOT select the node here. 
@@ -38,7 +38,7 @@ const handleNodeSelect = (node) => {
         // This ensures the Search function acts as a navigation tool to the details page
         router.push({ 
             name: 'ProgramEfforts', 
-            params: { programId: node.value || node.program_id } 
+            params: { programId: node.program_id } 
         });
     }
 };
@@ -46,7 +46,7 @@ const handleNodeSelect = (node) => {
 // View Switcher (Sidebar Button Action)
 const handleViewEfforts = () => {
     if (selectedNode.value) {
-        router.push({ name: 'ProgramEfforts', params: { programId: selectedNode.value.value } });
+        router.push({ name: 'ProgramEfforts', params: { programId: selectedNode.value.program_id } });
     }
 };
 
@@ -67,7 +67,7 @@ const breadcrumbs = computed(() => {
     if (selectedNode.value && chartData.value) {
         // Helper to find path in tree
         const findPath = (node, targetId, currentPath = []) => {
-            const nodeId = node.value || node.program_id;
+            const nodeId = node.program_id;
             if (String(nodeId) === String(targetId)) return [...currentPath, node];
             
             if (node.children) {
@@ -80,19 +80,19 @@ const breadcrumbs = computed(() => {
         };
         
         // Ensure we're looking for the ID correctly regardless of which property holds it
-        const targetId = selectedNode.value.value || selectedNode.value.program_id;
+        const targetId = selectedNode.value.program_id;
         const treePath = findPath(chartData.value, targetId);
         if (treePath) {
              crumbs.pop(); // Remove static root
              treePath.forEach(n => crumbs.push({ 
                  name: n.name, 
-                 id: n.value || n.program_id,
+                 id: n.program_id,
                  children: n.children // Pass children for dropdown
              }));
         } else {
              crumbs.push({ 
                  name: selectedNode.value.name, 
-                 id: selectedNode.value.value || selectedNode.value.program_id,
+                 id: selectedNode.value.program_id,
                  children: selectedNode.value.children 
              });
         }
@@ -123,7 +123,7 @@ const handleBreadcrumbClick = (crumb) => {
     }
     
     if (crumb.id) {
-        handleNodeSelect({ value: crumb.id, name: crumb.name });
+        handleNodeSelect({ program_id: crumb.id, name: crumb.name });
     }
 };
 
@@ -247,7 +247,7 @@ const currentEnvironment = computed(() => {
            <div class="sidebar-body">
                <div class="info-group">
                    <label>ID</label>
-                   <span>{{ selectedNode.value }}</span>
+                   <span>{{ selectedNode.program_id }}</span>
                </div>
                
                <!-- New Data Fields -->

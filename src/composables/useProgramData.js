@@ -70,8 +70,9 @@ export function useProgramData() {
                 acc.push({
                     name: effort.name,
                     value: effort.id,
+                    program_id: effort.id, // Ensure App.vue can read this for navigation
+                    id: effort.id,
                     type: 'Software Effort',
-                    isSoftwareEffort: true,
                     isSoftwareEffort: true,
                     parentId: nodes.program_id || nodes.value || nodes.id,
                     programName: nodes.name

@@ -29,11 +29,11 @@ const initChart = () => {
 
   chartInstance.on('click', (params) => {
     if (params.componentType === 'series') {
-        const nodeValue = params.data.value;
-        const currentCollapsed = collapsedState.value.get(nodeValue);
+        const nodeId = params.data.program_id;
+        const currentCollapsed = collapsedState.value.get(nodeId);
         
         // Toggle collapsed state
-        collapsedState.value.set(nodeValue, !currentCollapsed);
+        collapsedState.value.set(nodeId, !currentCollapsed);
         
         // Trigger update to reflect expansion/collapse
         updateChart();
@@ -53,11 +53,11 @@ const collapsedState = ref(new Map());
 const syncState = (node, depth = 0) => {
     if (!node) return;
     // Only set if not already present to preserve user interaction
-    if (!collapsedState.value.has(node.value)) {
+    if (!collapsedState.value.has(node.program_id)) {
         // Default logic: Root (depth 0) expanded, children (depth 1+) collapsed
         // This shows Root + Level 1 nodes.
         const defaultCollapsed = depth >= 1; 
-        collapsedState.value.set(node.value, node.collapsed !== undefined ? node.collapsed : defaultCollapsed);
+        collapsedState.value.set(node.program_id, node.collapsed !== undefined ? node.collapsed : defaultCollapsed);
     }
     if (node.children) {
         node.children.forEach(child => syncState(child, depth + 1));
@@ -110,7 +110,7 @@ const updateChart = () => {
           return `
             <div style="font-weight: 500; font-size: 14px; margin-bottom: 4px;">${d.name}</div>
             <div style="font-size: 12px; color: ${color}; margin-bottom: 4px; font-weight: 500;">● ${status}</div>
-            <div style="font-size: 11px; color: ${colors.neutral};">ID: ${d.value}</div>
+            <div style="font-size: 11px; color: ${colors.neutral};">ID: ${d.program_id}</div>
           `;
       }
     },
@@ -145,8 +145,10 @@ const updateChart = () => {
           }
         },
 
+        roam: true, // Enable dragging/panning
+
         emphasis: {
-          focus: 'descendant',
+          focus: 'none', // Disable fading of other nodes
           itemStyle: {
               shadowBlur: 10,
               shadowColor: 'rgba(0, 0, 0, 0.2)'
@@ -216,7 +218,7 @@ const updateChart = () => {
       }
 
       // Apply Selection Highlight
-      if (props.selectedId && newNode.value == props.selectedId) {
+      if (props.selectedId && newNode.program_id == props.selectedId) {
           newNode.itemStyle.shadowBlur = 10;
           newNode.itemStyle.shadowColor = '#2E7D32'; // Distinct highlight (Green)
           newNode.itemStyle.borderColor = '#2E7D32';
@@ -226,8 +228,8 @@ const updateChart = () => {
       }
       
       // Apply Managed Collapsed State
-      if (collapsedState.value.has(newNode.value)) {
-          newNode.collapsed = collapsedState.value.get(newNode.value);
+      if (collapsedState.value.has(newNode.program_id)) {
+          newNode.collapsed = collapsedState.value.get(newNode.program_id);
       }
 
       if (newNode.children) {
@@ -250,11 +252,11 @@ const expandPathToNode = (targetId) => {
 
     // Helper to find path
     const findPath = (node, path = []) => {
-        if (node.value == targetId) return path;
+        if (node.program_id == targetId) return path;
         
         if (node.children) {
             for (const child of node.children) {
-                const res = findPath(child, [...path, node.value]);
+                const res = findPath(child, [...path, node.program_id]);
                 if (res) return res;
             }
         }

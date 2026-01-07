@@ -25,21 +25,23 @@ async function fetchItems() {
             // DUMMY DATA INJECTION for "Missing Efforts" verification
             // This node strictly matches the "Expected (Missing)" criteria:
             // expecting_software_efforts = true AND (softwareEfforts is missing or empty)
-            const dummyNode = {
-                program_id: 9991234,
-                name: "Test Program (Missing Efforts)",
-                value: 9991234,
-                expecting_software_efforts: true,
-                hasSoftwareEffort: false,
-                softwareEfforts: [], // Explicitly empty
-                details: { programLeader: "TEST ADMIN" },
-                children: []
-            };
+            if (CompassAPIService.useTestData) {
+                const dummyNode = {
+                    program_id: 9991234,
+                    name: "Test Program (Missing Efforts)",
+                    value: 9991234,
+                    expecting_software_efforts: true,
+                    hasSoftwareEffort: false,
+                    softwareEfforts: [], // Explicitly empty
+                    details: { programLeader: "TEST ADMIN" },
+                    children: []
+                };
 
-            if (Array.isArray(response.data)) {
-                response.data.push(dummyNode);
-            } else if (response.data && response.data.children) {
-                response.data.children.push(dummyNode);
+                if (Array.isArray(response.data)) {
+                    response.data.push(dummyNode);
+                } else if (response.data && response.data.children) {
+                    response.data.children.push(dummyNode);
+                }
             }
 
             state.items = response.data;
@@ -142,13 +144,9 @@ function getFilteredSWEItems(root) {
         }
 
         // Logic Customization: 
-        // We want to show nodes that HAVE EFFORTS (hasSoftwareEffort) 
-        // OR contain them (containsSoftwareEffort => handled by child check)
-        // The previous logic used 'expect_software_effort' which was from the mocked data structure but 
-        // our new `api.js` structure uses `hasSoftwareEffort`.
-
-        // Let's adapt to our current API mock structure:
-        const isRelevant = node.hasSoftwareEffort === true;
+        // We want to show nodes that EXPECT EFFORTS (expecting_software_efforts) 
+        // regardless of whether they currently have them or not.
+        const isRelevant = node.expecting_software_efforts === true;
         const hasRelevantChild = filteredChildren.length > 0;
 
         // Include this node if it matches or any child matched

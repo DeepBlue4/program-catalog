@@ -120,7 +120,7 @@ onBeforeRouteUpdate(handleNavigation);
             :key="currentProgram.value"
             :program="currentProgram"
             :program-name="currentProgram.name" 
-            :program-id="currentProgram.value" 
+            :program-id="currentProgram.program_id" 
             :efforts="currentProgram.softwareEfforts"
             :selected-id="route.query.effort_id"
             @back="goBack"

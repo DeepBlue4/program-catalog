@@ -28,7 +28,7 @@ const chartData = computed(() => {
 // Sync Selection -> URL
 watch(selectedNode, (newNode) => {
     const currentId = route.query.program_id;
-    const newId = newNode ? String(newNode.value) : undefined;
+    const newId = newNode ? String(newNode.program_id) : undefined;
 
     if (currentId !== newId) {
         const query = { ...route.query };
@@ -45,7 +45,7 @@ watch(selectedNode, (newNode) => {
 watch(() => route.query.program_id, (newId) => {
     if (newId) {
         // Prevent unnecessary updates if already selected
-        if (selectedNode.value && String(selectedNode.value.value) === String(newId)) return;
+        if (selectedNode.value && String(selectedNode.value.program_id) === String(newId)) return;
 
         const node = findNodeById(newId);
         if (node) {
@@ -68,7 +68,7 @@ watch(chartData, (newData) => {
     // 2. We have a target ID in URL
     // 3. AND (We have no selection OR selection doesn't match target)
     if (newData && targetId) {
-        if (!selectedNode.value || String(selectedNode.value.value) !== String(targetId)) {
+        if (!selectedNode.value || String(selectedNode.value.program_id) !== String(targetId)) {
             const node = findNodeById(targetId);
             if (node) selectNode(node);
         }
@@ -126,7 +126,7 @@ const handleReset = () => {
             v-if="chartData"
             ref="chartRef"
             :data="chartData" 
-            :selected-id="selectedNode ? selectedNode.value : null"
+            :selected-id="selectedNode ? selectedNode.program_id : null"
             @node-click="handleNodeClick" 
         />
         <div v-else class="empty-state">

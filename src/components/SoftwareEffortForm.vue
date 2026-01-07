@@ -28,12 +28,8 @@ const props = defineProps({
       inherit_developer_setup: false,
       inherit_work_location: false,
       local_statement_of_work_profile: {
-        allow_non_us: false,
-        mission_critical: false,
-        security_clearance: [],
-        safety_criticality: [],
-        allow_non_us: false,
-        mission_critical: false,
+        allow_non_us: null,
+        mission_critical: null,
         security_clearance: [],
         safety_criticality: [],
         program_phase: ['Design', 'Development'], // Default phases
@@ -342,6 +338,13 @@ const toArray = (str) => {
     return str.split(',').map(s => s.trim()).filter(s => s);
 };
 
+// Helper for Tri-State Booleans (Select inputs return strings)
+const parseTriState = (val) => {
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+    return null;
+};
+
 // Helper for array to comma-separated list (for textareas)
 const fromArray = (arr) => {
     if (!arr) return '';
@@ -590,7 +593,7 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                     
                     <div class="field-group span-2">
                         <MultiSelectDropdown 
-                            :modelValue="sv('statement_of_work_profile', 'program_phase') || []"
+                            :modelValue="toArray(sv('statement_of_work_profile', 'program_phase'))"
                             @update:modelValue="val => updateLocal('statement_of_work_profile', 'program_phase', val)"
                             :options="PROGRAM_PHASES"
                             label="Program Phase"
@@ -634,12 +637,12 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                          <select 
                             class="std-select" 
                             :value="sv('statement_of_work_profile', 'allow_non_us')"
-                            @change="e => updateLocal('statement_of_work_profile', 'allow_non_us', e.target.value === 'true')"
+                            @change="e => updateLocal('statement_of_work_profile', 'allow_non_us', parseTriState(e.target.value))"
                             :disabled="formData.inherit_statement_of_work_profile"
                          >
-                            <option value="" disabled selected>Select...</option>
-                            <option :value="true">True</option>
-                            <option :value="false">False</option>
+                            <option value="">None</option>
+                            <option value="true">True</option>
+                            <option value="false">False</option>
                          </select>
                          <span v-if="errors.allow_non_us" class="error-msg">{{ errors.allow_non_us }}</span>
                     </div>
@@ -649,11 +652,12 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                          <select 
                             class="std-select" 
                             :value="sv('statement_of_work_profile', 'mission_critical')"
-                            @change="e => updateLocal('statement_of_work_profile', 'mission_critical', e.target.value === 'true')"
+                            @change="e => updateLocal('statement_of_work_profile', 'mission_critical', parseTriState(e.target.value))"
                             :disabled="formData.inherit_statement_of_work_profile"
                          >
-                            <option :value="true">True</option>
-                            <option :value="false">False</option>
+                            <option value="">None</option>
+                            <option value="true">True</option>
+                            <option value="false">False</option>
                          </select>
                     </div>
                 </div>

@@ -65,7 +65,7 @@ const dashboardData = computed(() => {
 
     // Helpers for List Mapping
     const mapNodeToList = (n) => ({
-        id: n.value,
+        id: n.program_id,
         name: n.name,
         leader: n.details?.programLeader || n.programLeader || 'N/A',
         count: n.softwareEfforts ? n.softwareEfforts.length : 0,
