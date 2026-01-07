@@ -150,9 +150,8 @@ class ProgramCatalogService:
         """
 
         logger.info(
-            "save_efforts_for_program: start for program_catalog_info_id=%s, single effort=%s",
-            id,
-            getattr(new_effort_data, "name", "Unknown"),
+            "save_efforts_for_program: start [DEBUG] incoming_id=%r (type=%s) for effort=%s",
+            id, type(id), getattr(new_effort_data, "name", "Unknown"),
         )
         
         # Guard: Ensure we have data
@@ -161,18 +160,18 @@ class ProgramCatalogService:
             return
 
         # Resolve Program Instance
-        # The 'id' passed might be a UUID (PK) or an Integer (program_id).
-        # We need the actual instance to set the Foreign Key correctly.
-        program_instance = ProgramCatalogInfoModel.objects.filter(id=id).first()
-        if not program_instance:
-             # Fallback: Try looking up by program_id (Legacy ID)
-             program_instance = ProgramCatalogInfoModel.objects.filter(program_id=id).first()
+        # Per user request: incoming 'id' is always treated as 'program_id', never a UUID.
+        logger.debug("save_efforts_for_program: Looking up Program by program_id=%r", id)
+        
+        program_instance = ProgramCatalogInfoModel.objects.filter(program_id=id).first()
         
         if not program_instance:
-            logger.error("save_efforts_for_program: Program not found for id=%s", id)
+            logger.error("save_efforts_for_program: Program NOT found for program_id=%r. Aborting.", id)
             # Depending on requirements, raise error or return
-            # raise ValueError(f"Program not found for id {id}")
             return
+        
+        logger.info("save_efforts_for_program: Resolved Program Instance -> pk=%s, program_id=%s", 
+                    program_instance.pk, program_instance.program_id)
 
         with transaction.atomic():
             # 1. Resolve Parent Instance (if provided)
