@@ -67,7 +67,7 @@ const dashboardData = computed(() => {
     const mapNodeToList = (n) => ({
         id: n.program_id,
         name: n.name,
-        leader: n.details?.programLeader || n.programLeader || 'N/A',
+        leader: n.details?.organization_leader_name || n.organization_leader_name || 'N/A',
         count: n.softwareEfforts ? n.softwareEfforts.length : 0,
         rawNode: n
     });

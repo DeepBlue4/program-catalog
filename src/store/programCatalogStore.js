@@ -33,7 +33,7 @@ async function fetchItems() {
                     expecting_software_efforts: true,
                     hasSoftwareEffort: false,
                     softwareEfforts: [], // Explicitly empty
-                    details: { programLeader: "TEST ADMIN" },
+                    details: { organization_leader_name: "TEST ADMIN" },
                     children: []
                 };
 

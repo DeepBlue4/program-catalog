@@ -579,27 +579,27 @@ const showHelpModal = ref(false);
                     
                     <div class="info-item">
                         <label>Program Leader</label>
-                        <div class="value">{{ program.programLeader || 'N/A' }}</div>
+                        <div class="value">{{ program.organization_leader_name || 'N/A' }}</div>
                     </div>
 
                     <div class="info-item">
                         <label>Chief Engineer</label>
-                        <div class="value">{{ program.chiefEngineer || 'N/A' }}</div>
+                        <div class="value">{{ program.chief_engineer_name || 'N/A' }}</div>
                     </div>
 
                     <div class="info-item">
                         <label>Program Value</label>
-                        <div class="value">{{ program.programValue || 'N/A' }}</div>
+                        <div class="value">{{ program.program_value || 'N/A' }}</div>
                     </div>
 
                     <div class="info-item">
                         <label>Primary Location</label>
-                        <div class="value">{{ program.primaryLocation || 'N/A' }}</div>
+                        <div class="value">{{ program.primary_location || 'N/A' }}</div>
                     </div>
 
                     <div class="info-item">
                         <label>Type</label>
-                        <div class="value">{{ program.primaryType || 'N/A' }}</div>
+                        <div class="value">{{ program.program_type || 'N/A' }}</div>
                     </div>
 
                     <div class="info-item">
