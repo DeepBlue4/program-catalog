@@ -517,11 +517,8 @@ export class CompassAPIService {
                 // Helper / Flattened properties for UI convenience if needed, 
                 // but trying to match model structure more closely.
                 // The frontend likely relies on these:
-                programLeader: organization_leader_name, // Map for UI compatibility if needed by existing views?
-                chiefEngineer: chief_engineer_name,      // Map for UI compatibility
-                primaryLocation: primary_location,       // Map for UI compatibility
-                primaryType: program_type,               // Map for UI compatibility
-                programValue: program_value,             // Map for UI compatibility
+                // Frontend Legacy mappings removed to enforce strict backend alignment
+
 
                 softwareEfforts: softwareEfforts,
                 hasSoftwareEffort: softwareEfforts.length > 0,

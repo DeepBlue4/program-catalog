@@ -253,23 +253,23 @@ const currentEnvironment = computed(() => {
                <!-- New Data Fields -->
                <div class="info-group">
                    <label>Program Leader</label>
-                   <span>{{ selectedNode.programLeader }}</span>
+                   <span>{{ selectedNode.organization_leader_name }}</span>
                </div>
                <div class="info-group">
                    <label>Chief Engineer</label>
-                   <span>{{ selectedNode.chiefEngineer }}</span>
+                   <span>{{ selectedNode.chief_engineer_name }}</span>
                </div>
                <div class="info-group">
                    <label>Primary Location</label>
-                   <span>{{ selectedNode.primaryLocation }}</span>
+                   <span>{{ selectedNode.primary_location }}</span>
                </div>
                <div class="info-group">
                    <label>Type</label>
-                   <span>{{ selectedNode.primaryType }}</span>
+                   <span>{{ selectedNode.program_type }}</span>
                </div>
                 <div class="info-group">
                    <label>Program Value</label>
-                   <span>{{ selectedNode.programValue }}</span>
+                   <span>{{ selectedNode.program_value }}</span>
                </div>
                
                <div class="divider"></div>
