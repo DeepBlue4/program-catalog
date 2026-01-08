@@ -33,7 +33,7 @@ const props = defineProps({
         mission_critical: null,
         security_clearance: [],
         safety_criticality: [],
-        program_phase: ['Design', 'Development'], // Default phases
+        program_phase: '', // Default phases
         program_manager_email: ''
       },
       technical_points_of_contact: {
@@ -601,14 +601,16 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
                     </div>
                     
                     <div class="field-group span-2">
-                        <MultiSelectDropdown 
-                            :modelValue="toArray(sv('statement_of_work_profile', 'program_phase'))"
-                            @update:modelValue="val => updateLocal('statement_of_work_profile', 'program_phase', val)"
-                            :options="PROGRAM_PHASES"
-                            label="Program Phase"
+                         <label>Program Phase</label>
+                         <select 
+                            class="std-select" 
+                            :value="sv('statement_of_work_profile', 'program_phase')"
+                            @change="e => updateLocal('statement_of_work_profile', 'program_phase', e.target.value)"
                             :disabled="formData.inherit_statement_of_work_profile"
-                            placeholder="Select Program Phases..."
-                        />
+                        >
+                            <option value="" disabled selected>Select Program Phase...</option>
+                            <option v-for="phase in PROGRAM_PHASES" :key="phase" :value="phase">{{ phase }}</option>
+                        </select>
                     </div>
                      <div class="field-group" :class="{ 'has-error': errors.program_manager_email }">
                         <label>Program Manager Email <span class="required-star">*</span></label>
