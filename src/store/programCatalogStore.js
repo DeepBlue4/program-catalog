@@ -1,8 +1,8 @@
-import { reactive } from "vue";
+import { reactive, shallowRef } from "vue";
 import { CompassAPIService } from "../services/api.js";
 
 const state = reactive({
-    items: null,
+    items: shallowRef(null),
     loading: false,
     error: null,
 });
