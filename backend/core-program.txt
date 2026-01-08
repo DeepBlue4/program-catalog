@@ -1,0 +1,43 @@
+# ##############################################################################
+# ##############################################################################
+# #
+# #                            BOEING PROPRIETARY
+# #                        CLASSIFICATION: UNCLASSIFIED
+# #                   Unpublished Work - All Rights Reserved
+# #                             Copyright 2024-2025
+# #                   Contract: Boeing Funded Development
+# #              Third Party Disclosure Requires Written Approval
+# #
+# ##############################################################################
+from typing import Optional
+
+from pydantic import Field
+
+from models.abstract.enhanced_base_model import EnhancedBasedModel
+
+
+class Program(EnhancedBasedModel):
+    """
+    Pydantic model representing a ProgramCatalogInfo record for API responses.
+    """
+
+    name: Optional[str] = Field(default=None, alias="program_name")
+    program_id: Optional[int] = None
+    parent_program_id: Optional[int] = None
+    program_path: Optional[str] = None
+    description: Optional[str] = None
+    primary_location: Optional[str] = None
+    status: Optional[str] = None
+    organization_leader_name: Optional[str] = None
+    chief_engineer_name: Optional[str] = None
+    program_type: Optional[str] = None
+    program_value: Optional[str] = None
+
+    class Config:
+        # This allows the Pydantic model to be created from a Django ORM object
+        from_attributes = True
+        populate_by_name = True
+
+
+class ProgramTreeNode(Program):
+    children: Optional[list] = []

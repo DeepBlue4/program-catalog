@@ -294,7 +294,7 @@ const currentEnvironment = computed(() => {
            </div>
         </div>
         <div v-else class="sidebar-empty">
-            <p>Select a node from the chart to view details.</p>
+            <p>Select a Program from the chart to view details.</p>
         </div>
       </aside>
     </main>

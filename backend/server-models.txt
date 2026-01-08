@@ -1,0 +1,1038 @@
+# ##############################################################################
+# ##############################################################################
+# #
+# #                            BOEING PROPRIETARY
+# #                        CLASSIFICATION: UNCLASSIFIED
+# #                   Unpublished Work - All Rights Reserved
+# #                             Copyright 2024-2025
+# #                   Contract: Boeing Funded Development
+# #              Third Party Disclosure Requires Written Approval
+# #
+# ##############################################################################
+from __future__ import annotations
+
+import csv
+import uuid
+from datetime import date
+
+from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
+from django.db.models import JSONField, QuerySet
+from django.urls import reverse
+from django.utils.safestring import mark_safe
+from log.log_handler import logger
+
+from apps.utils.models import BaseStorageModel
+from models.collection.program_catalog.program_data import ProgramInfo
+from models.program.software_effort import (
+    ProgramCatalogDataCallParser,
+)
+
+from .db_types import LTreeField
+
+
+class BaseProgramCatalogModelManager(models.Manager):
+
+    def import_external_program_data(self, csv_data: csv.DictReader, date: date):
+        """
+        Import external program data into Compass
+        """
+
+    def create_from_csv_file(self, csv_data, date: date):  # pragma: no cover
+        """
+        Interface function for data import
+        """
+        pass
+
+    def generate_report(self, csv_writer: csv.DictWriter):  # pragma: no cover
+        """
+        Interface function for report generation
+        """
+        pass
+
+    def set_children_active(self):  # pragma: no cover
+        """
+        Interface function for setting child object active status
+        """
+        pass
+
+
+class BaseProgramCatalogModel(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+
+    # TODO Issue #1177
+    # consolidate these fields once this class potentially inherits from BaseStorageModel
+    timestamp_created = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Created Timestamp",
+        help_text="The timestamp for when the the record was created",
+    )
+    timestamp_updated = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Updated Timestamp",
+        help_text="The timestamp for when the the record was updated",
+    )
+
+    class Meta:
+        abstract = True
+
+    @admin.display(description="Name")  # pragma: no cover
+    def get_name(self) -> str:
+        """
+        Interface function for returning the name of the object
+        """
+        return ""
+
+    def get_formatted_reference(self, reference_name, reference_object):
+        url = reverse("admin:" + reference_name + "_change", args=[reference_object.id])
+        link = '<a href="%s">%s</a>' % (url, reference_object.get_name())
+        return mark_safe(link)
+
+
+class ProgramCatalogManager(BaseProgramCatalogModelManager):
+    def get_by_current_name(self, name: str) -> ProgramCatalogModel | None:
+        """
+        Find and return the SoftwareProgram object that has the input name as of today's date
+        """
+        for program in self.all():
+            if program.name_on_date(date.today()) == name:
+                return program
+        return None
+
+    def deactivate_not_active(self, new_active_ids: list[int]):
+        """
+        Sets all SoftwarePrograms not in the input list of IDs to inactive
+        """
+        not_active_programs = self.exclude(id__in=new_active_ids)
+        for program in not_active_programs:
+            program.active = False
+        # Update in bulk to avoid transactions in a tight loop
+        self.bulk_update(not_active_programs, ["active"])
+
+    def existed_on_date(self, date: date) -> QuerySet:
+        existed_ids = []
+
+        for program in self.all():
+            if program.name_on_date(date) != "":
+                existed_ids.append(program.id)
+        return self.filter(id__in=existed_ids)
+
+
+class ProgramCatalogModel(BaseProgramCatalogModel):
+    """
+    Used as a parent allowing data to associate itself with a specific org found within the
+    Enterprise Hierarchy.
+    """
+
+    id = models.SmallAutoField(primary_key=True, editable=False, unique=True)
+    """This ID maps to the org ID found within EH"""
+    critical = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
+    objects = ProgramCatalogManager()
+
+    class Meta:
+        verbose_name_plural = "Program Catalog (Exporter)"
+        ordering = ["id"]
+
+    def path_on_date(self, date: date) -> str | None:
+        """
+        Returns the path to the program on the given date
+        """
+        info = self.programcataloginfomodel_set.filter(date__lte=date).last()
+        if info:
+            return info.program_path
+        return ""
+
+    def name_on_date(self, date: date) -> str | None:
+        """
+        Returns the name of a SoftwareProgram on the given date
+        """
+        info = self.programcataloginfomodel_set.filter(date__lte=date).last()
+        if info:
+            return info.name
+        return ""
+
+    def parent_on_date(self, date: date) -> ProgramCatalogModel | None:
+        """
+        Returns the parent of this SoftwareProgram on the given date
+        """
+        info = self.programcataloginfomodel_set.filter(date__lte=date).last()
+        if info:
+            return info.parent_program
+        return None
+
+    @admin.display(description="Name")
+    def get_name(self) -> str | None:
+        return self.name_on_date(date.today())
+
+    def get_current_parent(self) -> ProgramCatalogModel | None:
+        return self.parent_on_date(date.today())
+
+    @admin.display(description="Parent Program")
+    def get_parent_link(self) -> str:
+        """
+        Returns a formatted hyperlink to the parent of this SoftwareProgram.  This is used for
+        navigation on the SoftwareProgram admin page
+        """
+        current_parent_program = self.get_current_parent()
+        if current_parent_program is not None:
+            return self.get_formatted_reference(
+                "swe_program_catalog_programcatalogmodel", current_parent_program
+            )
+        else:
+            return ""
+
+    def get_child_ids_on_date(self, date: date) -> list[int]:
+        """
+        Returns a list of SoftwareProgram IDs representing
+        the direct children of this SoftwareProgram
+        """
+        ids = []
+        for program in ProgramCatalogModel.objects.all():
+            if program.parent_on_date(date) == self:
+                ids.append(program.id)
+        return ids
+
+    def get_current_children(self) -> QuerySet:
+        """
+        Returns a QuerySet populated with the direct children of this SoftwareProgram
+        """
+        return ProgramCatalogModel.objects.filter(id__in=self.get_child_ids_on_date(date.today()))
+
+    def get_current_descendant_ids(self, descendant_ids: list[int]) -> QuerySet:
+        """
+        Returns a list of SoftwareProgram IDs representing all of
+        the descendants of this SoftwareProgram
+        """
+        child_ids = self.get_child_ids_on_date(date.today())
+        descendant_ids.extend(child_ids)
+
+        for child_id in child_ids:
+            descendant = ProgramCatalogModel.objects.get(id=child_id)
+            descendant.get_current_descendant_ids(descendant_ids)
+
+    def get_current_descendants(self) -> QuerySet:
+        """
+        Returns a QuerySet populated with the descendants of this SoftwareProgram
+        """
+        descendant_ids: list[int] = []
+        self.get_current_descendant_ids(descendant_ids)
+        return ProgramCatalogModel.objects.filter(id__in=descendant_ids)
+
+    def set_children_active(self):
+        """
+        Sets the active status of all children of this SoftwareProgram
+        to the active status of this SoftwareProgram.
+        Note: This is cascaded to all descendants via the pre_save signal handling
+        """
+        for child in self.get_current_children():
+            child.active = self.active
+            child.save()
+
+
+class ProgramCatalogInfoManager(BaseProgramCatalogModelManager):
+
+    def create_sw_programs_in_bulk(self, data: list[ProgramInfo]) -> dict:
+        """Creates the SW Program entities.
+
+        This operation is done as a bulk operation to keep the execution time to a minimum.
+
+        Args:
+            data (list): The entries from the imported file
+
+        Returns:
+            dict: A mapping of IDs to entities
+        """
+
+        sw_program_entities_to_add = []
+        sw_program_id_to_entity = {}
+        for row in data:
+            program_id = row.org_id
+            program = ProgramCatalogModel(id=program_id, active=True)
+            sw_program_entities_to_add.append(program)
+            sw_program_id_to_entity[program_id] = program
+        ProgramCatalogModel.objects.bulk_create(sw_program_entities_to_add, ignore_conflicts=True)
+        return sw_program_id_to_entity
+
+    @transaction.atomic
+    def create_program_updates(self, parsed_data: list[ProgramInfo], date: date) -> list[int]:
+        """
+        Creates new SoftwareProgramInfo objects based on an input table of data.
+        Returns a list of SoftwareProgram IDs
+        """
+        org_name_to_id = self.create_program_to_id_lookup(parsed_data)
+        ids = []
+
+        # In an effort to do transactions in bulk, we first create the SW Program entities, then
+        # will create the corresponding info object
+        id_to_program = self.create_sw_programs_in_bulk(parsed_data)
+
+        sw_program_entities_to_add = []
+        for row in parsed_data:
+            program_id = row.org_id
+            program_name = row.name
+            program_path = self.construct_program_path(row, org_name_to_id)
+            row.program_path = program_path
+
+            if program_id == "" or program_name == "":
+                continue
+
+            program = id_to_program[program_id]
+            data = row.model_dump(
+                exclude={
+                    "org_id",
+                    "org_name_in_breadcrumb",
+                    "parent",
+                    "breadcrumb",
+                    "has_descendant_expecting_software_effort",
+                }
+            )
+            entity = ProgramCatalogInfoModel.objects.update_or_create(
+                date=date,
+                program=program,
+                defaults=data,
+            )
+            sw_program_entities_to_add.append(entity)
+            ids.append(program_id)
+
+        return ids
+
+    def construct_program_path(self, program: ProgramInfo, program_name_to_id: dict) -> str:
+        """
+        Creates the path used for querying for program info based a structure.
+
+        Args:
+            data (dict): The Program Catalog row that was imported.
+            program_name_to_id (dict): The lookup from program name to ID
+
+        Returns:
+            str: The dotted ID path (e.g., 3.4.5282.4556.185)
+        """
+        path = ""
+        for ancestor_org in program.breadcrumb:
+            org_id = program_name_to_id[ancestor_org]
+            if len(path) > 0:
+                path += "."
+            path += str(org_id)
+        return path
+
+    def create_program_to_id_lookup(self, program_list: list[ProgramInfo]) -> dict:
+        """
+        Creates a lookup of program name to program ID. Since the names are not consistent within
+        the file we are importing, this uses the last entry set in the LV column to determine the
+        name that should be used in the lookup.
+
+        Args:
+            program_list (list): The list of imported programs.
+
+        Returns:
+            dict: A mapping from program name as define in the LV columns to ID
+        """
+        org_name_to_id = {}
+        for program in program_list:
+            lvl_org_name = program.org_name_in_breadcrumb
+            org_name_to_id[lvl_org_name] = program.org_id
+        return org_name_to_id
+
+    def cleanup_program_updates(self, parsed_data: list[ProgramInfo]):
+        """
+        Sets the parent programs for the last SoftwareProgramInfo
+        updates and deletes and duplicates.
+        """
+
+        # Create a lookup for setting the parent program before entering the update
+        # loop to avoid hitting the DB each time for this info
+        program_lookup = {}
+        today = date.today()
+        for program in ProgramCatalogModel.objects.all():
+            # Avoid doing lookups by name since the names across the columns are not consistent,
+            # to work around this we will use the current program path
+            program_lookup[program.path_on_date(today)] = program
+
+        for row in parsed_data:
+            program_path = row.program_path
+            parent_path = ".".join(program_path.split(".")[:-1])
+
+            if parent_path == "":
+                continue
+            parent_program = program_lookup.get(parent_path, None)
+            if parent_program is None:
+                continue
+
+            program_id = row.org_id
+            program_updates = self.filter(program__id=program_id)
+            if program_updates.count() == 0:
+                continue
+
+            # set the parent program for the last update of this program
+            last_update = program_updates.last()
+            last_update.parent_program = parent_program
+            last_update.save()
+
+            # now that the parent program has been set, we can check if the last update is
+            # identical to the previous one and remove it if it is
+            if program_updates.count() > 1:
+                prev_update = program_updates[program_updates.count() - 2]
+                if last_update.is_identical_to(prev_update):
+                    last_update.delete()
+
+    def create_from_csv_file(self, parsed_data: list[ProgramInfo], date: date):
+        """
+        Create SoftwareProgramInfo and SoftwareProgram objects from an input csv file.
+        """
+        # First pass, create an program update for each entry in the source data
+        active_program_ids = self.create_program_updates(parsed_data, date)
+
+        # Second pass, update the parent links in the program updates and remove duplicates.
+        # We have to do this in two passes because the parent information in the source data
+        # uses names instead of IDs. So, it's possible a parent name could have changed
+        # since the last update.
+        self.cleanup_program_updates(parsed_data)
+
+        ProgramCatalogModel.objects.deactivate_not_active(active_program_ids)
+
+
+class ProgramCatalogInfoModel(BaseProgramCatalogModel):
+    """
+    Used to capture data brought in via the Enterprise Hierarchy. Since these fields can change over
+    time, there may be more than one entry for each ProgramCatalogModel.
+    """
+
+    date = models.DateField()
+    name = models.CharField(max_length=128)
+    program = models.ForeignKey(ProgramCatalogModel, on_delete=models.CASCADE)
+    parent_program = models.ForeignKey(
+        ProgramCatalogModel, null=True, on_delete=models.SET_NULL, related_name="parent"
+    )
+    objects = ProgramCatalogInfoManager()
+    program_path = LTreeField()
+    expect_software_effort = models.BooleanField(
+        default=False,
+        help_text="Whether a SoftwareEffort is expected to be associated with this Program.",
+    )
+    description = models.TextField(
+        null=True,
+        blank=True,
+        help_text="A brief description of the program.",
+    )
+    aliases = models.TextField(
+        null=True,
+        blank=True,
+        help_text="List of alternative names for the program.",
+    )
+    status = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        help_text="The current status of the program.",
+    )
+    primary_location = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True,
+        help_text="The primary location of the program.",
+    )
+    organization_leader_name = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True,
+        help_text="The name of the leader of the organization.",
+    )
+    chief_engineer_name = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True,
+        help_text="The name of the chief engineer.",
+    )
+    program_affiliation = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True,
+        help_text="The program the organization is affiliated with.",
+    )
+    program_value = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True,
+        help_text="The value of the program.",
+    )
+    program_type = models.CharField(
+        max_length=128,
+        null=True,
+        blank=True,
+        help_text="The type of the program.",
+    )
+
+    class Meta:
+        verbose_name_plural = "Enterprise Hierarchy Importer and Viewer"
+        ordering = ["date"]
+        unique_together = ["program", "date"]
+
+    @admin.display(description="Program")
+    def program_link(self):
+        """
+        Returns a formatted hyperlink to the SoftwareProgram associated with
+        this SoftwareProgramInfo.  This is used for navigation on the
+        SoftwareProgramInfo admin page.
+        """
+        return self.get_formatted_reference("swe_program_catalog_programcatalogmodel", self.program)
+
+    @admin.display(description="Parent Program")
+    def parent_program_link(self):
+        """
+        Returns a formatted hyperlink to the parent SoftwareProgram associated with
+        this SoftwareProgramInfo.  This is used for navigation on the
+        SoftwareProgramInfo admin page.
+        """
+        if self.parent_program is not None:
+            return self.get_formatted_reference(
+                "swe_program_catalog_programcatalogmodel", self.parent_program
+            )
+        else:
+            return ""
+
+    @admin.display(description="Name")
+    def get_name(self) -> str:
+        return self.name
+
+    def is_identical_to(self, info: ProgramCatalogInfoModel):
+        return (
+            self.name == info.name
+            and self.parent_program == info.parent_program
+            and self.program_path == info.program_path
+            and self.program_type == info.program_type
+            and self.program_value == info.program_value
+            and self.program_affiliation == info.program_affiliation
+            and self.chief_engineer_name == info.chief_engineer_name
+            and self.organization_leader_name == info.organization_leader_name
+            and self.primary_location == info.primary_location
+            and self.status == info.status
+            and self.aliases == info.aliases
+            and self.description == info.description
+            and self.expect_software_effort == info.expect_software_effort
+            and self.has_descendant_expecting_software_effort
+            == info.has_descendant_expecting_software_effort
+        )
+
+    @property
+    def has_descendant_expecting_software_effort(self) -> bool:
+        """
+        Optimized: use program_path (ltree) to find any descendant ProgramCatalogInfo
+        with date <= today and expect_software_effort == True in a single DB query.
+        """
+        as_of = date.today()
+
+        # If this info has no program_path (shouldn't happen for a valid record), return False
+        if not self.program_path:
+            return False
+
+        # The program_path for descendants must start with this node's path plus a dot.
+        # Example: this path "3.4" -> descendants "3.4.5", "3.4.5.7", etc.
+        prefix = f"{self.program_path}."
+
+        # Single DB hit: are there any descendant infos (as of today) expecting effort?
+        return ProgramCatalogInfoModel.objects.filter(
+            program_path__startswith=prefix,
+            date__lte=as_of,
+            expect_software_effort=True,
+        ).exists()
+
+
+class StatementOfWorkProfileModel(BaseStorageModel):
+
+    allow_non_us = models.BooleanField(
+        blank=True,
+        null=True,
+        help_text="Whether non-U.S. personnel are allowed to participate",
+    )
+    mission_critical = models.BooleanField(
+        blank=True,
+        null=True,
+        help_text="Whether the effort is mission critical or not",
+    )
+
+    security_clearance = models.JSONField(
+        blank=True,
+        null=True,
+        help_text="The security clearance required for the program",
+    )
+    safety_criticality = models.JSONField(
+        blank=True,
+        null=True,
+        help_text="The safety criticality required for an effort",
+    )
+    program_phase = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text="The phase of the effort",
+    )
+    program_manager_email = models.EmailField(
+        max_length=254,
+        blank=True,
+        null=True,
+        help_text="Email of the program manager",
+    )
+
+
+class TechnicalPointOfContactModel(BaseStorageModel):
+    """
+    Technical points of contact for a program or statement of work.
+    Consider linking these to User objects (ForeignKey) in future iterations.
+    """
+
+    security_focal = models.CharField(
+        max_length=254,
+        blank=True,
+        null=True,
+        help_text="Name or email of the security focal point",
+    )
+    software_lead = models.CharField(
+        max_length=254,
+        blank=True,
+        null=True,
+        help_text="Name or email of the software lead",
+    )
+
+
+class DeveloperSetupModel(BaseStorageModel):
+    """
+    Developer environment and tooling details.
+    The programming_languages and operating_systems are stored as JSON arrays.
+    Example:
+      programming_languages = ["python", "c++", "java"]
+      operating_systems = ["linux", "windows"]
+    """
+
+    development_environments = models.JSONField(
+        blank=True,
+        null=True,
+        help_text="High-level description of the development environment (IDE, containers, etc.)",
+    )
+    source_control_tools = models.JSONField(
+        blank=True,
+        null=True,
+        help_text="e.g., git, perforce",
+    )
+    issue_tracking_tools = models.JSONField(
+        blank=True,
+        null=True,
+        help_text="e.g., Jira, GitHub Issues",
+    )
+    dp_assessment_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Data protection (DP) assessment or plan name",
+    )
+    sbom_location = models.JSONField(
+        blank=True,
+        null=True,
+        help_text="JSON array of SBOM storage tools",
+    )
+    programming_languages = JSONField(
+        default=list,
+        blank=True,
+        null=True,
+        help_text="JSON array of programming languages, e.g. ['python', 'c++']",
+    )
+    operating_systems = JSONField(
+        default=list,
+        blank=True,
+        null=True,
+        help_text="JSON array of supported OS names, e.g. ['linux', 'windows']",
+    )
+
+
+class WorkLocationModel(BaseStorageModel):
+    locations = models.JSONField(
+        default=list,
+        blank=True,
+        null=True,
+        help_text="JSON array of work location(s) for the effort",
+    )
+
+
+class SoftwareEffortsInfoManager(BaseProgramCatalogModelManager):
+
+    def _find_program_info(self, parsed_id):
+        try:
+            pid = int(parsed_id)
+        except (TypeError, ValueError):
+            return None
+
+        if ProgramCatalogInfoModel.objects.filter(program_id=pid).exists():
+            # return the matching queryset
+            return ProgramCatalogInfoModel.objects.filter(program_id=pid)
+        return None
+
+    def _parse_software_effort(self, program, csv_row):
+        # Verify no software effort for this program
+        existing_efforts = SoftwareEffortModel.objects.filter(
+            program_catalog_info_id=program[0]
+        ).exists()
+
+        if existing_efforts:
+            # TODO Set up for bulk update
+            logger.error("This importer is only set up to import as a fresh import")
+        # Fresh Import Logic
+        else:
+            # Pass CSV row to parser
+            parser = ProgramCatalogDataCallParser(**csv_row)
+            # Parser is now in pydantic form
+            software_effort = parser.to_models()
+            try:
+                # Create underlying models
+                sow_model = StatementOfWorkProfileModel(
+                    **software_effort.statement_of_work_profile.model_dump()
+                )
+
+                lot_model = TechnicalPointOfContactModel(
+                    **software_effort.technical_points_of_contact.model_dump()
+                )
+
+                local_dev_model = DeveloperSetupModel(
+                    **software_effort.developer_setup.model_dump()
+                )
+                wol_model = WorkLocationModel(**software_effort.work_location.model_dump())
+                # Save them off so they create UUID for DB
+                sow_model.save()
+                lot_model.save()
+                local_dev_model.save()
+                wol_model.save()
+                # Set above models and other fields
+                new_model = SoftwareEffortModel(
+                    program_catalog_info=program[0],
+                    name=software_effort.name,
+                    parent=None,
+                    inherit_statement_of_work_profile=False,
+                    inherit_technical_points_of_contact=False,
+                    inherit_developer_setup=False,
+                    inherit_work_location=False,
+                    local_statement_of_work_profile=sow_model,
+                    local_technical_points_of_contact=lot_model,
+                    local_developer_setup=local_dev_model,
+                    local_work_location=wol_model,
+                )
+                # Saved to DB
+                new_model.save()
+
+            except Exception as e:
+                # log the error and handle partial/failed row
+                logger.exception(
+                    "Failed to create SoftwareEffortModel for effort: %s %s", software_effort, e
+                )
+                raise
+
+    def create_from_csv_file(self, reader, date: date):
+        for row in reader:
+            parsed_org_id = row.get("Org ID", None)
+            status = row.get("Update Status", None)
+            program = self._find_program_info(parsed_org_id)
+            if status == "Not Applicable":
+                # No effort Skip!
+                continue
+            # Valid Program with Coordinating ID
+            elif program:
+                # Set expect software effort
+                program[0].expect_software_effort = True
+                program[0].save()
+                self._parse_software_effort(program, row)
+            # Program was not listed in enterprise heirarchy
+            else:
+                logger.warning(
+                    "This Org Id was not included in the original \
+                    Enterprise Hierarchy %i its software effort data will not be added",
+                    parsed_org_id,
+                )
+
+
+class SoftwareEffortModel(BaseStorageModel):
+    objects = SoftwareEffortsInfoManager()
+
+    program_catalog_info = models.ForeignKey(
+        ProgramCatalogInfoModel,
+        related_name="software_efforts",
+        null=True,
+        blank=True,
+        help_text="The program catalog info this software effort belongs to",
+        on_delete=models.SET_NULL,
+    )
+    name = models.CharField(
+        max_length=2048,
+        blank=True,
+        null=True,
+        help_text="The name of the effort",
+    )
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="children",
+        help_text="Optional parent software effort",
+    )
+    linked_software_efforts = models.ManyToManyField(
+        "self",
+        blank=True,
+        symmetrical=False,
+        related_name="linked_from",
+        help_text="Optional list of other SoftwareEffortModel instances linked to this effort",
+    )
+
+    inherit_statement_of_work_profile = models.BooleanField(
+        default=False,
+        verbose_name="Inherit SOW",
+        help_text="If checked, the SOW Profile will be inherited from the parent.",
+    )
+    inherit_technical_points_of_contact = models.BooleanField(
+        default=False,
+        verbose_name="Inherit POCs",
+        help_text="If checked, the Technical POCs will be inherited from the parent.",
+    )
+    inherit_developer_setup = models.BooleanField(
+        default=False,
+        verbose_name="Inherit Dev Setup",
+        help_text="If checked, the Developer Setup will be inherited from the parent.",
+    )
+    inherit_work_location = models.BooleanField(
+        default=False,
+        verbose_name="Inherit Work Location",
+        help_text="If checked, the Work Location will be inherited from the parent.",
+    )
+
+    # These are only used if their corresponding 'inherit_...' boolean is False.
+    local_statement_of_work_profile = models.OneToOneField(
+        StatementOfWorkProfileModel,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="software_effort",
+        verbose_name="Local SOW Profile",
+        help_text="Local SOW Profile. Used only if 'Inherit SOW' is unchecked.",
+    )
+    local_technical_points_of_contact = models.OneToOneField(
+        TechnicalPointOfContactModel,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="software_effort",
+        verbose_name="Local Technical POCs",
+        help_text="Local Technical POCs. Used only if 'Inherit POCs' is unchecked.",
+    )
+    local_developer_setup = models.OneToOneField(
+        DeveloperSetupModel,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="software_effort",
+        verbose_name="Local Developer Setup",
+        help_text="Local Developer Setup. Used only if 'Inherit Dev Setup' is unchecked.",
+    )
+    local_work_location = models.OneToOneField(
+        WorkLocationModel,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="software_effort",
+        verbose_name="Local Work Location",
+        help_text="Local Work Location. Used only if 'Inherit Work Location' is unchecked.",
+    )
+
+    class Meta:
+        indexes = [models.Index(fields=["parent"])]
+
+    #
+    # Helper utilities
+    #
+    def _get_parent_field_value(self, field_name: str):
+        """
+        Return the parent's effective field value for `field_name`, or None if no parent.
+        We intentionally call `getattr(self.parent, field_name)` so that inheritance works:
+        if the parent is also inheriting that field, its property will resolve up the chain.
+        """
+        if not self.parent:
+            return None
+        return getattr(self.parent, field_name)
+
+    #
+    # Properties exposing the effective (inherited-or-local) values.
+    # Setters disallow assignment while inheritance is enabled to avoid accidental divergence.
+    #
+    @property
+    def statement_of_work_profile(self) -> StatementOfWorkProfileModel | None:
+        """
+        Returns the effective SOW profile based on the 'inherit_statement_of_work_profile' flag.
+        """
+        if self.inherit_statement_of_work_profile and self.parent:
+            return self.parent.statement_of_work_profile  # Recursive call
+        return self.local_statement_of_work_profile
+
+    @statement_of_work_profile.setter
+    def statement_of_work_profile(self, value: StatementOfWorkProfileModel | None):
+        """
+        Allows setting the local SOW profile only if 'inherit_statement_of_work_profile' is False.
+        """
+        if self.inherit_statement_of_work_profile:
+            raise AttributeError(
+                f"Cannot set 'statement_of_work_profile' on '{self.name}'. "
+                "It is set to 'Inherit SOW'."
+            )
+        if not isinstance(value, (StatementOfWorkProfileModel, type(None))):
+            raise TypeError("Value must be an instance of StatementOfWorkProfileModel or None.")
+        self.local_statement_of_work_profile = value
+
+    @property
+    def technical_points_of_contact(self) -> TechnicalPointOfContactModel | None:
+        """
+        Returns the effective Technical POCs based on 'inherit_technical_points_of_contact'.
+        """
+        if self.inherit_technical_points_of_contact and self.parent:
+            return self.parent.technical_points_of_contact
+        return self.local_technical_points_of_contact
+
+    @technical_points_of_contact.setter
+    def technical_points_of_contact(self, value: TechnicalPointOfContactModel | None):
+        """
+        Allows setting the local Technical POCs only if 'inherit_technical_points_of_contact'.
+        """
+        if self.inherit_technical_points_of_contact:
+            raise AttributeError(
+                f"Cannot set 'technical_points_of_contact' on '{self.name}'. "
+                "It is set to 'Inherit POCs'."
+            )
+        if not isinstance(value, (TechnicalPointOfContactModel, type(None))):
+            raise TypeError("Value must be an instance of TechnicalPointOfContactModel or None.")
+        self.local_technical_points_of_contact = value
+
+    @property
+    def developer_setup(self) -> DeveloperSetupModel | None:
+        """
+        Returns the effective Developer Setup based on the 'inherit_developer_setup' flag.
+        """
+        if self.inherit_developer_setup and self.parent:
+            return self.parent.developer_setup
+        return self.local_developer_setup
+
+    @developer_setup.setter
+    def developer_setup(self, value: DeveloperSetupModel | None):
+        """
+        Allows setting the local Developer Setup only if 'inherit_developer_setup' is False.
+        """
+        if self.inherit_developer_setup:
+            raise AttributeError(
+                f"Cannot set 'developer_setup' on '{self.name}'. "
+                "It is set to 'Inherit Dev Setup'."
+            )
+        if not isinstance(value, (DeveloperSetupModel, type(None))):
+            raise TypeError("Value must be an instance of DeveloperSetupModel or None.")
+        self.local_developer_setup = value
+
+    @property
+    def work_location(self) -> WorkLocationModel | None:
+        """
+        Returns the effective Work Location based on the 'inherit_work_location' flag.
+        """
+        if self.inherit_work_location and self.parent:
+            return self.parent.work_location
+        return self.local_work_location
+
+    @work_location.setter
+    def work_location(self, value: WorkLocationModel | None):
+        """
+        Allows setting the local Work Location only if 'inherit_work_location' is False.
+        """
+        if self.inherit_work_location:
+            raise AttributeError(
+                f"Cannot set 'work_location' on '{self.name}'. "
+                "It is set to 'Inherit Work Location'."
+            )
+        if not isinstance(value, (WorkLocationModel, type(None))):
+            raise TypeError("Value must be an instance of WorkLocationModel or None.")
+        self.local_work_location = value
+
+    #
+    # Data hygiene and validation
+    #
+    def clean(self):
+        """
+        Validate inheritance logic and parent relationship:
+        1. For each 'inherit_...' flag, ensure a parent exists.
+        2. For each 'inherit_...' flag, ensure no conflicting local data is set.
+        3. Prevent self-parenting (cycle).
+        4. Prevent parent-child cycles (walk up).
+        """
+        super().clean()
+        errors = {}
+
+        # 1. & 2. Granular Inheritance Validation
+
+        if self.inherit_statement_of_work_profile:
+            if self.parent_id is None:
+                errors["inherit_statement_of_work_profile"] = (
+                    "Cannot inherit SOW: no parent is set."
+                )
+            if self.local_statement_of_work_profile_id is not None:
+                errors["local_statement_of_work_profile"] = (
+                    "Cannot set a local SOW Profile while 'Inherit SOW' is checked."
+                )
+
+        if self.inherit_technical_points_of_contact:
+            if self.parent_id is None:
+                errors["inherit_technical_points_of_contact"] = (
+                    "Cannot inherit POCs: no parent is set."
+                )
+            if self.local_technical_points_of_contact_id is not None:
+                errors["local_technical_points_of_contact"] = (
+                    "Cannot set local POCs while 'Inherit POCs' is checked."
+                )
+
+        if self.inherit_developer_setup:
+            if self.parent_id is None:
+                errors["inherit_developer_setup"] = "Cannot inherit Dev Setup: no parent is set."
+            if self.local_developer_setup_id is not None:
+                errors["local_developer_setup"] = (
+                    "Cannot set a local Dev Setup while 'Inherit Dev Setup' is checked."
+                )
+
+        if self.inherit_work_location:
+            if self.parent_id is None:
+                errors["inherit_work_location"] = "Cannot inherit Work Location: no parent is set."
+            if self.local_work_location_id is not None:
+                errors["local_work_location"] = (
+                    "Cannot set a local Work Location while 'Inherit Work Location' is checked."
+                )
+
+        # 3. & 4. Parent validation / cycle detection (similar to previous logic)
+        if self.parent is not None:
+            if self.pk is not None and self.parent.pk == self.pk:
+                errors["parent"] = "An object cannot be its own parent."
+
+            ancestor = self.parent
+            seen_ids = set()
+            while ancestor is not None:
+                if ancestor.pk in seen_ids:
+                    # malformed chain; stop walking
+                    break
+                seen_ids.add(ancestor.pk)
+                if self.pk is not None and ancestor.pk == self.pk:
+                    errors["parent"] = "Setting this parent would create a cycle."
+                ancestor = ancestor.parent
+
+        if errors:
+            raise ValidationError(errors)
+
+    def clean_linked_relations(self):
+        """
+        Optional: validate linked_software_efforts to avoid self-linking or trivial cycles.
+        This is not strictly required, but helpful if you want to enforce:
+          - No self-link (an effort cannot link to itself)
+          - Optionally disallow immediate mutual links (A -> B and B -> A)
+        Call this from forms or save() if desired.
+        """
+        # Example guard: remove self-link if present
+        if self.pk and self.linked_software_efforts.filter(pk=self.pk).exists():
+            raise ValidationError(
+                {"linked_software_efforts": "An object cannot be linked to itself."}
+            )

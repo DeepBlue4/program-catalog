@@ -1,0 +1,357 @@
+# ##############################################################################
+# ##############################################################################
+# #
+# #                            BOEING PROPRIETARY
+# #                        CLASSIFICATION: UNCLASSIFIED
+# #                   Unpublished Work - All Rights Reserved
+# #                             Copyright 2024-2025
+# #                   Contract: Boeing Funded Development
+# #              Third Party Disclosure Requires Written Approval
+# #
+# ##############################################################################
+from datetime import date, datetime
+
+from rest_framework import serializers
+
+from .models import (
+    DeveloperSetupModel,
+    ProgramCatalogInfoModel,
+    ProgramCatalogModel,
+    SoftwareEffortModel,
+    StatementOfWorkProfileModel,
+    TechnicalPointOfContactModel,
+    WorkLocationModel,
+)
+
+
+class TechnicalPointOfContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TechnicalPointOfContactModel
+        fields = "__all__"
+
+
+class StatementOfWorkProfileModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StatementOfWorkProfileModel
+        fields = "__all__"
+
+
+class DeveloperSetupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeveloperSetupModel
+        fields = "__all__"
+
+
+class WorkLocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkLocationModel
+        fields = "__all__"
+
+
+class SoftwareEffortSerializer(serializers.ModelSerializer):
+    """
+    Serializer that:
+      - Serializes the effective OneToOne related objects via nested serializers.
+        (Reads use the model properties, e.g., `obj.statement_of_work_profile`,
+         which automatically resolve inheritance).
+      - Accepts nested objects for creation/update of the local backing fields.
+      - Exposes and accepts the per-field inheritance booleans
+        (e.g., `inherit_statement_of_work_profile`, `inherit_technical_points_of_contact`)
+      - Overrides create/update to route nested data to the `local_...` fields
+        based on the state of the `inherit_...` flags.
+    """
+
+    # Nested serializers for the effective read representation.
+    # These will call the model property getters for read operations.
+    statement_of_work_profile = StatementOfWorkProfileModelSerializer(
+        required=False, allow_null=True
+    )
+    technical_points_of_contact = TechnicalPointOfContactSerializer(required=False, allow_null=True)
+    developer_setup = DeveloperSetupSerializer(required=False, allow_null=True)
+    work_location = WorkLocationSerializer(required=False, allow_null=True)
+
+    # Read the parent's UUID for output
+    parent_uuid = serializers.SerializerMethodField(read_only=True)
+
+    # Read-only linked software efforts summary
+    linked_software_efforts = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = SoftwareEffortModel
+        fields = "__all__"
+
+    def get_parent_uuid(self, obj: SoftwareEffortModel):
+        """
+        Return the parent's UUID (or None) for the API consumer.
+        """
+        parent = getattr(obj, "parent", None)
+        if not parent:
+            return None
+        # Support both UUID primary key patterns if you have a `uuid` field
+        return getattr(parent, "uuid", parent.pk)
+
+    def get_linked_software_efforts(self, obj: SoftwareEffortModel):
+        """
+        Return a list of dicts for the linked_software_efforts M2M relation
+        - program_id and program_name are read from the related program_catalog_info if present.
+        - Falls back to empty string / None as appropriate when values are missing.
+        """
+        linked_qs = getattr(obj, "linked_software_efforts", None)
+        if not linked_qs:
+            return []
+
+        # If the relation is a manager/queryset, iterate the .all() result
+        iterable = linked_qs.all() if hasattr(linked_qs, "all") else linked_qs
+        out = []
+        for linked in iterable:
+            # id/uuid
+            linked_uuid = getattr(linked, "uuid", None)
+            linked_pk = getattr(linked, "pk", getattr(linked, "id", None))
+            identifier = linked_uuid or linked_pk
+
+            # name
+            name = getattr(linked, "name", None) or ""
+
+            # program_catalog_info may be null
+            pci = getattr(linked, "program_catalog_info", None)
+            program_id = None
+            program_name = ""
+            if pci is not None:
+                # pci.program is a FK to ProgramCatalogModel; use its id if present
+                program_obj = getattr(pci, "program", None)
+                if program_obj is not None:
+                    program_id = getattr(program_obj, "id", None)
+                # pci.name is the program_name on that info record
+                program_name = getattr(pci, "name", "") or ""
+
+            out.append(
+                {
+                    "id": identifier,
+                    "uuid": linked_uuid,
+                    "name": name,
+                    "program_id": program_id,
+                    "program_name": program_name,
+                }
+            )
+        return out
+
+    def _pop_profile_data(self, validated_data):
+        """Helper to pop all profile-related data from validated_data."""
+
+        # Pop nested data objects
+        profile_data = {
+            "sow": validated_data.pop("statement_of_work_profile", None),
+            "poc": validated_data.pop("technical_points_of_contact", None),
+            "dev_setup": validated_data.pop("developer_setup", None),
+            "work_location": validated_data.pop("work_location", None),
+        }
+
+        # Pop local fields to prevent super() from trying to write to them
+        validated_data.pop("local_statement_of_work_profile", None)
+        validated_data.pop("local_technical_points_of_contact", None)
+        validated_data.pop("local_developer_setup", None)
+        validated_data.pop("local_work_location", None)
+
+        return profile_data
+
+    def create(self, validated_data):
+        """
+        Create a new SoftwareEffortModel, handling nested profiles.
+        """
+        # 1. Pop all profile data before creating the main instance
+        profile_data = self._pop_profile_data(validated_data)
+
+        # 2. Create the main instance. This sets all regular fields,
+        #    including the `inherit_...` flags.
+        instance = super().create(validated_data)
+
+        # 3. Based on flags, create local profiles *if* data was provided
+        if not instance.inherit_statement_of_work_profile and profile_data["sow"]:
+            instance.local_statement_of_work_profile = StatementOfWorkProfileModel.objects.create(
+                **profile_data["sow"]
+            )
+
+        if not instance.inherit_technical_points_of_contact and profile_data["poc"]:
+            instance.local_technical_points_of_contact = (
+                TechnicalPointOfContactModel.objects.create(**profile_data["poc"])
+            )
+
+        if not instance.inherit_developer_setup and profile_data["dev_setup"]:
+            instance.local_developer_setup = DeveloperSetupModel.objects.create(
+                **profile_data["dev_setup"]
+            )
+
+        if not instance.inherit_work_location and profile_data["work_location"]:
+            instance.local_work_location = WorkLocationModel.objects.create(
+                **profile_data["work_location"]
+            )
+
+        # 4. Save the foreign keys for the newly created local profiles
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        """
+        Update a SoftwareEffortModel, handling nested profile logic.
+        """
+        partial = self.partial
+
+        # Use a sentinel to check if a key was passed in the request
+        _sentinel = object()
+
+        # Pop nested data.
+        sow_data = validated_data.pop("statement_of_work_profile", _sentinel)
+        poc_data = validated_data.pop("technical_points_of_contact", _sentinel)
+        dev_setup_data = validated_data.pop("developer_setup", _sentinel)
+        work_location_data = validated_data.pop("work_location", _sentinel)
+
+        # Pop local fields
+        validated_data.pop("local_statement_of_work_profile", None)
+        validated_data.pop("local_technical_points_of_contact", None)
+        validated_data.pop("local_developer_setup", None)
+        validated_data.pop("local_work_location", None)
+
+        # 1. Update the main instance. This updates all simple fields,
+        #    including `name`, `parent`, and all `inherit_...` flags.
+        instance = super().update(instance, validated_data)
+
+        # 2. Handle updates for each profile based on new state
+        self._update_local_profile(
+            instance,
+            sow_data,
+            "local_statement_of_work_profile",
+            "inherit_statement_of_work_profile",
+            StatementOfWorkProfileModelSerializer,
+            partial,
+            _sentinel,
+        )
+        self._update_local_profile(
+            instance,
+            poc_data,
+            "local_technical_points_of_contact",
+            "inherit_technical_points_of_contact",
+            TechnicalPointOfContactSerializer,
+            partial,
+            _sentinel,
+        )
+        self._update_local_profile(
+            instance,
+            dev_setup_data,
+            "local_developer_setup",
+            "inherit_developer_setup",
+            DeveloperSetupSerializer,
+            partial,
+            _sentinel,
+        )
+        self._update_local_profile(
+            instance,
+            work_location_data,
+            "local_work_location",
+            "inherit_work_location",
+            WorkLocationSerializer,
+            partial,
+            _sentinel,
+        )
+
+        return instance
+
+    def _update_local_profile(
+        self,
+        instance,
+        data,
+        local_field_name,
+        inherit_flag_name,
+        SerializerClass,
+        partial,
+        sentinel,
+    ):
+        """
+        Helper to manage the create/update/delete logic for a single local profile.
+        """
+        inherit = getattr(instance, inherit_flag_name)
+        local_profile = getattr(instance, local_field_name)
+
+        if inherit:
+            # Rule: If inheriting, any local profile must be deleted.
+            if local_profile:
+                local_profile.delete()
+                setattr(instance, local_field_name, None)
+                instance.save(update_fields=[local_field_name])
+
+        elif data is not sentinel:
+            # Rule: Not inheriting, and data *was passed* for this profile.
+
+            if data is None:
+                # Data was explicitly set to null. Delete local profile.
+                if local_profile:
+                    local_profile.delete()
+                    setattr(instance, local_field_name, None)
+                    instance.save(update_fields=[local_field_name])
+
+            else:
+                # Data dict was provided. Create or update.
+                if local_profile:
+                    # Update existing local profile
+                    s = SerializerClass(local_profile, data=data, partial=partial)
+                else:
+                    # Create new local profile
+                    s = SerializerClass(data=data)
+
+                s.is_valid(raise_exception=True)
+                new_profile = s.save()
+
+                # Check if the save() call already associated it
+                if getattr(instance, local_field_name) != new_profile:
+                    setattr(instance, local_field_name, new_profile)
+                    instance.save(update_fields=[local_field_name])
+
+
+class ProgramCatalogInfoSerializer(serializers.ModelSerializer):
+    # expose the model @property as a read-only boolean
+    has_descendant_expecting_software_effort = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = ProgramCatalogInfoModel
+        fields = "__all__"
+
+
+class ProgramCatalogModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProgramCatalogModel
+        fields = "__all__"
+
+    def get_current_representation(self, instance: ProgramCatalogModel):
+        data = super().to_representation(instance)
+        data["name"] = instance.get_name()
+
+        parent = instance.get_current_parent()
+        data["parent_id"] = ""
+        if parent is not None:
+            data["parent_id"] = parent.id
+
+        children = instance.get_child_ids_on_date(date.today())
+        data["child_ids"] = children
+        return data
+
+    def get_representation_on_date(self, instance: ProgramCatalogModel, date_string: str):
+        data = super().to_representation(instance)
+        date = datetime.strptime(date_string, "%Y-%m-%d").date()
+        data["name"] = instance.name_on_date(date)
+
+        parent = instance.parent_on_date(date)
+        data["parent_id"] = ""
+        if parent is not None:
+            data["parent_id"] = parent.id
+
+        children = instance.get_child_ids_on_date(date)
+        data["child_ids"] = children
+        return data
+
+    def to_representation(self, instance: ProgramCatalogModel):
+
+        if "request" in self.context:
+            request = self.context["request"]
+            if "date" in request.query_params:
+                return self.get_representation_on_date(instance, request.query_params["date"])
+
+        return self.get_current_representation(instance)

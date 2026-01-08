@@ -1,0 +1,176 @@
+# ##############################################################################
+# ##############################################################################
+# #
+# #                            BOEING PROPRIETARY
+# #                        CLASSIFICATION: UNCLASSIFIED
+# #                   Unpublished Work - All Rights Reserved
+# #                             Copyright 2024-2025
+# #                   Contract: Boeing Funded Development
+# #              Third Party Disclosure Requires Written Approval
+# #
+# ##############################################################################
+import uuid
+
+from django.db import models
+
+from apps.utils.types.record_status_types import RecordStatus
+
+
+class BaseStorageModel(models.Model):
+    """BaseStorageModel will provide the generic re-usable fields for most models"""
+
+    class Meta:
+        abstract = True  # Do not create model in database.
+        ordering = ["-timestamp_created"]  # Default ordering by creation time in descending
+
+    # Primary Key for linking related Model(s)
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        auto_created=True,
+        help_text="The unique identifier and primary key for the record",
+    )
+
+    # Status of Model/Record
+    status = models.CharField(
+        max_length=50,
+        verbose_name="Status",
+        choices=RecordStatus.choices,
+        default=RecordStatus.ACTIVE,
+        help_text="The status of the current record",
+    )
+
+    # Important timestamp fields for Model
+    timestamp_created = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Created Timestamp",
+        help_text="The timestamp for when the the record was created",
+    )
+    timestamp_updated = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Updated Timestamp",
+        help_text="The timestamp for when the the record was updated",
+    )
+
+    def delete(self, *args, **kwargs):
+        """
+        Override the delete method to handle soft deletion.
+        Sets status to DELETED instead of actually deleting the object from the database.
+        """
+
+        # Recursively delete related objects with cascade
+        self._recursive_delete_related()
+
+        # Soft Delete before Hard Delete
+        if self.status != RecordStatus.DELETED:
+            self.status = RecordStatus.DELETED
+            self.save()
+        else:
+            # Delete the main instance
+            super().delete(*args, **kwargs)
+
+    def _recursive_delete_related(self):
+        for field in self._meta.get_fields():
+            # Check if the field is a ForeignKey or OneToOneField with CASCADE
+            if (
+                isinstance(field, (models.OneToOneField, models.ForeignKey))
+                and field.remote_field.on_delete == models.CASCADE
+            ):
+                related_object = getattr(self, field.name, None)
+                if related_object and related_object.uuid is not None:
+                    # Recursively call _recursive_delete_related on the related object
+                    if hasattr(related_object, "_recursive_delete_related"):
+                        related_object._recursive_delete_related()
+
+                    # Soft Delete before Hard Delete
+                    if related_object.status != RecordStatus.DELETED:
+                        related_object.status = RecordStatus.DELETED
+                        related_object.save()
+                    else:
+                        # Delete the related object
+                        related_object.delete()
+
+    def count_non_null_fields(self) -> int:
+        """
+        Count non-null fields in the model instance, including nested dictionaries, lists,
+        and OneToOne relationships, while ignoring specified fields.
+
+        Returns:
+            int: The total count of non-null fields.
+        """
+
+        ignore_fields = [
+            field.name for field in BaseStorageModel._meta.get_fields() if not field.is_relation
+        ]
+
+        def count_nested_values(value):
+            """
+            Recursively count non-null values in nested dictionaries, lists, or fields.
+            """
+
+            if isinstance(value, dict):
+                return sum(count_nested_values(v) for v in value.values())
+            elif isinstance(value, list):
+                return sum(count_nested_values(item) for item in value)
+            else:
+                return 1 if value is not None else 0
+
+        non_null_count = 0
+
+        for field in self._meta.get_fields():
+            # Skip ignored fields
+            if field.name in ignore_fields:
+                continue
+
+            # Handle OneToOne fields recursively
+            if isinstance(field, models.OneToOneField) or isinstance(field, models.ForeignKey):
+                related_obj = getattr(self, field.name, None)
+                if related_obj is not None:
+                    non_null_count += related_obj.count_non_null_fields()
+
+            # Handle regular fields
+            elif hasattr(field, "attname"):
+                value = getattr(self, field.name, None)
+                non_null_count += count_nested_values(value)
+
+        return non_null_count
+
+    def hard_delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+
+
+class BaseCollectionModel(models.Model):
+    """BaseCollectionModel will provide the generic re-usable fields for most metric models"""
+
+    class Meta:
+        abstract = True  # Do not create model in database.
+
+    source_name = models.CharField(
+        null=True,
+        blank=True,
+        max_length=50,
+        verbose_name="Source Name",
+        help_text="The name of the source being used",
+    )
+    source_version = models.CharField(
+        null=True,
+        blank=True,
+        max_length=50,
+        verbose_name="Source Version",
+        help_text="The version of the source being used",
+    )
+    source_environment = models.CharField(
+        null=True,
+        blank=True,
+        max_length=50,
+        verbose_name="Source Environment",
+        help_text="The environment that the data was sourced from.",
+    )
+    # Important timestamp fields for Model
+    timestamp_collected = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Collected Timestamp",
+        help_text="The timestamp for when the data/metrics were collected",
+    )

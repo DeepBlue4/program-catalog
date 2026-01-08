@@ -1,0 +1,659 @@
+# ##############################################################################
+# ##############################################################################
+# #
+# #                            BOEING PROPRIETARY
+# #                        CLASSIFICATION: UNCLASSIFIED
+# #                   Unpublished Work - All Rights Reserved
+# #                             Copyright 2024-2025
+# #                   Contract: Boeing Funded Development
+# #              Third Party Disclosure Requires Written Approval
+# #
+# ##############################################################################
+import re
+import uuid
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field, field_validator
+
+
+# (Enums unchanged — kept for completeness)
+class DevelopmentEnvironment(str, Enum):
+    BEN = "Boeing Enterprise Network"
+    BSF_D = "BSF-Disconnected"
+    BSF_G = "BSF-Global"
+    BSF_R = "BSF-Restricted"
+    BSF_US = "BSF-US"
+    ON_PREM = "On-Premises/Non-BSF"
+    CUSTOMER_ENVIRONMENT = "Customer Environment"
+    OTHER = "Other"
+
+
+class SourceControl(str, Enum):
+    GIT_LAB = "GitLab"
+    CLEAR_CASE = "ClearCase"
+    BIT_BUCKET = "Bitbucket"
+    SVN = "SVN"
+    AZURE_DEVOPS = "Azure DevOps"
+    OTHER = "Other"
+
+
+class ProjectManagementTool(str, Enum):
+    GIT_LAB = "GitLab"
+    CLEAR_CASE = "ClearCase"
+    BIT_BUCKET = "Bitbucket"
+    SVN = "SVN"
+    AZURE_DEVOPS = "Azure DevOps"
+    VERSION_ONE = "Version One"
+    OTHER = "Other"
+
+
+class ProgramSecurityLevel(str, Enum):
+    NONE_ASSIGNED = "None"
+    OTHER = "Other"
+    CUI = "CUI"
+    SECRET = "Secret"
+    TOP_SECRET = "Top Secret"
+
+
+class ProgramPhase(str, Enum):
+    DESIGN = "Design"
+    LEGACY = "Legacy"
+    PRODUCTION = "Production"
+    DEVELOPMENT = "Development"
+    NOT_APPLICABLE = "N/A"
+
+
+class SBOMLocation(str, Enum):
+    SBOM_STUDIO = "SBOM Studio"
+    GIT_LAB = "GitLab"
+    ARTIFACTORY = "Artifactory"
+    NEXUS = "Nexus"
+    OTHER = "Other"
+
+
+class PrimaryProgrammingLangauge(str, Enum):
+    ADA = "Ada"
+    C = "C"
+    CPP = "C++"
+    JAVA = "Java"
+    JAVA_SCRIPT = "JavaScript"
+    PYTHON = "Python"
+    RUST = "Rust"
+    OTHER = "Other"
+
+
+class OperatingSystem(str, Enum):
+    BOEING_LINUX = "Boeing Linux"
+    OTHER_LINUX = "Other Linux"
+    WINDOWS = "Windows"
+    ANDROID = "Android"
+    IOS = "iOS"
+    MAC_OS = "macOS"
+    VX_WORKS = "VxWorks"
+    INTEGRITY = "Integrity"
+    OTHER = "Other"
+
+
+class SafetyCriticality(str, Enum):
+    DALA_LOR1 = "DAL A / LOR 1"
+    DALB_LOR2 = "DAL B / LOR 2"
+    DALC_LOR3 = "DAL C / LOR 3"
+    DALD_LOR4 = "DAL D / LOR 4"
+    DALE_LOR5 = "DAL E / LOR 5"
+
+
+def validate_email(value: str | None) -> bool:
+    """
+    Validate an email string.
+
+    Returns True only if `value` is an optional non-empty string (after trimming)
+    and matches a basic email regex.
+    """
+    if not value:
+        return True
+
+    value = value.strip()
+    if not value:
+        return True
+
+    email_re = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", re.IGNORECASE)
+    return bool(email_re.match(value))
+
+
+class StatementOfWorkProfile(BaseModel):
+    # Needed to print by alias
+    model_config = {"populate_by_name": True}
+    allow_non_us: Optional[bool] = None
+    mission_critical: Optional[bool] = None
+    security_clearance: Optional[List[str]] = None
+    safety_criticality: Optional[List[str]] = None
+    program_phase: Optional[str] = None
+    program_manager_email: Optional[str] = None
+
+    @field_validator("program_manager_email")
+    @classmethod
+    def validate_name(cls, v: Optional[str]) -> Optional[str]:
+        if not validate_email(v):
+            raise ValueError("Email is invalid")
+        return v
+
+
+class TechnicalPointOfContact(BaseModel):
+    # Needed to print by alias
+    model_config = {"populate_by_name": True}
+    security_focal: Optional[str] = None
+    software_lead: Optional[str] = None
+
+    @field_validator("security_focal", "software_lead")
+    @classmethod
+    def validate_name(cls, v: Optional[str]) -> Optional[str]:
+        if not validate_email(v):
+            raise ValueError("Email is invalid")
+        return v
+
+
+class DeveloperSetup(BaseModel):
+    # Needed to print by alias
+    model_config = {"populate_by_name": True}
+    development_environments: Optional[List[str]] = None
+    source_control_tools: Optional[List[str]] = None
+    issue_tracking_tools: Optional[List[str]] = None
+    dp_assessment_name: Optional[str] = None
+    sbom_location: Optional[List[str]] = None
+    programming_languages: Optional[List[str]] = None
+    operating_systems: Optional[List[str]] = None
+
+    @field_validator("development_environments")
+    @classmethod
+    def validate_environments(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        if v:
+            normalized: List[str] = []
+            for x in v:
+                if x in DevelopmentEnvironment:
+                    normalized.append(x)
+                else:
+                    if x == "BEN":
+                        normalized.append(DevelopmentEnvironment.BEN)
+                    elif x == "BSF-G":
+                        normalized.append(DevelopmentEnvironment.BSF_G)
+                    elif x == "BSF-R":
+                        normalized.append(DevelopmentEnvironment.BSF_R)
+                    elif x == "BSF-D":
+                        normalized.append(DevelopmentEnvironment.BSF_D)
+                    else:
+                        normalized.append(DevelopmentEnvironment.OTHER)
+            return normalized
+        return v
+
+
+class WorkLocation(BaseModel):
+    # Needed to print by alias
+    model_config = {"populate_by_name": True}
+    locations: Optional[List[str]] = None
+
+
+class SoftwareEffort(BaseModel):
+    # Needed to print by alias
+    model_config = {"populate_by_name": True}
+    uuid: Optional[str] = None
+    name: Optional[str] = Field(default=None, alias="software_effort_name")
+    # Parent reference (normalized)
+    parent_uuid: Optional[str] = None
+
+    # linked_software_efforts remains a list of small dicts for frontend
+    linked_software_efforts: Optional[List[Dict[str, str]]] = []
+
+    # Keep nested objects for frontend usage (optional). These will be used by the service
+    # to create/update backing related objects if provided and inheritance is not requested.
+    statement_of_work_profile: Optional[StatementOfWorkProfile] = None
+    technical_points_of_contact: Optional[TechnicalPointOfContact] = None
+    developer_setup: Optional[DeveloperSetup] = None
+    work_location: Optional[WorkLocation] = None
+
+    # These match the boolean fields on your Django model.
+    inherit_statement_of_work_profile: Optional[bool] = Field(
+        default=False, description="Inherit Statement of Work Profile from parent."
+    )
+    inherit_technical_points_of_contact: Optional[bool] = Field(
+        default=False, description="Inherit Technical Points of Contact from parent."
+    )
+    inherit_developer_setup: Optional[bool] = Field(
+        default=False, description="Inherit Developer Setup from parent."
+    )
+    inherit_work_location: Optional[bool] = Field(
+        default=False, description="Inherit Work Location from parent."
+    )
+
+    #
+    # Validators and normalizers
+    #
+    @field_validator("parent_uuid", mode="before")
+    @classmethod
+    def normalize_parent_uuid(cls, v: Any) -> Optional[str]:
+        """
+        Normalize allowed inputs into either:
+          - None (empty / None)
+          - a canonical UUID string (if enforcing UUIDs)
+          - or a trimmed string (if legacy numeric IDs allowed)
+
+        Behavior:
+        - uuid.UUID -> canonical str
+        - int -> str(int)  (keeps legacy numeric IDs)
+        - str -> trimmed; empty -> None
+        - else -> raise ValueError
+        """
+        if v is None:
+            return None
+
+        # Accept uuid.UUID
+        if isinstance(v, uuid.UUID):
+            return str(v)
+
+        # Accept ints (coerce to string)
+        if isinstance(v, int):
+            return str(v)
+
+        if isinstance(v, str):
+            v = v.strip()
+            if v == "":
+                return None
+
+            # Accept any non-empty string (keeps numeric legacy IDs)
+            return v
+        raise ValueError("parent_uuid must be a UUID string or UUID instance: ", v)
+
+    @field_validator("uuid", mode="before")
+    @classmethod
+    def normalize_uuid_input(cls, v: Any) -> Optional[str]:
+        """
+        Normalize the incoming uuid field so:
+        - None -> None
+        - uuid.UUID -> canonical dashed string
+        - int -> str(int) (useful when upstream sends numeric IDs)
+        - str -> trimmed string; if empty -> None
+          Optionally validate canonical UUID format by uncommenting the uuid.UUID(...) conversion.
+        """
+        if v is None:
+            return None
+
+        # Accept uuid.UUID instances
+        if isinstance(v, uuid.UUID):
+            return str(v)
+
+        # Accept integers by converting to string
+        if isinstance(v, int):
+            return str(v)
+
+        # Accept strings: trim and treat empty as None
+        if isinstance(v, str):
+            v = v.strip()
+            if v == "":
+                return None
+
+            # Return the trimmed string
+            return v
+
+        # Any other input types are rejected
+        raise ValueError("uuid must be None, a string, an int, or a UUID instance")
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: Optional[str]) -> Optional[str]:
+        # allow absent/None values
+        if v is None:
+            return v
+        trimmed = v.strip()
+
+        # 1) trimmed length must be greater than 3
+        if len(trimmed) <= 3:
+            raise ValueError("Name must be greater than 3 characters")
+
+        # 2) overall length must be <= 2048
+        if len(v) > 2048:
+            raise ValueError("Name must be less than or equal to 2048 characters")
+
+        # 3) only ASCII characters allowed (0x00 - 0x7F)
+        if re.search(r"[^\x00-\x7F]", v):
+            raise ValueError("Name must contain only ASCII characters")
+
+        # return the trimmed value so the stored value is clean
+        return trimmed
+
+    @field_validator("parent_uuid", mode="before")
+    @classmethod
+    def validate_parent_uuid_format(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Ensure parent_uuid, if provided, is a valid UUID string (canonical form).
+        Accepts either a string or a uuid.UUID. Returns the canonical dashed string or None.
+        """
+        # Preserve None
+        if v is None:
+            return None
+        # If input is a uuid.UUID instance, convert to canonical string
+        if isinstance(v, uuid.UUID) and not isinstance(v, int):
+            return str(v)
+
+        # If it's not a string, it's invalid
+
+        if not isinstance(v, str) and not isinstance(v, int):
+            raise ValueError("parent_uuid must be a UUID string or UUID instance: ", v)
+        if isinstance(v, str):
+            v = v.strip()
+        if v == "":
+            return None
+
+        # Validate and normalize using uuid.UUID
+        try:
+            u = uuid.UUID(v)
+            return str(u)  # canonical form
+        except (ValueError, TypeError):
+            raise ValueError("parent_uuid must be a valid UUID string")
+
+    @field_validator("parent_uuid")
+    @classmethod
+    def validate_parent_not_self(cls, v: Optional[str], info) -> Optional[str]:
+        """
+        Prevent self-parenting: parent_uuid cannot equal this object's uuid.
+        NOTE: pydantic validators don't easily provide the current model instance's uuid
+        when validating a field alone. Using a post-init check would be another option,
+        but for a simple in-model guard we'll check against values supplied in 'info'
+        if available. If unavailable, this check is performed in the service layer.
+        """
+        # If v is None, nothing to validate here
+        if v is None:
+            return v
+
+        # Try to access sibling 'uuid' value from the provided context.
+        # In pydantic v2, validators receiving 'info' can access 'data' for other fields.
+        try:
+            parent = info.data if hasattr(info, "data") else None
+            current_uuid = parent.get("uuid") if parent else None
+        except Exception:
+            current_uuid = None
+        if current_uuid and v == current_uuid:
+            raise ValueError("parent_uuid cannot reference the same Software Effort uuid")
+        return v
+
+    @field_validator("linked_software_efforts", mode="before")
+    @classmethod
+    def normalize_linked_software_efforts_to_full_dicts(
+        cls, v: Any
+    ) -> Optional[List[Dict[str, str]]]:
+        """
+        Normalize incoming linked_software_efforts into Optional[List[Dict[str, str]]]
+        where each entry is:
+        { "uuid": "<id-or-uuid-as-str>",
+            "name": "<name-or-empty>",
+            "program_id": "<program-id-or-empty>",
+            "program_name": "<program-name-or-empty>" }
+
+        Strict mode: any item that cannot be normalized will raise ValueError.
+        """
+
+        if v is None:
+            return None
+
+        def to_str_or_empty(x: Any) -> str:
+            if x is None:
+                return ""
+            if isinstance(x, uuid.UUID):
+                return str(x)
+            return str(x).strip()
+
+        def pick_first(mapping_like: Any, keys: tuple) -> Any:
+            """
+            Return the first non-None value for keys in mapping_like.
+            mapping_like may be a dict or object with attributes.
+            """
+            for k in keys:
+                if isinstance(mapping_like, dict):
+                    if k in mapping_like and mapping_like[k] is not None:
+                        return mapping_like[k]
+                else:
+                    try:
+                        val = getattr(mapping_like, k)
+                    except Exception:
+                        val = None
+                    if val is not None:
+                        return val
+            return None
+
+        def extract_fields(mapping_like: Any) -> Optional[Dict[str, str]]:
+            """
+            Extract required fields from dict-like or object-like input.
+            Returns normalized dict or None if id cannot be determined.
+            """
+            id_val = pick_first(mapping_like, ("uuid", "id", "pk"))
+            if id_val is None:
+                return None
+            name_val = pick_first(mapping_like, ("name",)) or ""
+            program_id_val = pick_first(mapping_like, ("program_id",)) or ""
+            program_name_val = pick_first(mapping_like, ("program_name",)) or ""
+            id_str = to_str_or_empty(id_val)
+            if id_str == "":
+                return None
+            return {
+                "uuid": id_str,
+                "name": to_str_or_empty(name_val),
+                "program_id": to_str_or_empty(program_id_val),
+                "program_name": to_str_or_empty(program_name_val),
+            }
+
+        def normalize_item(item: Any) -> Optional[Dict[str, str]]:
+            """Normalize one input item into the expected dict shape or return None."""
+            # uuid.UUID instance
+            if isinstance(item, uuid.UUID):
+                return {"uuid": str(item), "name": "", "program_id": "", "program_name": ""}
+
+            # primitive id strings/ints
+            if isinstance(item, (str, int)):
+                s = to_str_or_empty(item)
+                if s == "":
+                    return None
+                return {"uuid": s, "name": "", "program_id": "", "program_name": ""}
+
+            # dict-like or object-like extraction
+            result = extract_fields(item)
+            if result is not None:
+                return result
+
+            # final fallback: try string conversion
+            try:
+                s = to_str_or_empty(item)
+                if s == "":
+                    return None
+                return {"uuid": s, "name": "", "program_id": "", "program_name": ""}
+            except Exception:
+                return None
+
+        # If a single non-list/tuple/set was provided, coerce to list
+        if not isinstance(v, (list, tuple, set)):
+            normalized = normalize_item(v)
+            if normalized is None:
+                raise ValueError(f"Unable to normalize linked_software_efforts item: {v!r}")
+            return [normalized]
+
+        out: List[Dict[str, str]] = []
+        for raw in v:
+            normalized = normalize_item(raw)
+            if normalized is None:
+                raise ValueError(f"Unable to normalize linked_software_efforts item: {raw!r}")
+            out.append(normalized)
+
+        return out
+
+    #
+    # Cross-field consistency validators:
+    # - disallow nesting + inheritance at the same time
+    #
+    @field_validator(
+        "statement_of_work_profile",
+        "technical_points_of_contact",
+        "developer_setup",
+        "work_location",
+        mode="after",
+    )
+    @classmethod
+    def _nested_vs_inherited_conflict_check(cls, v: Any, info) -> Any:
+        """
+        Ensure nested payload is not provided when the corresponding inherit_* flag is True.
+
+        """
+        if v is None:
+            return v
+
+        field_name = info.field_name
+
+        # NEW: Map the nested object field to its specific boolean flag
+        flag_map = {
+            "statement_of_work_profile": "inherit_statement_of_work_profile",
+            "technical_points_of_contact": "inherit_technical_points_of_contact",
+            "developer_setup": "inherit_developer_setup",
+            "work_location": "inherit_work_location",
+        }
+
+        inherited_flag_name = flag_map.get(field_name)
+
+        # This should not happen if the decorator is correct, but good to check
+        if not inherited_flag_name:
+            return v
+
+        provided = info.data if hasattr(info, "data") else {}
+        inherited_val = provided.get(inherited_flag_name, False)
+
+        if inherited_val:
+            # The error message is updated to show the *correct* flag name
+            raise ValueError(
+                f"Conflicting input: provided '{field_name}' but '{inherited_flag_name}' is True. "
+                "Choose one: supply nested data or set the inherited flag to True."
+            )
+        return v
+
+
+def _as_list(v: Optional[str]) -> Optional[List[str]]:
+    """Seperate out inputs so they are in the correct selectable format."""
+    if not v:
+        return None
+    if isinstance(v, list):
+        return v
+    # split on comma or semicolon
+    parts = [p.strip() for p in str(v).split(",")]
+    # if no comma was present, also try semicolon (or handle both at once below)
+    if len(parts) == 1 and ";" in str(v):
+        parts = [p.strip() for p in str(v).split(";")]
+    parts = [p for p in parts if p]
+    return parts or None
+
+
+def _as_bool(v: Optional[str]) -> Optional[bool]:
+    """Parses out diffrent user inputs besides true and false.
+    eg. yes, no etc.
+    """
+    if not v:
+        return None
+    s = str(v).strip().lower()
+    if s in {"true", "yes", "y", "1"}:
+        return True
+    if s in {"false", "no", "n", "0"}:
+        return False
+    return None
+
+
+class ProgramCatalogDataCallParser(BaseModel):
+    """
+    This class is used to provide csv parsing of the data call one
+    and possible use later for bulk updating. Aliases are set to the column
+    names used in data call one.
+    """
+
+    org_id: Optional[str] = Field(None, alias="Org ID")
+    title: Optional[str] = Field(None, alias="Title")
+    long_name: Optional[str] = Field(None, alias="Long Name")
+    description_eh: Optional[str] = Field(None, alias="Description(EH)")
+    aliases: Optional[str] = Field(None, alias="Aliases")
+    status: Optional[str] = Field(None, alias="Status")
+    organization_type: Optional[str] = Field(None, alias="Organization Type")
+    primary_location: Optional[str] = Field(None, alias="Primary Location")
+    org_leader: Optional[str] = Field(None, alias="Org Leader")
+    chief_engineer: Optional[str] = Field(None, alias="Chief Engineer")
+    program_type: Optional[str] = Field(None, alias="Program Type")
+    program_affiliation: Optional[str] = Field(None, alias="Program Affiliation")
+    est_prog_value: Optional[str] = Field(None, alias="Est Prog Value")
+    parent_id: Optional[str] = Field(None, alias="Parent ID")
+    name_breadcrumb: Optional[str] = Field(None, alias="Name Breadcrumb")
+    contract_ids: Optional[str] = Field(None, alias="Contract IDs")
+    contract_allows_non_us: Optional[str] = Field(None, alias="Contract Allows Non-US")
+    program_management_contact_email: Optional[str] = Field(
+        None, alias="Program Management Contact Email"
+    )
+    technical_contact_email: Optional[str] = Field(None, alias="Technical Contact Email")
+    product_security_contact_email: Optional[str] = Field(
+        None, alias="Product Security Contact Email"
+    )
+    highest_security_clearance: Optional[str] = Field(None, alias="Highest Security Clearance")
+    highest_safety_criticality: Optional[str] = Field(None, alias="Highest Safety Criticality")
+    program_phase: Optional[str] = Field(None, alias="Program Phase")
+    development_environment: Optional[str] = Field(None, alias="Development Environment")
+    source_control: Optional[str] = Field(None, alias="Source Control")
+    project_management_tool: Optional[str] = Field(None, alias="Project Management Tool")
+    design_practice_assessment_program_name: Optional[str] = Field(
+        None, alias="Design Practice Assessment Program Name"
+    )
+    sbom_location: Optional[str] = Field(None, alias="SBOM Location")
+    primary_programming_language: Optional[str] = Field(None, alias="Primary Programming Language")
+    operating_system: Optional[str] = Field(None, alias="Operating System")
+    update_status: Optional[str] = Field(None, alias="Update Status")
+
+    model_config = {"validate_by_name": True}
+
+    def to_models(self) -> SoftwareEffort:
+        """
+        Direct mapping from ProgramCatalogParser fields to domain models.
+        Edit the right-hand side fields if your parser uses different attribute names.
+        """
+        # Statement of Work
+        sow = StatementOfWorkProfile(
+            allow_non_us=_as_bool(self.contract_allows_non_us),
+            mission_critical=None,  # Not in data call 1
+            security_clearance=_as_list(self.highest_security_clearance),
+            safety_criticality=_as_list(self.highest_safety_criticality),
+            program_phase=self.program_phase,
+            program_manager_email=self.program_management_contact_email,
+        )
+
+        # Technical points of contact
+        technical = TechnicalPointOfContact(
+            security_focal=self.product_security_contact_email,
+            software_lead=self.technical_contact_email,
+        )
+
+        # Developer setup
+        developer_setup = DeveloperSetup(
+            development_environments=_as_list(self.development_environment),
+            source_control_tools=_as_list(self.source_control),
+            issue_tracking_tools=_as_list(self.project_management_tool),
+            dp_assessment_name=self.design_practice_assessment_program_name,
+            sbom_location=_as_list(self.sbom_location),
+            programming_languages=_as_list(self.primary_programming_language),
+            operating_systems=_as_list(self.operating_system),
+        )
+
+        # Work location
+        work_location = WorkLocation(
+            locations=_as_list(self.primary_location),
+        )
+        title = None
+        if self.title:
+            title = self.title + " Software Effort"
+        # SoftwareEffort
+        software = SoftwareEffort(  # type: ignore[call-arg]
+            name=title,
+            linked_software_efforts=[],
+            statement_of_work_profile=sow,
+            technical_points_of_contact=technical,
+            developer_setup=developer_setup,
+            work_location=work_location,
+        )
+
+        return software

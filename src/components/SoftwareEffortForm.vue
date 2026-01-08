@@ -22,12 +22,13 @@ const props = defineProps({
     default: () => ({
       name: '',
       parent: null,
+      parent_uuid: null,
       linked_software_efforts: [],
       inherit_statement_of_work_profile: false,
       inherit_technical_points_of_contact: false,
       inherit_developer_setup: false,
       inherit_work_location: false,
-      local_statement_of_work_profile: {
+      statement_of_work_profile: {
         allow_non_us: null,
         mission_critical: null,
         security_clearance: [],
@@ -35,12 +36,12 @@ const props = defineProps({
         program_phase: ['Design', 'Development'], // Default phases
         program_manager_email: ''
       },
-      local_technical_points_of_contact: {
+      technical_points_of_contact: {
         security_focal: '',
         software_lead: '',
         names: ''
       },
-      local_developer_setup: {
+      developer_setup: {
         development_environments: [],
         source_control_tools: [],
         issue_tracking_tools: [],
@@ -49,7 +50,7 @@ const props = defineProps({
         programming_languages: [],
         operating_systems: []
       },
-      local_work_location: {
+      work_location: {
         locations: []
       }
     })
@@ -131,10 +132,10 @@ watch(() => props.effort, (newVal) => {
     // Ensure nested objects exist to avoid null pointer errors if data is incomplete
     const safeVal = JSON.parse(JSON.stringify(newVal));
     
-    if (!safeVal.local_statement_of_work_profile) safeVal.local_statement_of_work_profile = {};
-    if (!safeVal.local_technical_points_of_contact) safeVal.local_technical_points_of_contact = {};
-    if (!safeVal.local_developer_setup) safeVal.local_developer_setup = {};
-    if (!safeVal.local_work_location) safeVal.local_work_location = {};
+    if (!safeVal.statement_of_work_profile) safeVal.statement_of_work_profile = {};
+    if (!safeVal.technical_points_of_contact) safeVal.technical_points_of_contact = {};
+    if (!safeVal.developer_setup) safeVal.developer_setup = {};
+    if (!safeVal.work_location) safeVal.work_location = {};
     
     formData.value = safeVal;
     initialState.value = JSON.stringify(safeVal);
@@ -154,7 +155,7 @@ const filteredLinkCandidates = computed(() => {
         if (formData.value.id && e.id === formData.value.id) return false;
         
         // Exclude already linked
-        if (formData.value.linked_software_efforts && formData.value.linked_software_efforts.includes(e.id)) return false;
+        if (formData.value.linked_software_efforts && formData.value.linked_software_efforts.some(l => l.uuid === e.id || l.id === e.id)) return false;
 
         // Apply Search
         if (!query) return false; // Hide if no query to prevent overwhelming list
@@ -167,21 +168,35 @@ const filteredLinkCandidates = computed(() => {
 // Objects for currently linked IDs
 const linkedEffortObjects = computed(() => {
     if (!formData.value.linked_software_efforts) return [];
-    return formData.value.linked_software_efforts.map(id => {
-        return allEffortCandidates.value.find(e => e.id === id) || { id, name: 'Unknown/External Effort', _programName: 'Unknown' };
+    // The backend now returns objects { uuid, name, ... }.
+    // If the form data has full objects, use them.
+    // If it has strings (legacy/mock intermediate), map them.
+    return formData.value.linked_software_efforts.map(link => {
+        if (typeof link === 'string') {
+             return allEffortCandidates.value.find(e => e.id === link) || { id: link, name: 'Unknown/External Effort', _programName: 'Unknown' };
+        }
+        return link; // It's already an object
     });
 });
 
 const addLink = (effort) => {
     if (!formData.value.linked_software_efforts) formData.value.linked_software_efforts = [];
-    if (!formData.value.linked_software_efforts.includes(effort.id)) {
-        formData.value.linked_software_efforts.push(effort.id);
+    // Check duplication by ID
+    const exists = formData.value.linked_software_efforts.some(l => (l.uuid || l.id) === effort.id);
+    if (!exists) {
+        // Push the structure expected by Pydantic: { uuid, name, program_id, program_name }
+        formData.value.linked_software_efforts.push({
+            uuid: effort.id,
+            name: effort.name,
+            program_id: effort.program_id || '', // Assuming flat candidates have this
+            program_name: effort._programName || ''
+        });
         linkSearchQuery.value = ''; // Reset search
     }
 };
 
 const removeLink = (id) => {
-    formData.value.linked_software_efforts = formData.value.linked_software_efforts.filter(lid => lid !== id);
+    formData.value.linked_software_efforts = formData.value.linked_software_efforts.filter(l => (l.uuid || l.id) !== id);
 };
 
 // Inheritance Resolution Logic
@@ -195,18 +210,14 @@ const getEffectiveValue = (section, field) => {
     // If not inheriting, return local value
     const inheritKey = `inherit_${section}`;
     if (!formData.value[inheritKey]) {
-        // Access local_{section}_profile.{field}
-        // Section names in inherit key don't perfectly match local keys, normalize:
-        // inherit_statement_of_work_profile -> local_statement_of_work_profile
-        // inherit_technical_points_of_contact -> local_technical_points_of_contact
-        // inherit_developer_setup -> local_developer_setup
-        // inherit_work_location -> local_work_location
-        const localKey = `local_${section}`;
-        return formData.value[localKey]?.[field];
+        // Access {section}.{field} (No local_ prefix)
+        return formData.value[section]?.[field];
     }
 
     // If inheriting, walk up parents
     let currentParentId = formData.value.parent;
+    // Map parent_uuid if parent is null but uuid present (rare in this logic, relies on parent ID)
+    
     const inheritFlag = `inherit_${section}`;
 
     while (currentParentId) {
@@ -219,9 +230,8 @@ const getEffectiveValue = (section, field) => {
             continue;
         }
 
-        // Parent has local definition
-        const localKey = `local_${section}`;
-        return parent[localKey]?.[field];
+        // Parent has value
+        return parent[section]?.[field];
     }
     
     return null; // No value found up the chain
@@ -234,9 +244,9 @@ const sv = (section, field) => getEffectiveValue(section, field);
 const updateLocal = (section, field, value) => {
     const inheritKey = `inherit_${section}`;
     if (formData.value[inheritKey]) return; // Read only
-    const localKey = `local_${section}`;
-    if (!formData.value[localKey]) formData.value[localKey] = {};
-    formData.value[localKey][field] = value;
+    
+    if (!formData.value[section]) formData.value[section] = {};
+    formData.value[section][field] = value;
 };
 
 // Validation State
@@ -269,7 +279,7 @@ const validateForm = () => {
 
     // Program Manager Email (SOW)
     if (!formData.value.inherit_statement_of_work_profile) {
-        const email = formData.value.local_statement_of_work_profile?.program_manager_email;
+        const email = formData.value.statement_of_work_profile?.program_manager_email;
         if (!email) {
             errors.value.program_manager_email = 'Program Manager Email is required.';
             isValid = false;
@@ -282,8 +292,7 @@ const validateForm = () => {
         }
 
         // Allow Non-US (Must be boolean explicitly)
-        // Check if property exists and is not null/undefined. The requirement is a dropdown, so ensure it's selected.
-        const nonUs = formData.value.local_statement_of_work_profile?.allow_non_us;
+        const nonUs = formData.value.statement_of_work_profile?.allow_non_us;
         if (nonUs === null || nonUs === undefined || nonUs === '') {
              errors.value.allow_non_us = 'Please select a value.';
              isValid = false;
@@ -293,7 +302,7 @@ const validateForm = () => {
 
     // Software Lead (POCs)
     if (!formData.value.inherit_technical_points_of_contact) {
-        const email = formData.value.local_technical_points_of_contact?.software_lead;
+        const email = formData.value.technical_points_of_contact?.software_lead;
          if (!email) {
             errors.value.software_lead = 'Software Technical Lead Email is required.';
             isValid = false;

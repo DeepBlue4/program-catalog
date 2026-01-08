@@ -1,0 +1,281 @@
+# ##############################################################################
+# ##############################################################################
+# #
+# #                            BOEING PROPRIETARY
+# #                        CLASSIFICATION: UNCLASSIFIED
+# #                   Unpublished Work - All Rights Reserved
+# #                             Copyright 2024-2025
+# #                   Contract: Boeing Funded Development
+# #              Third Party Disclosure Requires Written Approval
+# #
+# ##############################################################################
+import re
+import uuid as external_uuid
+from datetime import datetime, timezone
+from typing import Any, Optional, Union, get_args, get_origin
+
+from enums.metrics import METRIC_TYPES, Metric
+from log.log_handler import logger
+from pydantic import BaseModel, ConfigDict, field_serializer
+
+
+class CombinableModel(BaseModel):
+    """
+    The CombinableModel contains logic that provides functionality to combine models.
+    """
+
+    # for gather_extra_props to work extra must be set to allow
+    model_config = ConfigDict(
+        frozen=True,
+        extra="allow",
+    )
+
+    def merge(self, other: "CombinableModel") -> "CombinableModel":
+        """
+        Merges two instances of CombinableModel by summing numeric fields
+        (integers and floats) and skipping computed fields (properties).
+
+        Non-numeric fields are not modified, and properties are retained from the first instance.
+
+        Args:
+            other (CombinableModel): Another instance of the same model to merge with.
+
+        Returns:
+            CombinableModel: A new instance with the merged values.
+        """
+
+        fields = self.model_fields
+        combined = {}
+
+        for field, field_info in fields.items():
+
+            # Check if the field is a property (i.e., computed) by inspecting the field in the class
+            if isinstance(getattr(self.__class__, field, None), property):
+                combined[field] = getattr(
+                    self, field
+                )  # Keep the computed field from the current instance
+            else:
+                # Get values for the current field from both instances
+                value_self = getattr(self, field)
+                value_other = getattr(other, field)
+
+                # Only sum if the values are numeric (either int or float)
+                if isinstance(value_self, (int, float)) and isinstance(value_other, (int, float)):
+                    combined[field] = value_self + value_other
+
+                else:
+                    # If the field is non-numeric, use the value from the instance without summing
+                    combined[field] = value_self
+
+        # Return a new instance of the same class with the merged data
+        return self.__class__(**combined)  # Dynamically pass the merged values as keyword arguments
+
+
+class EnhancedBasedModel(BaseModel):
+    """
+    The EnhancedBasedModel contains logic that extends Pydantic's functionality.
+    """
+
+    # These fields are required for serialization from Django ORM to
+    # Pydantic for API requests.
+    # Temporarily setting these fields to pass tests
+    uuid: Optional[external_uuid.UUID] = external_uuid.uuid4()
+    status: Optional[str] = "active"
+    timestamp_created: Optional[datetime] = datetime.now()
+    timestamp_updated: Optional[datetime] = datetime.now()
+
+    # for gather_extra_props to work extra must be set to allow
+    model_config = ConfigDict(
+        frozen=False,
+        extra="allow",
+    )
+
+    @field_serializer("uuid", when_used="always")
+    def serialize_uuid(self, uuid: external_uuid.UUID) -> "str | None":
+        return str(uuid) if uuid else None
+
+    @field_serializer("timestamp_created", "timestamp_updated", when_used="always")
+    def serialize_timestamp(self, timestamp: datetime) -> "str | None":
+        return str(timestamp) if timestamp else None
+
+    @classmethod
+    def _parse_int_or_none(cls, value, field) -> Optional[int]:
+        try:
+            if value is None:
+                return None
+            return int(value)
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid value in bsf-registration file Field: {field} Value: {value}")
+            return None
+
+    @classmethod
+    def _parse_str_or_none(cls, value, field) -> Optional[str]:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value
+        logger.warning(f"Invalid value in bsf-registration file Field: {field} Value: {value}")
+        return None
+
+    def redact_data(self):
+        redacted_data = {}
+        for k, v in self.__dict__.items():
+            if hasattr(v, "redact_data") and callable(v.redact_data):
+                redacted_data[k] = v.redact_data()
+            else:
+                redacted_data[k] = v
+
+        return self.__class__(**redacted_data)
+
+    def gather_extra_props(self) -> dict:
+        """
+        Returns a dict of all data that is not defined in a model.
+
+        Returns:
+            dict: The data not defined in the model
+        """
+        extra = self.model_extra or {}
+        for k, v in self:
+            if isinstance(v, EnhancedBasedModel):
+                v_extra = v.gather_extra_props()
+                if v_extra:
+                    extra[k] = v_extra
+        return extra
+
+    @classmethod
+    def check_field_metric_type(cls, value, metric_type: Metric = Metric.NONE) -> bool:
+        """
+        Check field value for metric compabtability
+
+        Args:
+            value (_type_): field type to check
+            metric_type (Metric, optional): Metric Type to check. Defaults to Metric.NONE.
+
+        Returns:
+            bool: Flag for found metric or not
+        """
+
+        found = False
+
+        # If a specific metric type is set check for matches else default to true
+        if metric_type == Metric.NONE:
+            found = True
+        else:
+            # Check for `json_schema_extra` in the current field
+            json_schema_extra = getattr(value, "json_schema_extra", None)
+            if json_schema_extra:
+                metric_types = json_schema_extra.get(METRIC_TYPES, [])
+                sub_metrics = metric_type.list_sub_metrics()
+
+                metric_matches = set(metric_types) & set(sub_metrics)
+
+                # If there are metric matches found then set value to true
+                if metric_matches:
+                    found = True
+
+        return found
+
+    @classmethod
+    def empty_instance(
+        cls,
+        use_example_values: bool = False,
+        metric_type: Metric = Metric.NONE,
+        ignore_fields: list = None,
+    ) -> dict:
+        """
+        Creates a dictionary representation of the object with custom default values
+        Args:
+            use_example_values(bool):
+                If True pass it will return string, 0, 0.0 True,
+                if false it will return all Nones.
+            metric_type(Metric): metric type to use for empty instance return
+            ignore_fields(list): list of str field names to ignore
+
+        Returns:
+            dict: the snapshot with default values
+        """
+        fields = cls.model_fields
+        values: dict[Any, Any] = {}
+
+        # Loop through the Pydantic fields to create their dict
+        for key, value in fields.items():
+
+            # If key is in ignore field list then skip
+            if ignore_fields and key in ignore_fields:
+                continue
+
+            field_type = value.annotation
+            is_list = False
+            is_dict = False
+
+            # Conditional flag to set value
+            set_value = False
+
+            # Pull the actual object type out of unions, lists, or dicts
+            if get_origin(field_type) == Union:
+                field_type = get_args(field_type)[0]
+
+            if get_origin(field_type) == list:
+                field_type = get_args(field_type)[0]
+                is_list = True
+            elif get_origin(field_type) == dict:
+                field_type = get_args(field_type)[1]
+                is_dict = True
+
+            example_value: Any = None
+            if isinstance(field_type, type) and issubclass(field_type, EnhancedBasedModel):
+                # recurse down to construct this object
+                example_value = field_type.empty_instance(
+                    use_example_values, metric_type, ignore_fields
+                )
+                set_value = True  # Set the value if an object field
+            elif use_example_values:
+                # Set default values based on type
+                if field_type == str:
+                    example_value = "string"  # empty string instead of None
+                elif field_type == int:
+                    example_value = 0  # zero instead of None
+                elif field_type == float:
+                    example_value = 0.0  # zero float instead of None
+                elif field_type == bool:
+                    example_value = False  # False instead of None
+                elif field_type == datetime:
+                    example_value = datetime.now(timezone.utc)  # current time instead of None
+                else:
+                    # are set to PydanticUndefined which, for whatever reason, we cannot import
+                    # to compare to. So, if we detect a known type for the default value we
+                    # will use that, otherwise just set it to None
+                    # Check for default value or use empty string
+                    primitives = (bool, str, int, float, type(None))
+                    default_val = value.default if isinstance(value.default, primitives) else ""
+                    example_value = default_val
+            # Fill with Nones
+            elif not use_example_values:
+                primitives = (bool, str, int, float, type(None))
+                default_val = value.default if isinstance(value.default, primitives) else None
+                example_value = default_val
+
+            # If set value is false check metric type
+            if not set_value:
+                set_value = cls.check_field_metric_type(value, metric_type)
+
+            # Only set the value if flag is set to true
+            if set_value:
+                # Re-construct the representation to be true to the type
+                if is_list:
+                    values[key] = [example_value]  # empty list instead of [None]
+                elif is_dict:
+                    values[key] = {"key": example_value}
+                else:
+                    values[key] = example_value
+
+        return values
+
+    @classmethod
+    def get_name(cls) -> str:
+        """
+        Dynamically return the class name in snake_case format.
+        """
+        # Convert class name to snake_case
+        name = re.sub(r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
+        return name

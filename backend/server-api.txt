@@ -1,0 +1,253 @@
+# ##############################################################################
+# ##############################################################################
+# #
+# #                            BOEING PROPRIETARY
+# #                        CLASSIFICATION: UNCLASSIFIED
+# #                   Unpublished Work - All Rights Reserved
+# #                             Copyright 2024-2025
+# #                   Contract: Boeing Funded Development
+# #              Third Party Disclosure Requires Written Approval
+# #
+# ##############################################################################
+from typing import List, Optional
+
+from log.log_handler import logger
+from pydantic import TypeAdapter
+from rest_framework.response import Response
+from rest_framework.status import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_404_NOT_FOUND,
+)
+from rest_framework.views import APIView
+
+from apps.accounts.models import CachedUserModel, DAFUser
+from apps.swe_program_catalog.external_services.program_catalog_service import (
+    ProgramCatalogService,
+)
+from models.accounts.users import CachedUserModel as PydanticCachedUserModel
+from models.accounts.users import DAFUserModel as PydanticDAFUserModel
+from models.program.software_effort import SoftwareEffort
+
+
+class EnterpriseHierarchyEndpoint(APIView):
+    def get(self, request, *args, **kwargs):
+        service = ProgramCatalogService()
+        data = service.get_all_programs_as_tree()
+        if data is None:
+            return Response({}, status=HTTP_404_NOT_FOUND)
+        return Response(data.model_dump(), status=HTTP_200_OK)
+
+
+class ProgramEndpoint(APIView):
+    def get(self, request, id, *args, **kwargs):
+        service = ProgramCatalogService()
+        program = service.get_program_by_uuid(id)
+
+        if program is None:
+            return Response(status=HTTP_404_NOT_FOUND)
+        return Response(program.model_dump(), status=HTTP_200_OK)
+
+
+class SoftwareEffortEndpoint(APIView):
+    def get(self, request, id, *args, **kwargs):
+        service = ProgramCatalogService()
+        efforts = service.get_efforts_for_program(id)
+
+        if efforts is None:
+            return Response(status=HTTP_404_NOT_FOUND)
+        json_data = [data.model_dump() for data in efforts]
+        return Response(json_data, status=HTTP_200_OK)
+
+    def put(self, request, id, *args, **kwargs):
+        try:
+            ta = TypeAdapter(SoftwareEffort)
+            logger.info("Validating update for software effort %s", id)
+            new_effort_model = ta.validate_python(request.data)
+            logger.info("Validated update for software effort %s", id)
+
+            service = ProgramCatalogService()
+            logger.info("Saving update for software effort %s", id)
+            service.save_efforts_for_program(id, new_effort_model)
+
+        except Exception as e:
+            logger.error("Failed to update software effort %s", e)
+            logger.error(request.data)
+            return Response({"detail": str(e)}, status=HTTP_400_BAD_REQUEST)
+
+        return Response(new_effort_model, status=HTTP_201_CREATED)
+
+    def delete(self, request, id=None, *args, **kwargs):
+        """
+        Delete a SoftwareEffort by UUID.
+
+        This endpoint removes a SoftwareEffort identified by its UUID.
+
+        Parameters:
+            request (rest_framework.request.Request): The incoming HTTP request.
+            id (str|None): UUID string of the SoftwareEffort to delete. Required.
+
+        Returns:
+            rest_framework.response.Response
+        """
+        service = ProgramCatalogService()
+        if not id:
+            return Response({"detail": "id required"}, status=HTTP_400_BAD_REQUEST)
+
+        try:
+            deleted = service.delete_effort_by_uuid(id)
+            if not deleted:
+                return Response({"detail": "not found"}, status=HTTP_404_NOT_FOUND)
+
+            # Return explicit JSON so clients that always parse JSON don't fail.
+            return Response({"detail": "deleted"}, status=HTTP_200_OK)
+
+        except Exception as e:
+            logger.exception("Failed to delete software effort %s", id)
+            return Response({"detail": str(e)}, status=HTTP_400_BAD_REQUEST)
+
+
+class CurrentUserEndpoint(APIView):
+
+    def get(self, request, *args, **kwargs):
+
+        user = request.user
+        if not user or not user.is_authenticated:
+            return Response(status=HTTP_401_UNAUTHORIZED)
+
+        # Attempt to find a CachedUserModel that matches both email and bemsid from the DAFUser.
+        # Guard for attributes missing on the DAFUser object.
+        user_email = getattr(user, "email", None)
+
+        cached_user = None
+        if user_email:
+            # If both fields are present we use both, otherwise use whatever is available.
+            # Using filter().first() to avoid raising exceptions if not present.
+            cached_user = CachedUserModel.objects.filter(email=user_email).first()
+
+        # If no cached_user record was found, return 404.
+        if cached_user is None:
+            logger.warning("CachedUser not found for (%s)", user_email)
+
+        # Build response JSON by combining data from DAFUser and CachedUserModel.
+        # Choose and normalize fields that make sense for your frontend.
+        # Build the pydantic DAF user model from the Django user
+        daf_payload = {
+            "username": getattr(user, "username", None),
+            "bemsid": getattr(user, "bemsid", None),
+            "first_name": getattr(user, "first_name", None),
+            "last_name": getattr(user, "last_name", None),
+            "email": user_email,
+            "boeing_contractor": getattr(user, "boeing_contractor", True),
+            "is_active": getattr(user, "is_active", True),
+            "is_staff": getattr(user, "is_staff", False),
+            "is_superuser": getattr(user, "is_superuser", False),
+        }
+
+        # Create pydantic model instances (will validate/normalize)
+        daf_user_model = PydanticDAFUserModel(**daf_payload)
+
+        # Build the pydantic cached user model from the Django cached_user
+        cached_payload = {
+            "bemsid": getattr(cached_user, "bemsid", None),
+            "name": getattr(cached_user, "name", None),
+            "business_unit": getattr(cached_user, "business_unit", None),
+            "manager_status": getattr(cached_user, "manager_status", None),
+            "swe_status": getattr(cached_user, "swe_status", None),
+            "email": getattr(cached_user, "email", None),
+        }
+
+        cached_user_model = PydanticCachedUserModel(**cached_payload)
+
+        # Prepare final response dict by dumping the pydantic models
+        response_data = {
+            "id": getattr(user, "id", None),
+            "daf_user": daf_user_model.model_dump(),
+            "cached": cached_user_model.model_dump(),
+        }
+
+        # Compute display_name (prefer cached.name)
+        display_name: Optional[str] = cached_user_model.name or (
+            f"{daf_user_model.first_name or ''} {daf_user_model.last_name or ''}".strip()
+        )
+        response_data["display_name"] = display_name
+
+        return Response(response_data, status=HTTP_200_OK)
+
+
+class EmailsEndpoint(APIView):
+    """
+    GET: Return an alphabetized list of unique email strings combined from:
+      - CachedUserModel.email
+      - DAFUser.email (the Django/DAF user table)
+    - Filters out null/empty emails.
+    - Performs case-insensitive de-duplication and case-insensitive sorting.
+    """
+
+    EXCLUDE_PATTERNS = [
+        "admin@boeing.com",
+    ]
+
+    def should_exclude(self, email: str) -> bool:
+        """Return True if email should be excluded based on EXCLUDE_PATTERNS."""
+        if not email:
+            return True
+        e = email.strip().lower()
+        if "@" not in e:
+            return True
+        for pat in self.EXCLUDE_PATTERNS:
+            if pat.endswith("@"):
+                # prefix match
+                if e.startswith(pat):
+                    return True
+            else:
+                # exact match
+                if e == pat:
+                    return True
+        return False
+
+    def get(self, request, *args, **kwargs):
+        try:
+            # Query emails from CachedUserModel
+            cached_emails_qs = CachedUserModel.objects.values_list("email", flat=True)
+
+            # Query emails from the DAFUser model
+            daf_emails_qs = DAFUser.objects.values_list("email", flat=True)
+
+            # Combine iterables and normalize: filter out None/empty, trim strings
+            combined_iter = list(cached_emails_qs) + list(daf_emails_qs)
+
+            normalized = []
+            for e in combined_iter:
+                if e is None:
+                    continue
+                if not isinstance(e, str):
+                    # Attempt to coerce, skip if fails
+                    try:
+                        e = str(e)
+                    except Exception:
+                        continue
+                trimmed = e.strip()
+                if not trimmed:
+                    continue
+                if self.should_exclude(trimmed):
+                    continue
+                normalized.append(trimmed)
+
+            # Case-insensitive unique mapping: preserve first-seen casing
+            lower_to_original = {}
+            for e in normalized:
+                key = e.lower()
+                if key not in lower_to_original:
+                    lower_to_original[key] = e
+
+            # Sort case-insensitively and return list of original-cased emails
+            sorted_emails = sorted(lower_to_original.values(), key=lambda s: s.lower())
+
+            return Response(sorted_emails, status=HTTP_200_OK)
+
+        except Exception as exc:  # pragma: no cover - top-level safety
+            logger.error("Failed to gather emails for EmailsEndpoint: %s", exc)
+            return Response({"detail": str(exc)}, status=HTTP_400_BAD_REQUEST)

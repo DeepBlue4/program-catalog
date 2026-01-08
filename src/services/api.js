@@ -126,28 +126,29 @@ export class CompassAPIService {
 
                 efforts.push({
                     id: effId,
+                    uuid: effId,
                     name: `Mock Effort ${i + 1}`,
-                    parent: null, // Flat list for this mock scope usually
+                    parent: null,
+                    parent_uuid: null,
 
                     inherit_statement_of_work_profile: false,
-                    local_statement_of_work_profile: {
-                        type: effType, // Kept per user request
+                    statement_of_work_profile: {
                         program_manager_email: `manager.${i}@example.com`,
                         allow_non_us: i % 2 === 0,
                         mission_critical: i % 4 === 0,
-                        program_phase: 'Development', // String to match Django text
+                        program_phase: 'Development',
                         security_clearance: ['None'],
                         safety_criticality: ['None']
                     },
 
                     inherit_technical_points_of_contact: false,
-                    local_technical_points_of_contact: {
+                    technical_points_of_contact: {
                         software_lead: `lead.${i}@example.com`,
                         security_focal: `sec.${i}@example.com`
                     },
 
                     inherit_developer_setup: false,
-                    local_developer_setup: {
+                    developer_setup: {
                         programming_languages: ['Python', 'Java'],
                         operating_systems: ['Linux'],
                         development_environments: ['BSF-Global'],
@@ -158,7 +159,7 @@ export class CompassAPIService {
                     },
 
                     inherit_work_location: false,
-                    local_work_location: {
+                    work_location: {
                         locations: ['Seattle, WA', 'Remote']
                     },
 
@@ -415,28 +416,29 @@ export class CompassAPIService {
 
                     softwareEfforts.push({
                         id: effId,
+                        uuid: effId,
                         name: effName,
                         parent: parentId,
+                        parent_uuid: parentId,
 
                         inherit_statement_of_work_profile: false,
-                        local_statement_of_work_profile: {
-                            type: effType, // Kept per user request
+                        statement_of_work_profile: {
                             program_manager_email: `manager.${j}@example.com`,
                             allow_non_us: random() > 0.5,
                             mission_critical: random() > 0.8,
-                            program_phase: pick(['Design', 'Development', 'Production']), // Django CharField match (string)
+                            program_phase: pick(['Design', 'Development', 'Production']),
                             security_clearance: [pick(['None', 'Secret'])],
                             safety_criticality: [pick(['None', 'DAL D / LOR 4'])]
                         },
 
                         inherit_technical_points_of_contact: false,
-                        local_technical_points_of_contact: {
+                        technical_points_of_contact: {
                             software_lead: `lead.${j}@example.com`,
                             security_focal: `sec.${j}@example.com`
                         },
 
                         inherit_developer_setup: false,
-                        local_developer_setup: {
+                        developer_setup: {
                             programming_languages: [pick(['Python', 'C++', 'Java'])],
                             operating_systems: [pick(['Linux', 'Windows'])],
                             development_environments: [pick(['BSF-Global', 'BSF-US'])],
@@ -447,7 +449,7 @@ export class CompassAPIService {
                         },
 
                         inherit_work_location: false,
-                        local_work_location: {
+                        work_location: {
                             locations: [primary_location, 'Remote']
                         },
 
