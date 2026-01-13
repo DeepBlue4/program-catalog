@@ -45,6 +45,10 @@ const initChart = () => {
 
   // Initial Sync
   syncState(props.data);
+  // Ensure we expand to the selection if one exists on mount
+  if (props.selectedId) {
+      expandPathToNode(props.selectedId);
+  }
   updateChart();
 };
 

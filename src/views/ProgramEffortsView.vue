@@ -72,8 +72,11 @@ const retryFetch = () => {
 
 const goBack = () => {
     // Navigate back to tree with program selected
-    if (currentProgram.value) {
-        router.push({ path: '/', query: { program_id: currentProgram.value.value } });
+    // Use the ID from the route params to ensure we always have context
+    const targetId = programId.value;
+    
+    if (targetId) {
+        router.push({ path: '/', query: { program_id: targetId } });
     } else {
         router.push('/');
     }

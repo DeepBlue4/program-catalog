@@ -6,7 +6,7 @@ import UserMenu from './components/UserMenu.vue';
 import { useProgramData } from './composables/useProgramData.js';
 import { useProgramCatalogStore } from './store/programCatalogStore';
 import BaseIcon from './components/BaseIcon.vue';
-import { mdiChevronDown, mdiSitemap } from '@mdi/js';
+import { mdiChevronDown, mdiSitemap, mdiCodeBraces, mdiChevronRight } from '@mdi/js';
 import { STATUS_COLORS } from './styles/statusConstants'; // Import Colors
 import MultiSelectDropdown from './components/MultiSelectDropdown.vue';
 
@@ -48,6 +48,15 @@ const handleViewEfforts = () => {
     if (selectedNode.value) {
         router.push({ name: 'ProgramEfforts', params: { programId: selectedNode.value.program_id } });
     }
+};
+
+const handleEffortClick = (effort) => {
+    if (!selectedNode.value) return;
+    router.push({
+        name: 'ProgramEfforts',
+        params: { programId: selectedNode.value.program_id },
+        query: { effort_id: effort.id || effort.uuid }
+    });
 };
 
 const handleBackToCatalog = () => {
@@ -132,6 +141,13 @@ const breadcrumbDropdownRef = ref(null);
 
 const toggleDropdown = () => {
     showBreadcrumbDropdown.value = !showBreadcrumbDropdown.value;
+};
+
+
+const showEffortsList = ref(false);
+
+const toggleEffortsList = () => {
+    showEffortsList.value = !showEffortsList.value;
 };
 
 const selectChild = (child) => {
@@ -273,23 +289,39 @@ const currentEnvironment = computed(() => {
                </div>
                
                <div class="divider"></div>
-               
-               <div class="action-area">
-                   <div class="stat-row">
-                       <span class="stat-label">Software Efforts</span>
-                       <span class="stat-value">{{ selectedNode.softwareEfforts ? selectedNode.softwareEfforts.length : 0 }}</span>
-                   </div>
-                   
-                   <button 
-                        v-if="selectedNode.softwareEfforts && selectedNode.softwareEfforts.length > 0" 
-                        class="btn-filled full-width"
-                        @click="handleViewEfforts"
-                   >
-                       View Software Efforts
-                   </button>
-                   <button v-else class="btn-outlined full-width" @click="handleViewEfforts">
-                       View Empty State (Create)
-                   </button>
+                             <div class="action-area" style="position: relative;">
+                    <button 
+                         v-if="selectedNode.softwareEfforts && selectedNode.softwareEfforts.length > 0" 
+                         class="btn-filled full-width mb-3"
+                         @click="handleViewEfforts"
+                    >
+                        View Software Efforts
+                    </button>
+                    <button v-else class="btn-outlined full-width mb-3" @click="handleViewEfforts">
+                        Initialize Efforts
+                    </button>
+                    
+                    <div 
+                        class="section-header clickable" 
+                        @click="toggleEffortsList"
+                    >
+                        <span class="section-label">Software Efforts ({{ selectedNode.softwareEfforts ? selectedNode.softwareEfforts.length : 0 }})</span>
+                        <BaseIcon :path="showEffortsList ? mdiChevronDown : mdiChevronRight" :size="20" class="toggle-icon" />
+                    </div>
+                    
+                    <div v-if="showEffortsList && selectedNode.softwareEfforts && selectedNode.softwareEfforts.length > 0" class="efforts-dropdown floating-dropdown">
+                        <div 
+                            v-for="effort in selectedNode.softwareEfforts" 
+                            :key="effort.id || effort.uuid" 
+                            class="effort-item-clean"
+                            @click="handleEffortClick(effort)"
+                        >
+                            <div class="effort-info">
+                                <span class="effort-name">{{ effort.name }}</span>
+                                <span class="effort-id">{{ effort.id || effort.uuid }}</span>
+                            </div>
+                        </div>
+                    </div>
                </div>
            </div>
         </div>
@@ -591,6 +623,7 @@ const currentEnvironment = computed(() => {
 
 .sidebar-body {
     padding: 1.5rem;
+    padding-bottom: 20rem; /* Extra space for floating dropdown */
     overflow-y: auto;
     flex: 1;
 }
@@ -657,6 +690,104 @@ const currentEnvironment = computed(() => {
 
 .full-width {
     width: 100%;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    cursor: pointer;
+    user-select: none;
+    border-top: 1px solid #E7E0EC;
+    margin-top: 8px;
+}
+
+.section-header:hover .section-label {
+    color: #1D1B20;
+}
+
+.section-label {
+    font-size: 0.75rem;
+    color: #625B71;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.toggle-icon {
+    color: #625B71;
+    transition: transform 0.2s;
+}
+
+.efforts-dropdown.floating-dropdown {
+    position: absolute;
+    /* Aligned to the left of the click action (relative to action-area) */
+    top: 100%; /* Below the header (technically below the whole action-area relative parent if not careful, but flex column flow inside means we need to key off the header) */
+    /* Check structure: action-area is relative. Header is inside. If we want it relative to Header, Header should be relative? 
+       Actually user said "aligned to the left of the click action". 
+       Let's position it absolute relative to the .action-area container for simplicity as requested "floating".
+    */
+    left: 0;
+    right: 0; 
+    z-index: 50;
+    background: #FFFFFF;
+    border: 1px solid #C4C7C5;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+
+.efforts-dropdown {
+    display: flex;
+    flex-direction: column;
+    background: #FFFFFF;
+    border: 1px solid #E7E0EC;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0px 1px 2px rgba(0,0,0,0.1);
+}
+
+.effort-item-clean {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #F3EDF7;
+    transition: background 0.1s;
+}
+
+.effort-item-clean:last-child {
+    border-bottom: none;
+}
+
+.effort-item-clean:hover {
+    background: #F3EDF7; /* surface-container-high */
+}
+
+.effort-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.effort-name {
+    font-size: 14px;
+    color: #1D1B20;
+    font-weight: 500;
+}
+
+.effort-id {
+    font-size: 11px;
+    color: #625B71;
+    margin-top: 2px;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.mb-3 {
+    margin-bottom: 0.75rem;
 }
 
 .sidebar-empty {
