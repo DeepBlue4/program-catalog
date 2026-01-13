@@ -57,6 +57,7 @@ export function useProgramData() {
         acc.push({
             ...nodes,
             value: idValue, // Robust ID mapping
+            program_id: idValue, // Ensure consistent ID access for App.vue navigation
             name: nodes.name // Ensure name is present
         });
 

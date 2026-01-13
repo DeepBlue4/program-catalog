@@ -14,14 +14,27 @@ const emit = defineEmits(['select']);
 
 const query = ref('');
 const isOpen = ref(false);
+const activeFilter = ref('all');
+
+const filters = [
+    { label: 'All', value: 'all' },
+    { label: 'Programs', value: 'program' },
+    { label: 'Efforts', value: 'effort' }
+];
 
 const filteredItems = computed(() => {
   if (!query.value) return [];
   const lowerQuery = query.value.toLowerCase();
-  return props.items.filter(item => 
-    item.name.toLowerCase().includes(lowerQuery) || 
-    String(item.value).toLowerCase().includes(lowerQuery)
-  ).slice(0, 10); // Limit to 10 suggestions
+  
+  return props.items.filter(item => {
+    // 1. Check Filter
+    if (activeFilter.value === 'program' && item.isSoftwareEffort) return false;
+    if (activeFilter.value === 'effort' && !item.isSoftwareEffort) return false;
+
+    // 2. Check Query
+    return item.name.toLowerCase().includes(lowerQuery) || 
+           String(item.value).toLowerCase().includes(lowerQuery);
+  }).slice(0, 10); // Limit to 10 suggestions
 });
 
 const handleInput = () => {
@@ -57,27 +70,45 @@ const handleBlur = () => {
       <span class="search-icon"><BaseIcon :path="mdiMagnify" :size="14" /></span>
     </div>
     
-    <ul v-if="isOpen && filteredItems.length" class="suggestions-list">
-      <li 
-        v-for="item in filteredItems" 
-        :key="item.value" 
-        @click="selectItem(item)"
-        class="suggestion-item"
-      >
-        <div class="item-content">
-             <div class="item-row primary">
-                 <span class="item-name">{{ item.name }}</span>
-             </div>
-             <div class="item-row secondary">
-                 <span class="item-type-badge" :class="{ program: !item.isSoftwareEffort }">
-                    {{ item.isSoftwareEffort ? 'Effort' : 'Program' }}
-                 </span>
-                 <span v-if="item.programName" class="item-context">{{ item.programName }}</span>
-                 <span class="item-id">ID: {{ item.value }}</span>
-             </div>
+    <div v-if="isOpen && query" class="suggestions-dropdown">
+       <!-- Filter Bar -->
+       <div class="filter-bar">
+           <span 
+                v-for="filter in filters" 
+                :key="filter.value"
+                class="filter-chip"
+                :class="{ active: activeFilter === filter.value }"
+                @mousedown.prevent="activeFilter = filter.value"
+            >
+                {{ filter.label }}
+           </span>
+       </div>
+
+        <ul v-if="filteredItems.length" class="suggestions-list">
+            <li 
+                v-for="item in filteredItems" 
+                :key="item.value" 
+                @click="selectItem(item)"
+                class="suggestion-item"
+            >
+                <div class="item-content">
+                    <div class="item-row primary">
+                        <span class="item-name">{{ item.name }}</span>
+                    </div>
+                    <div class="item-row secondary">
+                        <span class="item-type-badge" :class="{ program: !item.isSoftwareEffort }">
+                            {{ item.isSoftwareEffort ? 'Effort' : 'Program' }}
+                        </span>
+                        <span v-if="item.programName" class="item-context">{{ item.programName }}</span>
+                        <span class="item-id">ID: {{ item.value }}</span>
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <div v-else class="no-results">
+            No results found for "{{ query }}" in {{ activeFilter === 'all' ? 'All' : activeFilter === 'program' ? 'Programs' : 'Efforts' }}.
         </div>
-      </li>
-    </ul>
+    </div>
   </div>
 </template>
 
@@ -108,7 +139,7 @@ const handleBlur = () => {
   pointer-events: none;
 }
 
-.suggestions-list {
+.suggestions-dropdown {
   position: absolute;
   top: 100%;
   left: 0;
@@ -117,12 +148,46 @@ const handleBlur = () => {
   border: 1px solid #C4C7C5; /* outline-variant */
   border-radius: 12px;
   margin-top: 6px;
-  padding: 4px;
-  list-style: none;
   box-shadow: 0px 2px 6px 2px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3); /* elevation-2 */
   z-index: 1000;
+  overflow: hidden;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #C4C7C5;
+    background: #F3EDF7; /* surface-container */
+}
+
+.filter-chip {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 10px;
+    border-radius: 12px;
+    border: 1px solid #79747E;
+    color: #49454F;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.filter-chip:hover {
+    background: #E8DEF8;
+}
+
+.filter-chip.active {
+    background: #E8DEF8; /* secondary-container */
+    color: #1D192B; /* on-secondary-container */
+    border-color: transparent;
+}
+
+.suggestions-list {
+  padding: 4px;
+  list-style: none;
   max-height: 400px;
   overflow-y: auto;
+  margin: 0;
 }
 
 .suggestion-item {
@@ -197,5 +262,13 @@ const handleBlur = () => {
     margin-left: auto; /* Push to right */
     font-family: monospace;
     opacity: 0.7;
+}
+
+.no-results {
+    padding: 16px;
+    text-align: center;
+    color: #49454F; /* on-surface-variant */
+    font-size: 13px;
+    font-style: italic;
 }
 </style>

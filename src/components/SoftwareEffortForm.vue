@@ -391,6 +391,24 @@ const LANGUAGE_OPTIONS = ["Python", "C++", "Java", "Ada", "JavaScript", "C", "Ru
 const OS_OPTIONS = ["Boeing Linux", "Other Linux", "Windows", "Android", "iOS", "VxWorks", "Integrity", "macOS", "Other"];
 const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 
+const WORK_LOCATION_OPTIONS = [
+    "USA, WA, Seattle",
+    "USA, WA, Everett",
+    "USA, WA, Renton",
+    "USA, MO, St. Louis",
+    "USA, SC, North Charleston",
+    "USA, CA, Long Beach",
+    "USA, TX, Plano",
+    "USA, VA, Arlington",
+    "USA, AL, Huntsville",
+    "USA, AZ, Mesa",
+    "Canada, BC, Vancouver",
+    "Canada, ON, Ottawa",
+    "UK, London, London",
+    "Australia, QLD, Brisbane",
+    "India, KA, Bengaluru"
+];
+
 </script>
 
 <template>
@@ -857,13 +875,14 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
 
                 <div class="form-fields-grid" :class="{ 'is-inherited': formData.inherit_work_location }">
                     <div class="field-group span-2">
-                        <label>Locations</label>
-                         <textarea 
-                             :value="fromArray(sv('work_location', 'locations'))" 
-                             @input="e => updateLocal('work_location', 'locations', toArray(e.target.value))"
-                             :disabled="formData.inherit_work_location"
-                             class="std-textarea" rows="3" placeholder="Building 40, Remote, etc..."
-                        ></textarea>
+                        <MultiSelectDropdown 
+                            :modelValue="sv('work_location', 'locations') || []"
+                            @update:modelValue="val => updateLocal('work_location', 'locations', val)"
+                            :options="WORK_LOCATION_OPTIONS"
+                            label="Work Locations"
+                            :disabled="formData.inherit_work_location"
+                            placeholder="Search and select locations..."
+                        />
                     </div>
                 </div>
             </div>
@@ -1076,6 +1095,40 @@ const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
     background: #F3EDF7; /* surface-container */
     color: #005AC1; /* primary */
     border-left-color: #005AC1; /* primary */
+}
+
+.tab-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 24px; /* Fix width to ensure icon center stability */
+    height: 24px;
+}
+
+.error-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #BA1A1A; /* error */
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #F7F2FA; /* Match bg to cutout */
+}
+
+.tab-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start; /* Ensure left alignment of text */
+    line-height: normal;
 }
 
 /* Content */

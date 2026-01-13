@@ -384,7 +384,7 @@ async function populateSoftwareEfforts(root) {
         // We do this regardless of 'hasSoftwareEffort' flag if it's unreliable as per user report.
         if (node.expecting_software_efforts) {
             // Ensure we have a valid ID to query
-            const targetId = node.uuid || node.program_id || node.id;
+            const targetId = node.program_id || node.id;
             if (!targetId) return;
 
             const p = CompassAPIService.getSoftwareEfforts(targetId).then(resp => {
@@ -420,7 +420,7 @@ export function useProgramCatalogStore() {
         fetchItems,
         fetchItemsNames,
         fetchSWEItems,
-        getSWEItems, // Exposed
+        getSWEItems,
         findByOrgId,
         findByOrgName,
         getOrgPathByID,
