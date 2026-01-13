@@ -45,6 +45,12 @@ async function fetchItems() {
             }
 
             state.items = response.data;
+
+            // In production, the hierarchy endpoint does NOT include software efforts.
+            // We must fetch them separately for relevant nodes.
+            if (!CompassAPIService.useTestData) {
+                await populateSoftwareEfforts(state.items);
+            }
         }
     } catch (err) {
         state.error = err.message || "Failed to fetch items";
@@ -354,6 +360,58 @@ async function getAllSoftwareEfforts() {
 
     traverse(state.items);
     return allEfforts;
+}
+
+/**
+ * Helper to recursively populate software efforts for nodes that expect them.
+ * This is required in production because the hierarchy endpoint is lightweight.
+ */
+async function populateSoftwareEfforts(root) {
+    if (!root) return;
+
+    // Collect all promises to run in parallel
+    const promises = [];
+
+    function traverseAndCollect(node) {
+        if (!node) return;
+
+        if (Array.isArray(node)) {
+            node.forEach(traverseAndCollect);
+            return;
+        }
+
+        // If the node expects efforts, we should fetch them.
+        // We do this regardless of 'hasSoftwareEffort' flag if it's unreliable as per user report.
+        if (node.expecting_software_efforts) {
+            // Ensure we have a valid ID to query
+            const targetId = node.uuid || node.program_id || node.id;
+            if (!targetId) return;
+
+            const p = CompassAPIService.getSoftwareEfforts(targetId).then(resp => {
+                if (resp.success && Array.isArray(resp.data)) {
+                    node.softwareEfforts = resp.data;
+                    node.hasSoftwareEffort = resp.data.length > 0;
+                } else {
+                    // Initialize empty if failed or empty
+                    if (!node.softwareEfforts) node.softwareEfforts = [];
+                }
+            });
+            promises.push(p);
+        }
+
+        if (node.children && Array.isArray(node.children)) {
+            node.children.forEach(traverseAndCollect);
+        }
+    }
+
+    traverseAndCollect(root);
+
+    // Wait for all fetches to complete
+    if (promises.length > 0) {
+        console.log(`[Store] Hydrating software efforts for ${promises.length} nodes...`);
+        await Promise.all(promises);
+        console.log('[Store] Hydration complete.');
+    }
 }
 
 export function useProgramCatalogStore() {
