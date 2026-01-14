@@ -144,7 +144,7 @@ const toggleDropdown = () => {
 };
 
 
-const showEffortsList = ref(false);
+const showEffortsList = ref(true);
 
 const toggleEffortsList = () => {
     showEffortsList.value = !showEffortsList.value;

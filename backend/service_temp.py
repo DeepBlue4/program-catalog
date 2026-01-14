@@ -85,15 +85,16 @@ class ProgramCatalogService:
 
     def _get_latest_programs(self):
         """
-        Helper for getting the most version of each active software programs
-
+        Helper for getting the latest version date of each active software program.
+        
         Returns:
-            list: the list of programs
+            QuerySet: Grouped by program_id with Max("date")
         """
         return (
             ProgramCatalogInfoModel.objects.filter(program__active=True)
+            # Fix: Explicitly group by program_id before annotating
+            .values("program_id")
             .annotate(latest_date=Max("date"))
-            .values("program_id", "latest_date")
         )
 
     def _convert_program_catalog_info_to_dto(
@@ -106,13 +107,41 @@ class ProgramCatalogService:
         return pydantic_model.model_validate(serialized_data)
 
     def get_efforts_for_program(self, id: str) -> list[SoftwareEffort] | None:
+        """
+        Get all software efforts for a specific program.
 
-        program = ProgramCatalogInfoModel.objects.filter(id=id).first()
+        Args:
+            id (str): The 'program_id' (Business ID) of the program (e.g., '101', '505').
+                      NOTE: This is NOT the database UUID of the ProgramCatalogInfoModel.
+        
+        Returns:
+            list[SoftwareEffort] | None: A list of software efforts or None if program not found.
+        """
+        logger.info("[get_efforts_for_program] Fetching efforts for program_id: %s", id)
+
+        # 1. Fetch the latest active program info to ensure we match the correct version.
+        # This mirrors the logic in get_program_by_id logic.
+        latest_program_info = self._get_latest_programs()
+        
+        # 2. Look up the ProgramCatalogInfoModel using the business 'program_id'
+        # filtered by the latest date to get the current active record.
+        program = ProgramCatalogInfoModel.objects.filter(
+            program_id=id,
+            date__in=latest_program_info.values("latest_date")
+        ).first()
 
         if program is None:
+            logger.warning("[get_efforts_for_program] Program NOT found for program_id: %s", id)
             return None
 
+        # 3. Retrieve Software Efforts associated with this specific program info instance.
         software_efforts = SoftwareEffortModel.objects.filter(program_catalog_info=program)
+        
+        logger.info(
+            "[get_efforts_for_program] Found %d efforts for program %s (pk=%s)", 
+            software_efforts.count(), id, program.pk
+        )
+
         serialized_data = SoftwareEffortSerializer(software_efforts, many=True).data
 
         return [SoftwareEffort.model_validate(item) for item in serialized_data]
@@ -427,11 +456,13 @@ class ProgramCatalogService:
         program_data.sort(key=lambda p: len(p["program_path"].split(".")))
 
         # Pop off the root (first item)
+        if not program_data:
+            return None
+        
         root_data = program_data.pop(0)
         
         # Convert to Pydantic/Dict structure
         # We manually construct to avoid serializer overhead
-        # Note: expecting_software_efforts is mapped from expect_software_effort
         def map_to_dto(p_dict):
             # p_dict has snake_case keys from DB values()
             return ProgramTreeNode(
@@ -445,20 +476,8 @@ class ProgramCatalogService:
                 chief_engineer_name=p_dict["chief_engineer_name"],
                 program_type=p_dict["program_type"],
                 program_value=p_dict["program_value"],
-                # Extra fields not in strict Program model but needed for tree logic/frontend
-                # We attach them to the object if Pydantic allows or as parallel dict logic?
-                # ProgramTreeNode inherits Program. If fields are missing in Program, we can't set them via constructor easily
-                # unless Config allows extra.
-                # However, typically we just set attributes dynamically if python allows.
-                # Or we rely on "extra" fields if configured.
             )
             
-        # WAIT: If Program model doesn't have `expect_software_effort`, we need to attach it.
-        # Let's check `backend/core-program.txt` again. It inherits `EnhancedBasedModel`.
-        # I'll assumme I can assign extra attributes or I should define them.
-        
-        # Actually returning a dict tree is often faster, but signature says ProgramTreeNode.
-        
         root_node = map_to_dto(root_data)
         # Attach raw fields needed for logic/frontend
         root_node.expecting_software_efforts = root_data["expect_software_effort"]
@@ -481,6 +500,10 @@ class ProgramCatalogService:
             parent_node = id_path_to_node.get(parent_path)
 
             if parent_node is None:
+                logger.warning(
+                    "[get_all_programs_as_tree] Orphan found! Node '%s' (path=%s) is missing parent '%s'. Skipping.",
+                    p_dict["name"], p_dict["program_path"], parent_path
+                )
                 continue
 
             child_node = map_to_dto(p_dict)
@@ -498,11 +521,6 @@ class ProgramCatalogService:
             is_relevant = getattr(node, 'expecting_software_efforts', False) or getattr(node, 'has_descendant_expecting_software_effort', False)
             
             if is_relevant:
-                # Find parent? We don't have parent link on node, but we can look up via path
-                # Or just rely on children loop check?
-                # If we iterate reversed, we are visiting children before parents.
-                # BUT we need to set PARENT's flag.
-                # We can lookup parent by path.
                 parent_path = get_parent_id_path(node.program_path)
                 if parent_path and parent_path in id_path_to_node:
                     parent = id_path_to_node[parent_path]
@@ -527,7 +545,9 @@ class ProgramCatalogService:
             ProgramCatalogInfoModel.objects.filter(
                 program__active=True, date__in=latest_program_info.values("latest_date")
             )
-            .order_by("program_id", "-date")
+            # Fix: Sort deterministically to handle multiple entries on same date.
+            # Prefer sorting by timestamp_updated desc (if available) or id desc to break ties.
+            .order_by("program_id", "-date", "-id") 
             .distinct("program_id")
             .values(*fields)
         )
@@ -536,13 +556,6 @@ class ProgramCatalogService:
     def get_all_programs(self) -> list[Program]:
         # Refactor this to use the dicts too if needed, or leave as is if not critical path
         # Assuming get_all_programs_as_tree is the main visualization bottleneck
-        all_models = self._get_all_program_models() # This might fail if I removed it? 
-        # I only replaced _get_all_program_models with _get_all_program_dicts above?
-        # The instruction says "Replace _get_all_program_models with _get_all_program_dicts"
-        # So I should PROBABLY keep _get_all_program_models IF get_all_programs depends on it, OR refactor get_all_programs too.
-        # I'll keep _get_all_program_models but implement it using dicts if possible, OR just leave it for now but the prompt said replace.
-        # I'll implement _get_all_program_models separately or let it exist if I didn't verify get_all_programs usage.
-        # get_all_programs is used by... likely table view?
         # I'll implement _get_all_program_models to return models if needed, OR just map dicts to Program objects.
         return [self._convert_program_catalog_info_to_dto(ProgramCatalogInfoModel(**d)) for d in self._get_all_program_dicts()]
 

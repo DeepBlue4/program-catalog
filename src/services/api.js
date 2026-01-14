@@ -173,8 +173,11 @@ export class CompassAPIService {
             };
         }
 
+        const path = `enterprise-hierarchy/${hierarchyNodeUUID}/software-effort`;
+        console.log(`[API] getSoftwareEfforts fetching: ${path}`);
+
         const data = await CompassAPIService.performGet(
-            `enterprise-hierarchy/${hierarchyNodeUUID}/software-effort`,
+            path,
             [],
         );
         return data;

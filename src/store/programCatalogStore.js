@@ -382,16 +382,22 @@ async function populateSoftwareEfforts(root) {
 
         // If the node expects efforts, we should fetch them.
         // We do this regardless of 'hasSoftwareEffort' flag if it's unreliable as per user report.
+        // If the node expects efforts, we should fetch them.
+        // We do this regardless of 'hasSoftwareEffort' flag if it's unreliable as per user report.
         if (node.expecting_software_efforts) {
             // Ensure we have a valid ID to query
             const targetId = node.program_id || node.id;
             if (!targetId) return;
 
+            console.log(`[Store] Hydrating efforts for node ID: ${targetId} (${node.name})`);
+
             const p = CompassAPIService.getSoftwareEfforts(targetId).then(resp => {
                 if (resp.success && Array.isArray(resp.data)) {
+                    console.log(`[Store] Success hydrating node ${targetId}: found ${resp.data.length} efforts.`);
                     node.softwareEfforts = resp.data;
                     node.hasSoftwareEffort = resp.data.length > 0;
                 } else {
+                    console.warn(`[Store] Failed/Empty hydrating node ${targetId}`, resp);
                     // Initialize empty if failed or empty
                     if (!node.softwareEfforts) node.softwareEfforts = [];
                 }
