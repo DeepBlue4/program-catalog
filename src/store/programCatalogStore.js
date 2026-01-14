@@ -1,4 +1,4 @@
-import { reactive, shallowRef } from "vue";
+import { reactive, shallowRef, triggerRef } from "vue";
 import { CompassAPIService } from "../services/api.js";
 
 const state = reactive({
@@ -417,6 +417,9 @@ async function populateSoftwareEfforts(root) {
         console.log(`[Store] Hydrating software efforts for ${promises.length} nodes...`);
         await Promise.all(promises);
         console.log('[Store] Hydration complete.');
+
+        // Force reactivity update since state.items is a shallowRef and we mutated deep properties
+        triggerRef(state.items);
     }
 }
 
