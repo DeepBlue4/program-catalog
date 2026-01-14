@@ -253,11 +253,24 @@ export class MockApiData {
     }
 
     static getMockEmails() {
-        return [
+        const firstNames = ["James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", "William", "Elizabeth", "David", "Barbara", "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah", "Charles", "Karen"];
+        const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin"];
+
+        const emails = [
             "jane.doe@company.com",
             "john.smith@company.com",
             "admin@company.com",
-            "developer@company.com",
+            "developer@company.com"
         ];
+
+        // Generate more realistic emails
+        for (let i = 0; i < 40; i++) {
+            const fn = firstNames[Math.floor(Math.random() * firstNames.length)].toLowerCase();
+            const ln = lastNames[Math.floor(Math.random() * lastNames.length)].toLowerCase();
+            emails.push(`${fn}.${ln}@company.com`);
+        }
+
+        // Deduplicate
+        return [...new Set(emails)].sort();
     }
 }

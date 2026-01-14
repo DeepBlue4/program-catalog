@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useProgramCatalogStore } from '../store/programCatalogStore'; // Import store
 import BaseIcon from '../components/BaseIcon.vue';
 import MultiSelectDropdown from './MultiSelectDropdown.vue';
+import EmailAutocomplete from './EmailAutocomplete.vue';
 import {
   mdiFileSign,
   mdiAccountGroup,
@@ -631,13 +632,15 @@ const WORK_LOCATION_OPTIONS = [
                         </select>
                     </div>
                      <div class="field-group" :class="{ 'has-error': errors.program_manager_email }">
-                        <label>Program Manager Email <span class="required-star">*</span></label>
-                        <input 
-                             :value="sv('statement_of_work_profile', 'program_manager_email')"
-                             @input="e => updateLocal('statement_of_work_profile', 'program_manager_email', e.target.value)"
+                        <EmailAutocomplete 
+                             :modelValue="sv('statement_of_work_profile', 'program_manager_email')"
+                             @update:modelValue="val => updateLocal('statement_of_work_profile', 'program_manager_email', val)"
                              :disabled="formData.inherit_statement_of_work_profile"
-                             type="email" class="std-input" placeholder="manager@example.com">
-                         <span v-if="errors.program_manager_email" class="error-msg">{{ errors.program_manager_email }}</span>
+                             label="Program Manager Email"
+                             placeholder="manager@example.com"
+                             :error="errors.program_manager_email"
+                             :required="true"
+                        />
                     </div>
 
                      <div class="field-group span-2">
@@ -720,21 +723,24 @@ const WORK_LOCATION_OPTIONS = [
 
                 <div class="form-fields-grid" :class="{ 'is-inherited': formData.inherit_technical_points_of_contact }">
                      <div class="field-group" :class="{ 'has-error': errors.software_lead }">
-                        <label>Software Lead Email <span class="required-star">*</span></label>
-                        <input 
-                            :value="sv('technical_points_of_contact', 'software_lead')"
-                            @input="e => updateLocal('technical_points_of_contact', 'software_lead', e.target.value)"
+                        <EmailAutocomplete 
+                            :modelValue="sv('technical_points_of_contact', 'software_lead')"
+                            @update:modelValue="val => updateLocal('technical_points_of_contact', 'software_lead', val)"
                             :disabled="formData.inherit_technical_points_of_contact"
-                            type="email" class="std-input" placeholder="lead@example.com">
-                        <span v-if="errors.software_lead" class="error-msg">{{ errors.software_lead }}</span>
+                            label="Software Lead Email"
+                            placeholder="lead@example.com"
+                            :error="errors.software_lead"
+                            :required="true"
+                        />
                     </div>
                      <div class="field-group">
-                        <label>Security Focal</label>
-                        <input 
-                            :value="sv('technical_points_of_contact', 'security_focal')"
-                            @input="e => updateLocal('technical_points_of_contact', 'security_focal', e.target.value)"
+                        <EmailAutocomplete 
+                            :modelValue="sv('technical_points_of_contact', 'security_focal')"
+                            @update:modelValue="val => updateLocal('technical_points_of_contact', 'security_focal', val)"
                             :disabled="formData.inherit_technical_points_of_contact"
-                            type="text" class="std-input" placeholder="Name or Email">
+                            label="Security Focal"
+                            placeholder="Name or Email"
+                        />
                     </div>
                      <div class="field-group span-2">
                         <label>Other Contacts (Legacy)</label>
