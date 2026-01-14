@@ -196,6 +196,7 @@ class WorkLocation(BaseModel):
 class SoftwareEffort(BaseModel):
     # Needed to print by alias
     model_config = {"populate_by_name": True}
+    id: Optional[int] = None
     uuid: Optional[str] = None
     name: Optional[str] = Field(default=None, alias="software_effort_name")
     # Parent reference (normalized)

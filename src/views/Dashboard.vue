@@ -595,22 +595,22 @@ onUnmounted(() => {
 .metric-card {
     display: flex;
     flex-direction: column;
-    padding: 1.25rem 1.5rem;
-    gap: 0.5rem;
-    border-radius: 12px;
-    background-color: #F3EDF7; /* surface-container */
-    border: 1px solid transparent;
+    padding: 1.5rem; /* Increased padding */
+    gap: 0.75rem;
+    border-radius: 8px; /* Sharper corners */
+    background-color: #FFFFFF; /* White background */
+    border: 1px solid #E0E2E5; /* Subtle border */
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    min-height: 140px;
+    min-height: 150px;
     justify-content: space-between;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Very subtle base shadow */
 }
 
 .metric-card:hover {
-    box-shadow: 0px 4px 8px rgba(0,0,0,0.1); 
+    box-shadow: 0 8px 16px rgba(0,0,0,0.08); /* Professional lift */
     transform: translateY(-2px);
     border-color: #005AC1; /* primary */
-    background-color: #ECE6F0; /* surface-container-high */
 }
 
 /* Card Internals */
@@ -618,42 +618,43 @@ onUnmounted(() => {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center; /* Center align icon and label */
     width: 100%;
 }
 
 .metric-card .label {
-    font-size: 13px;
+    font-size: 11px; /* Smaller, professional label */
     font-weight: 600;
-    color: #49454F; /* on-surface-variant */
+    color: #6C757D; /* Muted text */
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 4px;
+    letter-spacing: 0.8px; /* Wider spacing */
+    margin: 0;
 }
 
 .card-value {
-    font-size: 42px;
-    font-weight: 700;
-    line-height: 1;
-    color: #1D1B20; /* on-surface */
-    margin: 0.5rem 0;
+    font-size: 36px; /* Slightly smaller, more balanced */
+    font-weight: 600; /* Medium-Bold */
+    line-height: 1.2;
+    color: #212529; /* Dark grey instead of pure black */
+    margin: 0.25rem 0;
+    font-family: 'Inter', sans-serif; /* Ensure clean font if available, or system default */
 }
 
 .card-desc {
-    font-size: 13px;
-    color: #625B71; /* secondary */
+    font-size: 12px; /* Smaller description */
+    color: #6C757D; /* Secondary text */
     line-height: 1.4;
 }
 
-/* Icon Resizing */
+/* Icon Resizing & Styling */
 .card-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%; /* Circle */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     flex-shrink: 0;
 }
 
@@ -661,13 +662,31 @@ onUnmounted(() => {
 .warning-card .card-value { color: #BA1A1A; } /* error */
 .anomaly-card .card-value { color: #BA1A1A; }
 
-/* Icons Colors (Reuse existing classes) */
-.card-icon.primary { background-color: v-bind('STATUS_COLORS.active.bg'); color: v-bind('STATUS_COLORS.active.text'); }
-.card-icon.good { background-color: #FFDF90; color: #231B00; } 
-.card-icon.warning { background-color: v-bind('STATUS_COLORS.gap.bg'); color: v-bind('STATUS_COLORS.gap.text'); }
-.card-icon.neutral { background-color: v-bind('STATUS_COLORS.parent.bg'); color: v-bind('STATUS_COLORS.parent.text'); }
-.card-icon.neutral-light { background-color: v-bind('STATUS_COLORS.neutral.bg'); color: v-bind('STATUS_COLORS.neutral.border'); }
-.card-icon.error-container { background-color: v-bind('STATUS_COLORS.gap.bg'); color: v-bind('STATUS_COLORS.gap.text'); }
+/* Icons Colors - Subtle Tinted Backgrounds */
+.card-icon.primary { 
+    background-color: #E8F0FE; /* Very light blue */
+    color: #1967D2; /* Strong blue */
+}
+.card-icon.good { 
+    background-color: #E6F4EA; /* Very light green */
+    color: #137333; /* Strong green */
+} 
+.card-icon.warning { 
+    background-color: #FEF7E0; /* Very light yellow/orange */
+    color: #EA8600; /* Strong orange */
+}
+.card-icon.neutral { 
+    background-color: #F1F3F4; /* Light grey */
+    color: #5F6368; /* Dark grey */
+}
+.card-icon.neutral-light { 
+    background-color: #F8F9FA; /* Very light grey */
+    color: #9AA0A6; /* Medium grey */
+}
+.card-icon.error-container { 
+    background-color: #FCE8E6; /* Very light red */
+    color: #C5221F; /* Strong red */
+}
 
 /* Action List Card */
 .list-card {

@@ -67,12 +67,16 @@ export function useProgramData() {
 
         // Include Software Efforts for Search
         if (nodes.softwareEfforts && nodes.softwareEfforts.length > 0) {
+            console.log(`[useProgramData] Processing ${nodes.softwareEfforts.length} efforts for ${nodes.name}`);
             nodes.softwareEfforts.forEach(effort => {
+                const effortValue = effort.id || effort.uuid; // Fallback if ID invalid
+                if (!effortValue) console.warn('[useProgramData] Effort missing ID/UUID:', effort);
+
                 acc.push({
                     name: effort.name,
-                    value: effort.id,
-                    program_id: effort.id, // Ensure App.vue can read this for navigation
-                    id: effort.id,
+                    value: effortValue,
+                    program_id: effortValue, // Ensure App.vue can read this for navigation
+                    id: effortValue,
                     type: 'Software Effort',
                     isSoftwareEffort: true,
                     parentId: nodes.program_id || nodes.value || nodes.id,
