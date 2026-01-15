@@ -455,12 +455,9 @@ class ProgramCatalogService:
         # Assuming program_path is like "1", "1.2", "1.2.3"
         program_data.sort(key=lambda p: len(p["program_path"].split(".")))
 
-        # Pop off the root (first item)
         if not program_data:
             return None
-        
-        root_data = program_data.pop(0)
-        
+
         # Convert to Pydantic/Dict structure
         # We manually construct to avoid serializer overhead
         def map_to_dto(p_dict):
@@ -477,29 +474,59 @@ class ProgramCatalogService:
                 program_type=p_dict["program_type"],
                 program_value=p_dict["program_value"],
             )
-            
-        root_node = map_to_dto(root_data)
-        # Attach raw fields needed for logic/frontend
-        root_node.expecting_software_efforts = root_data["expect_software_effort"]
-        root_node.has_descendant_expecting_software_effort = False # Calculated later
-        # root_node.children initialized by default []
-        
-        # Map path -> Node
-        id_path_to_node = {root_data["program_path"]: root_node}
 
         def get_parent_id_path(path: str) -> str:
             if "." not in path: return ""
             return path.rsplit(".", 1)[0]
+            
+        # Analyze Roots
+        # The sorted list has shallowest nodes first.
+        # Find how many nodes are at the top level (min depth)
+        
+        first_depth = len(program_data[0]["program_path"].split("."))
+        root_candidates_count = 0
+        for p in program_data:
+            if len(p["program_path"].split(".")) == first_depth:
+                root_candidates_count += 1
+            else:
+                break # Sorted by depth, so we can stop early
+        
+        root_node = None
+        id_path_to_node = {}
+        nodes_by_path = []
+
+        if root_candidates_count > 1:
+            # Multiple Roots -> Error as per user requirement.
+            # This indicates a data integrity issue where multiple programs are at the top level.
+            msg = f"Database integrity error: Found {root_candidates_count} root nodes. The hierarchy must have exactly one root."
+            logger.error(msg)
+            # Log the unexpected roots for debugging
+            for p in program_data[:root_candidates_count]:
+                 logger.error("Candidate root: %s (path='%s')", p["name"], p["program_path"])
+            
+            raise ValueError(msg)
+
+        else:
+            # Single Root -> Original Behavior
+            root_data = program_data.pop(0)
+            root_node = map_to_dto(root_data)
+            root_node.expecting_software_efforts = root_data["expect_software_effort"]
+            root_node.has_descendant_expecting_software_effort = False
+            
+            id_path_to_node[root_data["program_path"]] = root_node
+            nodes_by_path.append(root_node)
+            
+            processing_list = program_data
 
         # Populate Tree
         # Nodes are sorted by depth, so parents usually exist before children
-        nodes_by_path = [root_node] # For bubbling up calculation later
-
-        for p_dict in program_data:
+        for p_dict in processing_list:
             parent_path = get_parent_id_path(p_dict["program_path"])
             parent_node = id_path_to_node.get(parent_path)
 
             if parent_node is None:
+                # If we have a virtual root, we might have nested orphans, but logic holds.
+                # If single root, logic holds.
                 logger.warning(
                     "[get_all_programs_as_tree] Orphan found! Node '%s' (path=%s) is missing parent '%s'. Skipping.",
                     p_dict["name"], p_dict["program_path"], parent_path
@@ -513,7 +540,7 @@ class ProgramCatalogService:
             parent_node.children.append(child_node)
             id_path_to_node[p_dict["program_path"]] = child_node
             nodes_by_path.append(child_node)
-
+        
         # Bubble Up "has_descendant_expecting_software_effort"
         # Iterate in reverse (leaves to root)
         for node in reversed(nodes_by_path):

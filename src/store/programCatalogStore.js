@@ -34,13 +34,7 @@ async function fetchItems() {
             } else {
                 console.log(`[Store] Items fetched. Mode: ${CompassAPIService.useTestData ? 'MOCK' : 'PROD'}.`);
 
-                // Normalize Array Response (Unwrap single item if needed)
-                let rootData = response.data;
-                if (Array.isArray(rootData) && rootData.length === 1) {
-                    rootData = rootData[0];
-                }
-
-                state.items = rootData;
+                state.items = response.data;
 
                 // DUMMY DATA INJECTION for "Missing Efforts" verification
                 if (CompassAPIService.useTestData) {
