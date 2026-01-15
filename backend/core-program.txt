@@ -40,4 +40,10 @@ class Program(EnhancedBasedModel):
 
 
 class ProgramTreeNode(Program):
+    """
+    Tree node representation of a program with hierarchy and software effort flags.
+    """
     children: Optional[list] = []
+    # These flags control frontend behavior for software effort hydration and display
+    expecting_software_efforts: Optional[bool] = False
+    has_descendant_expecting_software_effort: Optional[bool] = False
