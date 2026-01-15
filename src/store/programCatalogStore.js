@@ -423,6 +423,48 @@ async function populateSoftwareEfforts(root) {
     }
 }
 
+/**
+ * saveSoftwareEffort
+ *
+ * Centrally handles saving a software effort (create/update), updating the local state,
+ * and triggering reactivity.
+ */
+async function saveSoftwareEffort(programId, effortData) {
+    const res = await CompassAPIService.saveSoftwareEffort(programId, effortData);
+
+    if (res.success) {
+        // Find the program node to update local state
+        const programNode = findByOrgId(programId);
+
+        if (programNode) {
+            if (!programNode.softwareEfforts) programNode.softwareEfforts = [];
+
+            const savedEffort = res.data || effortData;
+            // Ensure ID is present (if backend didn't return it but we generated it, or fallback)
+            // The backend MUST return the new ID for this to work correctly with the tree.
+
+            const existingIndex = programNode.softwareEfforts.findIndex(e => e.id === savedEffort.id || (e.uuid && e.uuid === savedEffort.uuid));
+
+            if (existingIndex !== -1) {
+                // Update
+                programNode.softwareEfforts[existingIndex] = savedEffort;
+            } else {
+                // Create
+                programNode.softwareEfforts.push(savedEffort);
+                // Also update metadata if needed
+                programNode.hasSoftwareEffort = true;
+            }
+
+            // Force UI update
+            triggerRef(state.items);
+        } else {
+            console.warn(`[Store] Could not find program node ${programId} to update state.`);
+        }
+    }
+
+    return res;
+}
+
 export function useProgramCatalogStore() {
     return {
         state,
@@ -434,5 +476,6 @@ export function useProgramCatalogStore() {
         findByOrgName,
         getOrgPathByID,
         getAllSoftwareEfforts,
+        saveSoftwareEffort,
     };
 }

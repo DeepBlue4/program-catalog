@@ -283,6 +283,10 @@ const showNotification = (message, type = 'success') => {
 // Import API
 import { CompassAPIService } from '../services/api';
 
+// Import Store
+import { useProgramCatalogStore } from '../store/programCatalogStore';
+const store = useProgramCatalogStore();
+
 const confirmDelete = async () => {
     if (itemToDelete.value) {
         const index = props.efforts.findIndex(e => e.id === itemToDelete.value.id);
@@ -312,57 +316,24 @@ const confirmDelete = async () => {
 };
 
 const saveEffort = async (effortData) => {
-    let isNew = false;
-    let oldItem = null;
-    let index = -1;
+    let isNew = !effortData.id;
 
-    // Prepare data for API (single item)
-    // If it's new, we might need a temp ID for internal logic, but API might assign one.
-    // Ideally we wait for API to give back ID.
-    // For now we preserve the logic of generating one if missing for the call.
-
-    if (effortData.id) {
-        // Update existing
-        index = props.efforts.findIndex(e => e.id === effortData.id);
-        if (index !== -1) {
-             oldItem = { ...props.efforts[index] };
-             // Do NOT mutate prop yet, wait for success
-        }
-    } else {
-        // Create new
-        isNew = true;
-        // Generate a temporary ID if one isn't provided, or let backend handle it?
-        // The form usually emits without ID for new items?
-        // The mock logic in Form creates 'EFF-...' but let's ensure we have a fallback or let backend assign.
-        // If we want backend to assign, we pass without ID? 
-        // For 'save_efforts_for_program' Python logic, it looks for UUID.
-        // Let's ensure we pass what we have.
-    }
-
-    // Call Granular API
-    const res = await CompassAPIService.saveSoftwareEffort(props.programId, effortData);
+    // Call Store Action
+    const res = await store.saveSoftwareEffort(props.programId, effortData);
 
     if (res.success) {
-         // The backed might return the FULL updated object (including new ID if created)
-         // Our mock returns `effortData`.
+         // UI Updates only (State is handled by store)
          const savedEffort = res.data || effortData;
          
          if (isNew) {
-             // If ID was missing and backend assigned one, ensuring we use it.
-             // If mock didn't assign, we might need to gen one to avoid issues.
-             if (!savedEffort.id) savedEffort.id = `EFF-${props.programId}-${Date.now()}`;
-             
-             props.efforts.push(savedEffort);
              emit('selection-change', savedEffort.id);
-         } else if (index !== -1) {
-             Object.assign(props.efforts[index], savedEffort);
          }
          
          showNotification(isNew ? 'Effort created successfully.' : 'Changes saved successfully.');
          showModal.value = false;
          isFormDirty.value = false;
     } else {
-         showNotification('Failed to save changes. Please try again.', 'error');
+         showNotification(res.message || 'Failed to save changes. Please try again.', 'error');
     }
 };
 

@@ -749,7 +749,33 @@ class SoftwareEffortsInfoManager(BaseProgramCatalogModelManager):
 
 
 class SoftwareEffortModel(BaseStorageModel):
+    id = models.BigIntegerField(unique=True, editable=False, null=True, blank=True)
     objects = SoftwareEffortsInfoManager()
+
+    def save(self, *args, **kwargs):
+        """
+        Overriding the save method to manually increment the integer 'id' field.
+
+        Reasoning:
+        1. We inherit 'uuid' as the Primary Key from BaseStorageModel.
+        2. We require a unique integer 'id' for frontend compatibility.
+        3. 'ProgramCatalogModel' uses a SmallAutoField (max ~32,000).
+        4. To prevent ID collisions with ProgramCatalogModel, we partition the ID space.
+           SoftwareEffortModel IDs start at 50,000.
+
+        This method manually calculates the next available ID by finding the current maximum.
+        """
+        if self.id is None:
+            # Start at 50,000 to avoid collision with ProgramCatalogModel (SmallAutoField)
+            STARTING_ID = 50000
+            max_id = SoftwareEffortModel.objects.aggregate(models.Max("id"))["id__max"]
+            
+            if max_id is None:
+                self.id = STARTING_ID
+            else:
+                self.id = max(max_id, STARTING_ID) + 1
+                
+        super().save(*args, **kwargs)
 
     program_catalog_info = models.ForeignKey(
         ProgramCatalogInfoModel,
