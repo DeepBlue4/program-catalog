@@ -1,8 +1,9 @@
 import { ref, computed } from 'vue';
 import { useProgramCatalogStore } from '../store/programCatalogStore';
 
-// Shared state
-const selectedNode = ref(null);
+// Shared state - store only the selected ID, not the node object
+// This allows the computed to always fetch fresh data from the tree
+const selectedNodeId = ref(null);
 
 export function useProgramData() {
     const store = useProgramCatalogStore();
@@ -96,18 +97,25 @@ export function useProgramData() {
         return store.findByOrgId(id);
     };
 
+    // Computed that always reads fresh node data from the tree
+    // This ensures reactivity when softwareEfforts are hydrated asynchronously
+    const selectedNode = computed(() => {
+        if (!selectedNodeId.value) return null;
+        // Access store.state.items to establish reactivity dependency
+        // even though findByOrgId also reads from it
+        const _items = store.state.items;
+        return store.findByOrgId(selectedNodeId.value);
+    });
+
     const selectNode = (node) => {
         if (!node) {
-            selectedNode.value = null;
+            selectedNodeId.value = null;
             return;
         }
 
-        // If the node passed is a partial or from search (might have 'value' but not full props),
-        // try to find the real node in the tree.
+        // Store just the ID - the computed will look up the full node
         const id = node.program_id || node.value;
-        const found = findNodeById(id);
-
-        selectedNode.value = found || node;
+        selectedNodeId.value = id;
     };
 
 
