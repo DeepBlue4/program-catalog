@@ -14,7 +14,7 @@ from typing import Dict, Union
 
 from cachetools import TTLCache, cached
 from django.db import transaction
-from django.db.models import ManyToManyField, Max, OuterRef, Subquery
+from django.db.models import ManyToManyField, Max
 from log.log_handler import logger
 from utils.compass_decorators import singleton
 
@@ -446,7 +446,10 @@ class ProgramCatalogService:
             ProgramTreeNode: the tree root
         """
         # Fetch dicts only (no model instances)
-        program_data = self._get_all_program_dicts()
+        # IMPORTANT: Create a copy to avoid mutating the cached list!
+        # The original list is cached by _get_all_program_dicts, and .sort()/.pop() 
+        # would mutate it, causing the root node to be missing on subsequent requests.
+        program_data = list(self._get_all_program_dicts())
 
         if not program_data:
             return None
@@ -558,20 +561,7 @@ class ProgramCatalogService:
     @cached(cache=TTLCache(maxsize=3000, ttl=60))
     def _get_all_program_dicts(self) -> list[dict]:
         """Gets all programs as dicts. Optimized."""
-        logger.info("[_get_all_program_dicts] Query executing (cache miss or expired)")
-        
-        # Correlated subquery: For each row, get the max date for that specific program_id.
-        # This ensures each program is matched to its OWN latest date, not just any date
-        # that happens to be another program's latest date.
-        latest_date_subquery = (
-            ProgramCatalogInfoModel.objects.filter(
-                program__active=True,
-                program_id=OuterRef("program_id")
-            )
-            .values("program_id")
-            .annotate(max_date=Max("date"))
-            .values("max_date")
-        )
+        latest_program_info = self._get_latest_programs()
 
         # Values to fetch
         fields = [
@@ -583,30 +573,14 @@ class ProgramCatalogService:
 
         result = (
             ProgramCatalogInfoModel.objects.filter(
-                program__active=True,
-                # Use correlated subquery to match each row's date to its own program's latest
-                date=Subquery(latest_date_subquery)
+                program__active=True, date__in=latest_program_info.values("latest_date")
             )
-            # Sort deterministically to break ties if multiple records have same date.
+            # Sort deterministically to handle multiple entries on same date.
             .order_by("program_id", "-date", "-id") 
             .distinct("program_id")
             .values(*fields)
         )
-        result_list = list(result)
-        
-        # Debug: Log the shallowest paths to identify if root is missing
-        if result_list:
-            # Sort by path depth to see what the "roots" are
-            sorted_by_depth = sorted(result_list, key=lambda p: len(p["program_path"].split(".")))
-            shallowest_depth = len(sorted_by_depth[0]["program_path"].split("."))
-            roots_at_depth = [p for p in sorted_by_depth if len(p["program_path"].split(".")) == shallowest_depth]
-            logger.info("[_get_all_program_dicts] Total programs: %d, Shallowest depth: %d, Nodes at shallowest: %d",
-                        len(result_list), shallowest_depth, len(roots_at_depth))
-            for root in roots_at_depth[:5]:  # Log first 5 to avoid spam
-                logger.info("[_get_all_program_dicts] Root candidate: path='%s', name='%s'", 
-                           root["program_path"], root["name"])
-        
-        return result_list
+        return list(result)
 
     def get_all_programs(self) -> list[Program]:
         # Refactor this to use the dicts too if needed, or leave as is if not critical path
