@@ -14,7 +14,7 @@ from typing import Dict, Union
 
 from cachetools import TTLCache, cached
 from django.db import transaction
-from django.db.models import ManyToManyField, Max
+from django.db.models import ManyToManyField, Max, OuterRef, Subquery
 from log.log_handler import logger
 from utils.compass_decorators import singleton
 
@@ -558,7 +558,18 @@ class ProgramCatalogService:
     @cached(cache=TTLCache(maxsize=3000, ttl=60))
     def _get_all_program_dicts(self) -> list[dict]:
         """Gets all programs as dicts. Optimized."""
-        latest_program_info = self._get_latest_programs()
+        # Correlated subquery: For each row, get the max date for that specific program_id.
+        # This ensures each program is matched to its OWN latest date, not just any date
+        # that happens to be another program's latest date.
+        latest_date_subquery = (
+            ProgramCatalogInfoModel.objects.filter(
+                program__active=True,
+                program_id=OuterRef("program_id")
+            )
+            .values("program_id")
+            .annotate(max_date=Max("date"))
+            .values("max_date")
+        )
 
         # Values to fetch
         fields = [
@@ -570,10 +581,11 @@ class ProgramCatalogService:
 
         result = (
             ProgramCatalogInfoModel.objects.filter(
-                program__active=True, date__in=latest_program_info.values("latest_date")
+                program__active=True,
+                # Use correlated subquery to match each row's date to its own program's latest
+                date=Subquery(latest_date_subquery)
             )
-            # Fix: Sort deterministically to handle multiple entries on same date.
-            # Prefer sorting by timestamp_updated desc (if available) or id desc to break ties.
+            # Sort deterministically to break ties if multiple records have same date.
             .order_by("program_id", "-date", "-id") 
             .distinct("program_id")
             .values(*fields)
