@@ -558,6 +558,8 @@ class ProgramCatalogService:
     @cached(cache=TTLCache(maxsize=3000, ttl=60))
     def _get_all_program_dicts(self) -> list[dict]:
         """Gets all programs as dicts. Optimized."""
+        logger.info("[_get_all_program_dicts] Query executing (cache miss or expired)")
+        
         # Correlated subquery: For each row, get the max date for that specific program_id.
         # This ensures each program is matched to its OWN latest date, not just any date
         # that happens to be another program's latest date.
@@ -590,7 +592,21 @@ class ProgramCatalogService:
             .distinct("program_id")
             .values(*fields)
         )
-        return list(result)
+        result_list = list(result)
+        
+        # Debug: Log the shallowest paths to identify if root is missing
+        if result_list:
+            # Sort by path depth to see what the "roots" are
+            sorted_by_depth = sorted(result_list, key=lambda p: len(p["program_path"].split(".")))
+            shallowest_depth = len(sorted_by_depth[0]["program_path"].split("."))
+            roots_at_depth = [p for p in sorted_by_depth if len(p["program_path"].split(".")) == shallowest_depth]
+            logger.info("[_get_all_program_dicts] Total programs: %d, Shallowest depth: %d, Nodes at shallowest: %d",
+                        len(result_list), shallowest_depth, len(roots_at_depth))
+            for root in roots_at_depth[:5]:  # Log first 5 to avoid spam
+                logger.info("[_get_all_program_dicts] Root candidate: path='%s', name='%s'", 
+                           root["program_path"], root["name"])
+        
+        return result_list
 
     def get_all_programs(self) -> list[Program]:
         # Refactor this to use the dicts too if needed, or leave as is if not critical path

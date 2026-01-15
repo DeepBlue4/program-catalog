@@ -14,7 +14,7 @@ import {
   mdiMagnify,
   mdiSourceBranch,
   mdiLayersOutline,
-  mdiCloseOutline
+  mdiClose
 } from '@mdi/js';
 
 const props = defineProps({
@@ -569,7 +569,7 @@ const WORK_LOCATION_OPTIONS = [
                                     </div>
                                 </div>
                                 <button class="btn-icon-danger" @click.stop="removeLink(link.id)" title="Remove Link">
-                                    <BaseIcon :path="mdiCloseOutline" :size="18" />
+                                    <BaseIcon :path="mdiClose" :size="18" />
                                 </button>
                             </div>
                             
