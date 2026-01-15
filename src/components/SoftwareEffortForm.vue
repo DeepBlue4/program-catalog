@@ -747,14 +747,7 @@ const WORK_LOCATION_OPTIONS = [
                             placeholder="Name or Email"
                         />
                     </div>
-                     <div class="field-group span-2">
-                        <label>Other Contacts (Legacy)</label>
-                        <input 
-                            :value="sv('technical_points_of_contact', 'names')"
-                            @input="e => updateLocal('technical_points_of_contact', 'names', e.target.value)"
-                            :disabled="formData.inherit_technical_points_of_contact"
-                            type="text" class="std-input">
-                    </div>
+
                 </div>
             </div>
 
@@ -1084,7 +1077,7 @@ const WORK_LOCATION_OPTIONS = [
     background: transparent;
     border: none;
     text-align: left;
-    padding: 12px 24px;
+    padding: 12px 16px;
     font-size: 14px;
     color: #49454F; /* on-surface-variant */
     cursor: pointer;
@@ -1113,15 +1106,15 @@ const WORK_LOCATION_OPTIONS = [
     align-items: center;
     justify-content: center;
     position: relative;
-    width: 24px; /* Fix width to ensure icon center stability */
+    width: 20px; /* Fix width to ensure icon center stability */
     height: 24px;
 }
 
 .error-badge {
     position: absolute;
-    top: -2px;
-    right: -2px;
-    background: #BA1A1A; /* error */
+    top: -6px;
+    right: -8px;
+    background: #B3261E;
     color: white;
     font-size: 10px;
     font-weight: bold;
@@ -1131,7 +1124,7 @@ const WORK_LOCATION_OPTIONS = [
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #F7F2FA; /* Match bg to cutout */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .tab-info {
@@ -1140,6 +1133,32 @@ const WORK_LOCATION_OPTIONS = [
     justify-content: center;
     align-items: flex-start; /* Ensure left alignment of text */
     line-height: normal;
+    gap: 4px;
+}
+
+.required-tag {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #BA1A1A; /* error */
+    background: #FFDAD6; /* error-container */
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.tab-btn.has-error {
+    color: #BA1A1A; /* error */
+    background: #FFDAD6; /* error-container */
+}
+
+.tab-btn.has-error:hover {
+    background: #FFDAD6; /* error-container */
+}
+
+.tab-btn.has-error .tab-label, 
+.tab-btn.has-error .tab-icon {
+    color: #BA1A1A; /* error */
 }
 
 /* Content */
@@ -1463,70 +1482,7 @@ const WORK_LOCATION_OPTIONS = [
 
 /* Clean Select Removed - Using .std-select globally */
 
-/* Updated Tab UX */
-.tab-btn {
-    align-items: flex-start; /* Align for multi-line */
-    padding: 12px 16px;
-    gap: 12px;
-}
-
-.tab-icon-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    padding-top: 2px;
-}
-
-.tab-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-}
-
-.required-tag {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: #BA1A1A; /* error */
-    background: #FFDAD6; /* error-container */
-    padding: 2px 6px;
-    border-radius: 4px;
-    letter-spacing: 0.5px;
-}
-
-.tab-btn.has-error {
-    color: #BA1A1A; /* error */
-    background: #FFDAD6; /* error-container */
-}
-
-.tab-btn.has-error:hover {
-    background: #FFDAD6; /* error-container */
-}
-
-.tab-btn.has-error .tab-label, 
-.tab-btn.has-error .tab-icon {
-    color: #BA1A1A; /* error */
-}
-
-.error-badge {
-    position: absolute;
-    top: -6px;
-    right: -8px;
-    background: #B3261E;
-    color: white;
-    font-size: 10px;
-    font-weight: bold;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
+/* Updated Tab UX block removed (merged upstream) */
 
 /* Search Dropdown Enhanced */
 .search-dropdown {

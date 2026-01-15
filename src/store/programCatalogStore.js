@@ -30,21 +30,24 @@ async function fetchItems() {
 
             if (!response.success) {
                 state.error = "Could not connect to the backend";
+                console.error("[Store] API Connection Failed");
             } else {
-                console.log('[Store] Items fetched, count:', response.data ? (Array.isArray(response.data) ? response.data.length : 1) : 0);
+                const dataSize = response.data ? (Array.isArray(response.data) ? response.data.length : (response.data.children ? response.data.children.length : 1)) : 0;
+                console.log(`[Store] Items fetched. Mode: ${CompassAPIService.useTestData ? 'MOCK' : 'PROD'}. Count: ${dataSize}`);
 
                 // DUMMY DATA INJECTION for "Missing Efforts" verification
                 if (CompassAPIService.useTestData) {
                     MockApiData.injectMissingEffortsNode(response.data);
                 }
 
-                state.items = response.data;
-
                 // In production, the hierarchy endpoint does NOT include software efforts.
                 // We must fetch them separately for relevant nodes.
                 if (!CompassAPIService.useTestData) {
-                    await populateSoftwareEfforts(state.items);
+                    console.log("[Store] Triggering populateSoftwareEfforts...");
+                    await populateSoftwareEfforts(response.data);
                 }
+
+                state.items = response.data;
             }
         } catch (err) {
             state.error = err.message || "Failed to fetch items";

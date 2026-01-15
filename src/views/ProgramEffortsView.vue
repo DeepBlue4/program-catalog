@@ -6,9 +6,12 @@ import BaseIcon from '../components/BaseIcon.vue';
 import { mdiMagnify, mdiArrowLeft, mdiRefresh } from '@mdi/js';
 import { useProgramData } from '../composables/useProgramData.js';
 
+import { useProgramCatalogStore } from '../store/programCatalogStore';
+
 const route = useRoute();
 const router = useRouter();
 const { selectedNode, findNodeById, selectNode, loading, chartData } = useProgramData();
+const store = useProgramCatalogStore(); // Init store
 const effortsList = ref(null); // Restored ref for navigation guards
 const showDebug = ref(false);
 
@@ -16,6 +19,10 @@ const showDebug = ref(false);
 const programId = computed(() => route.params.programId);
 
 const currentProgram = computed(() => {
+    // Force dependency on store updates (triggered by triggerRef in store actions)
+    // We access it here so Vue knows to re-evaluate this computed when store.state.items is triggered.
+    const _tick = store.state.items; 
+
     // If we have a selected node and it matches, use it (updates from store)
     if (selectedNode.value && selectedNode.value.value == programId.value) {
         return selectedNode.value;
