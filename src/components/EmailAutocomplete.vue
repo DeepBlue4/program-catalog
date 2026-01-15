@@ -182,7 +182,7 @@ const handleFocus = () => {
     border: 1px solid #79747E;
     border-radius: 4px;
     font-size: 14px;
-    background: transparent; /* Changed from white to transparent to inherit form bg if needed */
+    background: #FFFFFF; /* White background as requested */
     color: #1D1B20;
     transition: all 0.2s;
     height: 48px; /* Consistent M3 height */

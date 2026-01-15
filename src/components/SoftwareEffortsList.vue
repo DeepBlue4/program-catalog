@@ -257,9 +257,7 @@ const handleCreate = () => {
     });
 };
 
-const handleEdit = () => {
-    // Edit mode is now default in the main panel
-};
+
 
 const handleDelete = (effort) => {
     const target = effort || selectedEffort.value;
@@ -330,6 +328,11 @@ const saveEffort = async (effortData) => {
          }
          
          showNotification(isNew ? 'Effort created successfully.' : 'Changes saved successfully.');
+         
+         if (effortFormRef.value) {
+             effortFormRef.value.setClean();
+         }
+
          showModal.value = false;
          isFormDirty.value = false;
     } else {

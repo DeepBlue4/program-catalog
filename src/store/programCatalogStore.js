@@ -1,5 +1,6 @@
 import { reactive, shallowRef, triggerRef } from "vue";
 import { CompassAPIService } from "../services/api.js";
+import { MockApiData } from "../services/mockApiData.js";
 
 const state = reactive({
     items: shallowRef(null),
@@ -7,56 +8,53 @@ const state = reactive({
     error: null,
 });
 
+let fetchPromise = null;
+
 async function fetchItems() {
+    // If we already have items, don't fetch.
     if (state.items) {
-        // Don't fetch again since we already have the data
         return;
     }
+
+    // If a fetch is already in progress, return that promise to deduplicate requests.
+    if (fetchPromise) {
+        return fetchPromise;
+    }
+
     state.loading = true;
     state.error = null;
-    try {
-        const response = await CompassAPIService.getEnterpriseHierarchy();
 
-        if (!response.success) {
-            state.error = "Could not connect to the backend";
-        } else {
-            console.log('[Store] Items fetched, count:', response.data ? (Array.isArray(response.data) ? response.data.length : 1) : 0);
+    fetchPromise = (async () => {
+        try {
+            const response = await CompassAPIService.getEnterpriseHierarchy();
 
-            // DUMMY DATA INJECTION for "Missing Efforts" verification
-            // This node strictly matches the "Expected (Missing)" criteria:
-            // expecting_software_efforts = true AND (softwareEfforts is missing or empty)
-            if (CompassAPIService.useTestData) {
-                const dummyNode = {
-                    program_id: 9991234,
-                    name: "Test Program (Missing Efforts)",
-                    value: 9991234,
-                    expecting_software_efforts: true,
-                    hasSoftwareEffort: false,
-                    softwareEfforts: [], // Explicitly empty
-                    details: { organization_leader_name: "TEST ADMIN" },
-                    children: []
-                };
+            if (!response.success) {
+                state.error = "Could not connect to the backend";
+            } else {
+                console.log('[Store] Items fetched, count:', response.data ? (Array.isArray(response.data) ? response.data.length : 1) : 0);
 
-                if (Array.isArray(response.data)) {
-                    response.data.push(dummyNode);
-                } else if (response.data && response.data.children) {
-                    response.data.children.push(dummyNode);
+                // DUMMY DATA INJECTION for "Missing Efforts" verification
+                if (CompassAPIService.useTestData) {
+                    MockApiData.injectMissingEffortsNode(response.data);
+                }
+
+                state.items = response.data;
+
+                // In production, the hierarchy endpoint does NOT include software efforts.
+                // We must fetch them separately for relevant nodes.
+                if (!CompassAPIService.useTestData) {
+                    await populateSoftwareEfforts(state.items);
                 }
             }
-
-            state.items = response.data;
-
-            // In production, the hierarchy endpoint does NOT include software efforts.
-            // We must fetch them separately for relevant nodes.
-            if (!CompassAPIService.useTestData) {
-                await populateSoftwareEfforts(state.items);
-            }
+        } catch (err) {
+            state.error = err.message || "Failed to fetch items";
+        } finally {
+            state.loading = false;
+            fetchPromise = null; // Reset promise so we can retry on error or subsequent invalidation
         }
-    } catch (err) {
-        state.error = err.message || "Failed to fetch items";
-    } finally {
-        state.loading = false;
-    }
+    })();
+
+    return fetchPromise;
 }
 
 /**
@@ -178,14 +176,7 @@ function getFilteredSWEItems(root) {
     }
 }
 
-/**
- * fetchSWEItems
- * Preserved for backward compat if needed, but uses the internal helper.
- */
-async function fetchSWEItems() {
-    await fetchItems();
-    return getFilteredSWEItems(state.items);
-}
+
 
 // Synchronous getter for UI comp
 function getSWEItems() {
@@ -382,8 +373,6 @@ async function populateSoftwareEfforts(root) {
 
         // If the node expects efforts, we should fetch them.
         // We do this regardless of 'hasSoftwareEffort' flag if it's unreliable as per user report.
-        // If the node expects efforts, we should fetch them.
-        // We do this regardless of 'hasSoftwareEffort' flag if it's unreliable as per user report.
         if (node.expecting_software_efforts) {
             // Ensure we have a valid ID to query
             const targetId = node.program_id || node.id;
@@ -470,8 +459,8 @@ export function useProgramCatalogStore() {
         state,
         fetchItems,
         fetchItemsNames,
-        fetchSWEItems,
         getSWEItems,
+
         findByOrgId,
         findByOrgName,
         getOrgPathByID,

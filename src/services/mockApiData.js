@@ -273,4 +273,22 @@ export class MockApiData {
         // Deduplicate
         return [...new Set(emails)].sort();
     }
+    static injectMissingEffortsNode(data) {
+        const dummyNode = {
+            program_id: 9991234,
+            name: "Test Program (Missing Efforts)",
+            value: 9991234,
+            expecting_software_efforts: true,
+            hasSoftwareEffort: false,
+            softwareEfforts: [], // Explicitly empty
+            details: { organization_leader_name: "TEST ADMIN" },
+            children: []
+        };
+
+        if (Array.isArray(data)) {
+            data.push(dummyNode);
+        } else if (data && data.children) {
+            data.children.push(dummyNode);
+        }
+    }
 }

@@ -6,15 +6,15 @@ import MultiSelectDropdown from './MultiSelectDropdown.vue';
 import EmailAutocomplete from './EmailAutocomplete.vue';
 import {
   mdiFileSign,
-  mdiAccountGroup,
-  mdiLaptop,
-  mdiMapMarker,
-  mdiLink,
-  mdiInformation,
+  mdiAccountGroupOutline,
+  mdiCogs,
+  mdiMapMarkerOutline,
+  mdiLinkVariant,
+  mdiInformationOutline,
   mdiMagnify,
   mdiSourceBranch,
-  mdiLayers,
-  mdiClose
+  mdiLayersOutline,
+  mdiCloseOutline
 } from '@mdi/js';
 
 const props = defineProps({
@@ -72,10 +72,10 @@ const emit = defineEmits(['save', 'cancel', 'delete', 'dirty-change', 'revert', 
 const activeTab = ref('sow');
 const tabs = [
     { id: 'sow', label: 'Statement of Work', icon: mdiFileSign, required: true },
-    { id: 'pocs', label: 'Point of Contacts', icon: mdiAccountGroup, required: true },
-    { id: 'dev', label: 'Developer Setup', icon: mdiLaptop },
-    { id: 'location', label: 'Work Locations', icon: mdiMapMarker },
-    { id: 'general', label: 'General & Links', icon: mdiLink },
+    { id: 'pocs', label: 'Point of Contacts', icon: mdiAccountGroupOutline, required: true },
+    { id: 'dev', label: 'Developer Setup', icon: mdiCogs },
+    { id: 'location', label: 'Work Locations', icon: mdiMapMarkerOutline },
+    { id: 'general', label: 'General & Links', icon: mdiLinkVariant },
 ];
 
 const store = useProgramCatalogStore();
@@ -366,8 +366,13 @@ const resetForm = () => {
     formData.value = JSON.parse(initialState.value);
 };
 
+const setClean = () => {
+    initialState.value = JSON.stringify(formData.value);
+};
+
 defineExpose({
-    resetForm
+    resetForm,
+    setClean
 });
 
 const handleCancel = () => {
@@ -491,7 +496,7 @@ const WORK_LOCATION_OPTIONS = [
                     <div class="header-text-group">
                          <h3>General Configuration</h3>
                          <button class="btn-icon-sm" @click="toggleHelp('general')" :class="{ 'active': activeHelp === 'general' }">
-                            <BaseIcon :path="mdiInformation" :size="16" />
+                            <BaseIcon :path="mdiInformationOutline" :size="16" />
                         </button>
                     </div>
                 </div>
@@ -539,7 +544,7 @@ const WORK_LOCATION_OPTIONS = [
                                         </div>
                                         <div class="item-sub">
                                             <span class="program-name">
-                                                <BaseIcon :path="mdiLayers" :size="10" /> {{ cand._programName }}
+                                                <BaseIcon :path="mdiLayersOutline" :size="10" /> {{ cand._programName }}
                                                 <span class="program-id-sub">({{ cand._programId }})</span>
                                             </span>
                                             <span class="separator">•</span>
@@ -554,7 +559,7 @@ const WORK_LOCATION_OPTIONS = [
                         <div class="linked-items-list-modern">
                             <div v-for="link in linkedEffortObjects" :key="link.id" class="link-item-row">
                                 <div class="row-icon">
-                                     <BaseIcon :path="mdiLink" :size="20" />
+                                     <BaseIcon :path="mdiLinkVariant" :size="20" />
                                 </div>
                                 <div class="row-content">
                                     <div class="row-main">{{ link.name }}</div>
@@ -564,13 +569,13 @@ const WORK_LOCATION_OPTIONS = [
                                     </div>
                                 </div>
                                 <button class="btn-icon-danger" @click.stop="removeLink(link.id)" title="Remove Link">
-                                    <BaseIcon :path="mdiClose" :size="18" />
+                                    <BaseIcon :path="mdiCloseOutline" :size="18" />
                                 </button>
                             </div>
                             
                             <div v-if="linkedEffortObjects.length === 0" class="empty-state-modern">
                                 <div class="empty-icon-circle">
-                                    <BaseIcon :path="mdiLink" :size="24" />
+                                    <BaseIcon :path="mdiLinkVariant" :size="24" />
                                 </div>
                                 <span class="empty-text">No linked efforts yet. Search above to add dependencies.</span>
                             </div>
@@ -585,7 +590,7 @@ const WORK_LOCATION_OPTIONS = [
                     <div class="header-text-group">
                         <h3>Statement of Work</h3>
                         <button class="btn-icon-sm" @click="toggleHelp('sow')" :class="{ 'active': activeHelp === 'sow' }">
-                            <BaseIcon :path="mdiInformation" :size="16" />
+                            <BaseIcon :path="mdiInformationOutline" :size="16" />
                         </button>
                     </div>
                     <div class="header-controls">
@@ -701,7 +706,7 @@ const WORK_LOCATION_OPTIONS = [
                     <div class="header-text-group">
                         <h3>Technical Point of Contacts</h3>
                         <button class="btn-icon-sm" @click="toggleHelp('pocs')" :class="{ 'active': activeHelp === 'pocs' }">
-                            <BaseIcon :path="mdiInformation" :size="16" />
+                            <BaseIcon :path="mdiInformationOutline" :size="16" />
                         </button>
                     </div>
                     <div class="header-controls">
@@ -759,7 +764,7 @@ const WORK_LOCATION_OPTIONS = [
                     <div class="header-text-group">
                         <h3>Developer Setup</h3>
                         <button class="btn-icon-sm" @click="toggleHelp('dev')" :class="{ 'active': activeHelp === 'dev' }">
-                            <BaseIcon :path="mdiInformation" :size="16" />
+                            <BaseIcon :path="mdiInformationOutline" :size="16" />
                         </button>
                     </div>
                     <div class="header-controls">
@@ -842,7 +847,7 @@ const WORK_LOCATION_OPTIONS = [
                             placeholder="Select SBOM Location..."
                         />
                     </div>
-                    <div class="field-group">
+                    <div class="field-group span-2">
                         <label>Design Practice Assessment</label>
                         <input 
                             :value="sv('developer_setup', 'dp_assessment_name')"
@@ -859,7 +864,7 @@ const WORK_LOCATION_OPTIONS = [
                     <div class="header-text-group">
                         <h3>Work Locations</h3>
                          <button class="btn-icon-sm" @click="toggleHelp('location')" :class="{ 'active': activeHelp === 'location' }">
-                            <BaseIcon :path="mdiInformation" :size="16" />
+                            <BaseIcon :path="mdiInformationOutline" :size="16" />
                         </button>
                     </div>
                     <div class="header-controls">
@@ -1317,7 +1322,7 @@ const WORK_LOCATION_OPTIONS = [
 }
 
 .search-input-modern {
-    background: #FEF7FF;
+    background: #FFFFFF;
     border-radius: 100px !important; /* Pill shape for this search */
 }
 
