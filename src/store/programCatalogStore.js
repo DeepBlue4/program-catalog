@@ -1,4 +1,4 @@
-import { reactive, shallowRef, triggerRef } from "vue";
+import { reactive, shallowRef, triggerRef, ref } from "vue";
 import { CompassAPIService } from "../services/api.js";
 import { MockApiData } from "../services/mockApiData.js";
 
@@ -7,6 +7,10 @@ const state = reactive({
     loading: false,
     error: null,
 });
+
+// Version counter that increments when software efforts are hydrated
+// Computeds can depend on this to trigger re-evaluation after hydration
+const hydrationVersion = ref(0);
 
 let fetchPromise = null;
 
@@ -411,6 +415,10 @@ async function populateSoftwareEfforts(root) {
 
         // Force reactivity update since state.items is a shallowRef and we mutated deep properties
         triggerRef(state.items);
+
+        // Increment hydration version to trigger computed re-evaluation
+        hydrationVersion.value++;
+        console.log('[Store] hydrationVersion incremented to:', hydrationVersion.value);
     }
 }
 
@@ -459,6 +467,7 @@ async function saveSoftwareEffort(programId, effortData) {
 export function useProgramCatalogStore() {
     return {
         state,
+        hydrationVersion, // Expose for computed dependency
         fetchItems,
         fetchItemsNames,
         getSWEItems,

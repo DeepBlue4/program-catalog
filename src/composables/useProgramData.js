@@ -40,7 +40,11 @@ export function useProgramData() {
         return newNode;
     };
 
-    const chartData = computed(() => normalizeTree(store.state.items));
+    const chartData = computed(() => {
+        // Access hydrationVersion to establish dependency - triggers recompute when hydration completes
+        const _version = store.hydrationVersion.value;
+        return normalizeTree(store.state.items);
+    });
     const sweChartData = computed(() => normalizeTree(store.getSWEItems()));
 
     const flattenNodes = (nodes, acc = []) => {
@@ -90,6 +94,8 @@ export function useProgramData() {
     };
 
     const allNodes = computed(() => {
+        // Depend on hydrationVersion to trigger recompute when efforts are loaded
+        const _version = store.hydrationVersion.value;
         return flattenNodes(store.state.items);
     });
 
