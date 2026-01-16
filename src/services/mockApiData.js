@@ -245,10 +245,14 @@ export class MockApiData {
 
     static getMockUser() {
         return {
-            username: "testuser",
-            email: "test.user@company.com",
-            first_name: "Test",
-            last_name: "User",
+            name: 'Sawyer',
+            email: 'sawyer@example.com',
+            bemsid: 'SW12345',
+            businessUnit: 'Digital Platform',
+            isManager: true,
+            isAdmin: true,
+            isStaff: true,
+            is6J: true
         };
     }
 

@@ -130,6 +130,7 @@ class StatementOfWorkProfile(BaseModel):
     safety_criticality: Optional[List[str]] = None
     program_phase: Optional[str] = None
     program_manager_email: Optional[str] = None
+    effort_type: Optional[str] = None
 
     @field_validator("program_manager_email")
     @classmethod

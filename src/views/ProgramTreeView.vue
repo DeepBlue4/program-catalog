@@ -112,7 +112,7 @@ const handleReset = () => {
                 :class="{ active: filterMode === 'SWE' }" 
                 @click="filterMode = 'SWE'"
             >
-                Software Efforts
+                Software Programs
             </button>
         </div>
         <div class="v-divider"></div>

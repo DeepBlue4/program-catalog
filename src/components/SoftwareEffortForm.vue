@@ -207,6 +207,11 @@ const effortMap = computed(() => {
     return map;
 });
 
+const parentEffort = computed(() => {
+    if (!formData.value.parent) return null;
+    return effortMap.value[formData.value.parent];
+});
+
 const getEffectiveValue = (section, field) => {
     // If not inheriting, return local value
     const inheritKey = `inherit_${section}`;
@@ -482,7 +487,7 @@ const WORK_LOCATION_OPTIONS = [
                 </div>
                 <div class="tab-info">
                     <span class="tab-label">{{ tab.label }}</span>
-                    <span v-if="tab.required" class="required-tag">Required</span>
+                    <span v-if="tab.required" class="required-tag" :class="{ 'has-error': tabErrors[tab.id] }">Required</span>
                 </div>
             </button>
         </nav>
@@ -594,13 +599,18 @@ const WORK_LOCATION_OPTIONS = [
                         </button>
                     </div>
                     <div class="header-controls">
-                        <span v-if="formData.inherit_statement_of_work_profile" class="inherited-badge">Inheriting from Parent</span>
+                        <span v-if="formData.inherit_statement_of_work_profile" class="inherited-badge">Read-only while Inheriting from Parent</span>
                         <label class="inherit-toggle">
                             <input type="checkbox" v-model="formData.inherit_statement_of_work_profile" :disabled="!formData.parent">
                             <span class="toggle-track"></span>
                             <span>Inherit</span>
                         </label>
                      </div>
+                </div>
+                
+                <div v-if="formData.inherit_statement_of_work_profile && parentEffort" class="inheritance-info-banner">
+                    <BaseIcon :path="mdiSourceBranch" :size="16" />
+                    <span>Inheriting <strong>Statement of Work</strong> from <strong>{{ parentEffort.name }}</strong> (ID: {{ parentEffort.id }})</span>
                 </div>
                 
                 <transition name="expand">
@@ -615,8 +625,8 @@ const WORK_LOCATION_OPTIONS = [
                         <label>Effort Type</label>
                          <select 
                             class="std-select" 
-                            :value="sv('statement_of_work_profile', 'type')"
-                            @change="e => updateLocal('statement_of_work_profile', 'type', e.target.value)"
+                            :value="sv('statement_of_work_profile', 'effort_type')"
+                            @change="e => updateLocal('statement_of_work_profile', 'effort_type', e.target.value)"
                             :disabled="formData.inherit_statement_of_work_profile"
                         >
                             <option value="" disabled selected>Select Effort Type...</option>
@@ -710,13 +720,18 @@ const WORK_LOCATION_OPTIONS = [
                         </button>
                     </div>
                     <div class="header-controls">
-                        <span v-if="formData.inherit_technical_points_of_contact" class="inherited-badge">Inheriting from Parent</span>
+                        <span v-if="formData.inherit_technical_points_of_contact" class="inherited-badge">Read-only while Inheriting from Parent</span>
                         <label class="inherit-toggle">
                             <input type="checkbox" v-model="formData.inherit_technical_points_of_contact" :disabled="!formData.parent">
                             <span class="toggle-track"></span>
                             <span>Inherit</span>
                         </label>
                     </div>
+                </div>
+
+                <div v-if="formData.inherit_technical_points_of_contact && parentEffort" class="inheritance-info-banner">
+                    <BaseIcon :path="mdiSourceBranch" :size="16" />
+                    <span>Inheriting <strong>Points of Contact</strong> from <strong>{{ parentEffort.name }}</strong> (ID: {{ parentEffort.id }})</span>
                 </div>
 
                 <transition name="expand">
@@ -761,13 +776,18 @@ const WORK_LOCATION_OPTIONS = [
                         </button>
                     </div>
                     <div class="header-controls">
-                        <span v-if="formData.inherit_developer_setup" class="inherited-badge">Inheriting from Parent</span>
+                        <span v-if="formData.inherit_developer_setup" class="inherited-badge">Read-only while Inheriting from Parent</span>
                         <label class="inherit-toggle">
                             <input type="checkbox" v-model="formData.inherit_developer_setup" :disabled="!formData.parent">
                               <span class="toggle-track"></span>
                             <span>Inherit</span>
                         </label>
                     </div>
+                </div>
+
+                <div v-if="formData.inherit_developer_setup && parentEffort" class="inheritance-info-banner">
+                    <BaseIcon :path="mdiSourceBranch" :size="16" />
+                    <span>Inheriting <strong>Developer Setup</strong> from <strong>{{ parentEffort.name }}</strong> (ID: {{ parentEffort.id }})</span>
                 </div>
 
                 <transition name="expand">
@@ -861,13 +881,18 @@ const WORK_LOCATION_OPTIONS = [
                         </button>
                     </div>
                     <div class="header-controls">
-                        <span v-if="formData.inherit_work_location" class="inherited-badge">Inheriting from Parent</span>
+                        <span v-if="formData.inherit_work_location" class="inherited-badge">Read-only while Inheriting from Parent</span>
                         <label class="inherit-toggle">
                             <input type="checkbox" v-model="formData.inherit_work_location" :disabled="!formData.parent">
                              <span class="toggle-track"></span>
                             <span>Inherit</span>
                         </label>
                     </div>
+                </div>
+
+                <div v-if="formData.inherit_work_location && parentEffort" class="inheritance-info-banner">
+                    <BaseIcon :path="mdiSourceBranch" :size="16" />
+                    <span>Inheriting <strong>Work Locations</strong> from <strong>{{ parentEffort.name }}</strong> (ID: {{ parentEffort.id }})</span>
                 </div>
 
                 <transition name="expand">
@@ -1140,11 +1165,16 @@ const WORK_LOCATION_OPTIONS = [
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
-    color: #BA1A1A; /* error */
-    background: #FFDAD6; /* error-container */
+    color: #49454F; /* on-surface-variant (Grey) */
+    background: #E7E0EC; /* surface-variant (Light Grey) */
     padding: 2px 6px;
     border-radius: 4px;
     letter-spacing: 0.5px;
+}
+
+.required-tag.has-error {
+    color: #BA1A1A; /* error */
+    background: #FFDAD6; /* error-container */
 }
 
 .tab-btn.has-error {
@@ -1585,6 +1615,25 @@ const WORK_LOCATION_OPTIONS = [
     font-family: monospace;
     opacity: 0.8;
     font-size: 11px;
+}
+
+/* Inheritance Banner */
+.inheritance-info-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #F2F6FC; /* surface-variant / light primary tint */
+    color: #444746; /* on-surface-variant */
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 1.5rem; /* Match help card margin */
+    font-size: 13px;
+    border: 1px solid #D3E3FD;
+}
+
+.inheritance-info-banner strong {
+    font-weight: 600;
+    color: #005AC1; /* primary */
 }
 
 /* Responsive Implementation */

@@ -25,6 +25,7 @@ const FETCH_ALL_EFFORTS = true;
 
 const state = reactive({
     items: shallowRef(null),
+    currentUser: ref(null),
     loading: false,
     error: null,
 });
@@ -82,6 +83,31 @@ async function fetchItems() {
     })();
 
     return fetchPromise;
+}
+
+/**
+ * fetchCurrentUser
+ * 
+ * Populates state.currentUser based on the environment (Mock vs Prod).
+ */
+function fetchCurrentUser() {
+    if (CompassAPIService.useTestData) {
+        console.log("[Store] Loading Mock User Data...");
+        state.currentUser = MockApiData.getMockUser();
+    } else {
+        // Default to N/A / False for production until real auth is hooked up
+        console.log("[Store] Loading Default User Data (N/A)...");
+        state.currentUser = {
+            name: 'N/A',
+            email: 'N/A',
+            bemsid: 'N/A',
+            businessUnit: 'N/A',
+            isManager: false,
+            isAdmin: false,
+            isStaff: false,
+            is6J: false
+        };
+    }
 }
 
 /**
@@ -501,6 +527,7 @@ export function useProgramCatalogStore() {
         state,
         hydrationVersion, // Expose for computed dependency
         fetchItems,
+        fetchCurrentUser,
         fetchItemsNames,
         getSWEItems,
 

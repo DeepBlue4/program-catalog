@@ -69,6 +69,21 @@ const openHelp = (type) => {
       </button>
     </div>
 
+
+
+    <div class="legend-item">
+      <div class="visual">
+          <span class="dot parent"></span>
+      </div>
+      <div class="text-content">
+          <span class="label">Software Program</span>
+           <span class="count-badge">{{ counts.parent }}</span>
+      </div>
+      <button class="icon-btn-tiny" @click.stop="openHelp('parent')">
+          <BaseIcon :path="mdiInformation" :size="14" />
+      </button>
+    </div>
+
     <div class="legend-item">
       <div class="visual">
           <span class="dot gap"></span>
@@ -81,20 +96,7 @@ const openHelp = (type) => {
           <BaseIcon :path="mdiInformation" :size="14" />
       </button>
     </div>
-
-    <div class="legend-item">
-      <div class="visual">
-          <span class="dot parent"></span>
-      </div>
-      <div class="text-content">
-          <span class="label">Parent of Effort</span>
-           <span class="count-badge">{{ counts.parent }}</span>
-      </div>
-      <button class="icon-btn-tiny" @click.stop="openHelp('parent')">
-          <BaseIcon :path="mdiInformation" :size="14" />
-      </button>
-    </div>
-
+    
     <div class="legend-item">
       <div class="visual">
           <span class="dot neutral"></span>

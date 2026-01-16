@@ -1,7 +1,7 @@
 export const STATUS_COLORS = {
     active: {
         id: 'active',
-        label: 'Software Effort Active',
+        label: 'Software Program Active',
         fill: '#005AC1',   // primary
         border: '#005AC1', // primary
         text: '#FFFFFF',   // onPrimary (for tags)
@@ -9,7 +9,7 @@ export const STATUS_COLORS = {
     },
     gap: {
         id: 'gap',
-        label: 'Expected (Missing)',
+        label: 'Expected Software Program (Missing)',
         fill: '#FFDAD6',   // errorContainer
         border: '#BA1A1A', // error
         text: '#410002',   // onErrorContainer
@@ -17,7 +17,7 @@ export const STATUS_COLORS = {
     },
     parent: {
         id: 'parent',
-        label: 'Parent of Effort',
+        label: 'Parent of Software Program',
         fill: '#B3D4FF',   // light blue
         border: '#0066CC', // medium blue
         text: '#003366',   // dark blue text

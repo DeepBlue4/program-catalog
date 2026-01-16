@@ -323,7 +323,7 @@ onUnmounted(() => {
             <!-- 1. Compliance -->
             <div class="chart-card m3-card outlined compliance-card">
                 <div class="chart-header">
-                    <h3>Platform Compliance</h3>
+                    <h3>Program Compliance</h3>
                     <p>Percentage of programs expecting software that actually have active efforts.</p>
                 </div>
                 <div class="chart-wrapper" ref="chartRefCompliance"></div>
@@ -1164,7 +1164,7 @@ onUnmounted(() => {
     color: #49454F;
 }
 
-/* Platform Compliance Enhanced Styles */
+/* Program Compliance Enhanced Styles */
 .compliance-stats {
     display: flex;
     justify-content: space-around;

@@ -2,21 +2,26 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import BaseIcon from '../components/BaseIcon.vue';
 import { mdiAccountCircle, mdiBookOpenVariant, mdiChartPie, mdiLock, mdiOpenInNew, mdiCompass } from '@mdi/js';
+import { useProgramCatalogStore } from '../store/programCatalogStore';
 
 const isOpen = ref(false);
 const menuRef = ref(null);
 
-// Extended user data (in production, this would come from an API/auth service)
-const user = {
-  name: 'Sawyer',
-  email: 'sawyer@example.com',
-  bemsid: 'SW12345',
-  businessUnit: 'Digital Platform',
-  isManager: true,
-  isAdmin: true,
-  isStaff: true,
-  is6J: true
-};
+const store = useProgramCatalogStore();
+const user = computed(() => store.state.currentUser || {
+  name: 'Loading...',
+  email: '',
+  bemsid: '',
+  businessUnit: '',
+  isManager: false,
+  isAdmin: false,
+  isStaff: false,
+  is6J: false
+});
+
+onMounted(() => {
+  store.fetchCurrentUser();
+});
 
 // Determine Write Access: Admin OR Manager
 const hasWriteAccess = computed(() => {
