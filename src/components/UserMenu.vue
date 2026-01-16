@@ -177,7 +177,7 @@ onUnmounted(() => {
   top: 100%;
   right: 0;
   margin-top: 8px;
-  width: 280px;
+  width: 320px;
   background: #F3EDF7; /* surface-container */
   border-radius: 12px;
   padding: 1rem;
