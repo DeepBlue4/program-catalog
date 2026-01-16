@@ -2,6 +2,27 @@ import { reactive, shallowRef, triggerRef, ref } from "vue";
 import { CompassAPIService } from "../services/api.js";
 import { MockApiData } from "../services/mockApiData.js";
 
+// ==============================================================================
+// CONFIGURATION FLAGS
+// ==============================================================================
+
+/**
+ * FETCH_ALL_EFFORTS: Controls how software efforts are hydrated after initial load.
+ * 
+ * - true  (NEW): Fetch software efforts for ALL programs in the hierarchy.
+ *         Pros: Complete data coverage, no missing efforts, accurate anomaly detection.
+ *         Cons: More API calls, potentially slower initial load for large hierarchies.
+ *
+ * - false (OLD): Only fetch for programs with 'expecting_software_efforts' flag set.
+ *         Pros: Fewer API calls, faster initial load.
+ *         Cons: May miss unexpected/anomalous efforts, incomplete data.
+ *
+ * Toggle this flag to compare performance between approaches.
+ */
+const FETCH_ALL_EFFORTS = true;
+
+// ==============================================================================
+
 const state = reactive({
     items: shallowRef(null),
     loading: false,
@@ -377,22 +398,23 @@ async function populateSoftwareEfforts(root) {
             return;
         }
 
-        // If the node expects efforts, we should fetch them.
-        // We do this regardless of 'hasSoftwareEffort' flag if it's unreliable as per user report.
-        if (node.expecting_software_efforts) {
-            // Ensure we have a valid ID to query
+        // Determine if we should fetch for this node based on config flag
+        const shouldFetch = FETCH_ALL_EFFORTS
+            ? true  // NEW: Fetch for all programs
+            : node.expecting_software_efforts;  // OLD: Only fetch for expecting programs
+
+        if (shouldFetch) {
             const targetId = node.program_id || node.id;
             if (!targetId) return;
 
-            console.log(`[Store] Hydrating efforts for node ID: ${targetId} (${node.name})`);
-
             const p = CompassAPIService.getSoftwareEfforts(targetId).then(resp => {
                 if (resp.success && Array.isArray(resp.data)) {
-                    console.log(`[Store] Success hydrating node ${targetId}: found ${resp.data.length} efforts.`);
+                    if (resp.data.length > 0) {
+                        console.log(`[Store] Hydrated node ${targetId} (${node.name}): ${resp.data.length} efforts`);
+                    }
                     node.softwareEfforts = resp.data;
                     node.hasSoftwareEffort = resp.data.length > 0;
                 } else {
-                    console.warn(`[Store] Failed/Empty hydrating node ${targetId}`, resp);
                     // Initialize empty if failed or empty
                     if (!node.softwareEfforts) node.softwareEfforts = [];
                 }
@@ -407,11 +429,19 @@ async function populateSoftwareEfforts(root) {
 
     traverseAndCollect(root);
 
-    // Wait for all fetches to complete
+    // Wait for all fetches to complete with performance timing
     if (promises.length > 0) {
-        console.log(`[Store] Hydrating software efforts for ${promises.length} nodes...`);
+        const mode = FETCH_ALL_EFFORTS ? 'ALL_PROGRAMS' : 'EXPECTING_ONLY';
+        console.log(`\n[Store] ========== HYDRATION PERFORMANCE ==========`);
+        console.log(`[Store] Mode: ${mode}`);
+        console.log(`[Store] Fetching efforts for ${promises.length} nodes...`);
+        console.time('[Store] Hydration Duration');
+
         await Promise.all(promises);
-        console.log('[Store] Hydration complete.');
+
+        console.timeEnd('[Store] Hydration Duration');
+        console.log(`[Store] Hydration complete. ${promises.length} API calls made.`);
+        console.log(`[Store] ==============================================\n`);
 
         // Force reactivity update since state.items is a shallowRef and we mutated deep properties
         triggerRef(state.items);
@@ -419,6 +449,8 @@ async function populateSoftwareEfforts(root) {
         // Increment hydration version to trigger computed re-evaluation
         hydrationVersion.value++;
         console.log('[Store] hydrationVersion incremented to:', hydrationVersion.value);
+    } else {
+        console.log('[Store] No nodes to hydrate.');
     }
 }
 

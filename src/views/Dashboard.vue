@@ -245,12 +245,12 @@ const updateValidityChart = () => {
         const counts = dashboardData.value.counts;
         const validPopulated = counts.active - counts.anomaly; // Expected & Active
 
-        // Build chart data based on visibility
+        // Build chart data based on visibility (ordered: Populated, Parent, Neutral, Missing, Unexpected)
         const allData = [
             { value: validPopulated, name: 'Populated', key: 'populated', itemStyle: { color: RAW_COLORS.primary } },
-            { value: counts.missing, name: 'Missing', key: 'missing', itemStyle: { color: RAW_COLORS.error } },
-            { value: counts.parent, name: 'Parent of Effort', key: 'parent', itemStyle: { color: RAW_COLORS.tertiary } },
+            { value: counts.parent, name: 'Parent of Effort', key: 'parent', itemStyle: { color: '#B3D4FF' } },
             { value: counts.neutral, name: 'Neutral', key: 'neutral', itemStyle: { color: '#79747E' } },
+            { value: counts.missing, name: 'Missing', key: 'missing', itemStyle: { color: RAW_COLORS.error } },
             { value: counts.anomaly, name: 'Unexpected', key: 'unexpected', itemStyle: { color: RAW_COLORS.errorContainer } }
         ];
         
@@ -324,12 +324,43 @@ onUnmounted(() => {
             <div class="chart-card m3-card outlined compliance-card">
                 <div class="chart-header">
                     <h3>Platform Compliance</h3>
-                    <p>Percentage of programs expecting software that actually have active efforts. (Target > 90%)</p>
+                    <p>Percentage of programs expecting software that actually have active efforts.</p>
                 </div>
                 <div class="chart-wrapper" ref="chartRefCompliance"></div>
-                <div class="legend-mini">
-                    <div class="legend-item"><span class="dot error"></span> < 70%</div>
-                    <div class="legend-item"><span class="dot good"></span> > 90%</div>
+                
+                <!-- Enhanced Interactive Stats -->
+                <div class="compliance-stats">
+                    <div class="stat-item expecting" @click="openMetricModal('expecting')" title="Click for details">
+                        <span class="stat-value">{{ dashboardData.counts.expecting }}</span>
+                        <span class="stat-label">Expecting</span>
+                    </div>
+                    <div class="stat-item compliant" @click="openMetricModal('active')" title="Click for details">
+                        <span class="stat-value">{{ dashboardData.counts.expecting - dashboardData.counts.missing }}</span>
+                        <span class="stat-label">Compliant</span>
+                    </div>
+                    <div class="stat-item missing" @click="openMetricModal('missing')" title="Click for details">
+                        <span class="stat-value">{{ dashboardData.counts.missing }}</span>
+                        <span class="stat-label">Missing</span>
+                    </div>
+                </div>
+
+                <!-- Enhanced Legend with Thresholds -->
+                <div class="compliance-legend">
+                    <div class="threshold-item critical">
+                        <span class="threshold-bar"></span>
+                        <span class="threshold-range">&lt; 70%</span>
+                        <span class="threshold-label">Critical</span>
+                    </div>
+                    <div class="threshold-item warning">
+                        <span class="threshold-bar"></span>
+                        <span class="threshold-range">70-90%</span>
+                        <span class="threshold-label">Needs Work</span>
+                    </div>
+                    <div class="threshold-item good">
+                        <span class="threshold-bar"></span>
+                        <span class="threshold-range">&gt; 90%</span>
+                        <span class="threshold-label">Target</span>
+                    </div>
                 </div>
             </div>
 
@@ -352,20 +383,11 @@ onUnmounted(() => {
                      </div>
                      <div 
                          class="legend-item toggle" 
-                         :class="{ disabled: !chartVisibility.missing }"
-                         @click="toggleChartCategory('missing')"
-                         title="Click to toggle"
-                     >
-                         <span class="dot" :style="{ backgroundColor: RAW_COLORS.error }"></span>
-                         <span class="legend-text">Missing ({{ dashboardData.counts.missing }})</span>
-                     </div>
-                     <div 
-                         class="legend-item toggle" 
                          :class="{ disabled: !chartVisibility.parent }"
                          @click="toggleChartCategory('parent')"
                          title="Click to toggle"
                      >
-                         <span class="dot" :style="{ backgroundColor: RAW_COLORS.tertiary }"></span>
+                         <span class="dot" style="background-color: #B3D4FF"></span>
                          <span class="legend-text">Parent ({{ dashboardData.counts.parent }})</span>
                      </div>
                      <div 
@@ -376,6 +398,15 @@ onUnmounted(() => {
                      >
                          <span class="dot" style="background-color: #79747E"></span>
                          <span class="legend-text">Neutral ({{ dashboardData.counts.neutral }})</span>
+                     </div>
+                     <div 
+                         class="legend-item toggle" 
+                         :class="{ disabled: !chartVisibility.missing }"
+                         @click="toggleChartCategory('missing')"
+                         title="Click to toggle"
+                     >
+                         <span class="dot" :style="{ backgroundColor: RAW_COLORS.error }"></span>
+                         <span class="legend-text">Missing ({{ dashboardData.counts.missing }})</span>
                      </div>
                      <div 
                          class="legend-item toggle" 
@@ -1131,5 +1162,124 @@ onUnmounted(() => {
 .legend-text {
     font-size: 12px;
     color: #49454F;
+}
+
+/* Platform Compliance Enhanced Styles */
+.compliance-stats {
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 0;
+    border-top: 1px solid #E7E0EC;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+}
+
+.stat-item.expecting {
+    background: rgba(0, 90, 193, 0.08);
+}
+
+.stat-item.expecting:hover {
+    background: rgba(0, 90, 193, 0.15);
+}
+
+.stat-item.compliant {
+    background: rgba(46, 125, 50, 0.08);
+}
+
+.stat-item.compliant:hover {
+    background: rgba(46, 125, 50, 0.15);
+}
+
+.stat-item.missing {
+    background: rgba(186, 26, 26, 0.08);
+}
+
+.stat-item.missing:hover {
+    background: rgba(186, 26, 26, 0.15);
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1D1B20;
+}
+
+.stat-item.expecting .stat-value {
+    color: #005AC1;
+}
+
+.stat-item.compliant .stat-value {
+    color: #2E7D32;
+}
+
+.stat-item.missing .stat-value {
+    color: #BA1A1A;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #625B71;
+    margin-top: 2px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+/* Compliance Legend/Thresholds */
+.compliance-legend {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #E7E0EC;
+}
+
+.threshold-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+}
+
+.threshold-bar {
+    width: 16px;
+    height: 8px;
+    border-radius: 4px;
+}
+
+.threshold-item.critical .threshold-bar {
+    background: #BA1A1A;
+}
+
+.threshold-item.warning .threshold-bar {
+    background: #E7E0EC;
+}
+
+.threshold-item.good .threshold-bar {
+    background: #005AC1;
+}
+
+.threshold-range {
+    font-weight: 600;
+    color: #1D1B20;
+}
+
+.threshold-label {
+    color: #625B71;
 }
 </style>

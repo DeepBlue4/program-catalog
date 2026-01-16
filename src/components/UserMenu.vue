@@ -1,17 +1,27 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import BaseIcon from '../components/BaseIcon.vue';
-import { mdiAccountCircle, mdiBookOpenVariant, mdiChartPie, mdiLock, mdiLogout } from '@mdi/js';
+import { mdiAccountCircle, mdiBookOpenVariant, mdiChartPie, mdiLock, mdiOpenInNew, mdiCompass } from '@mdi/js';
 
 const isOpen = ref(false);
 const menuRef = ref(null);
 
+// Extended user data (in production, this would come from an API/auth service)
 const user = {
   name: 'Sawyer',
   email: 'sawyer@example.com',
+  bemsid: 'SW12345',
+  businessUnit: 'Digital Platform',
   isManager: true,
-  isAdmin: true
+  isAdmin: true,
+  isStaff: true,
+  is6J: true
 };
+
+// Determine Write Access: Admin OR Manager
+const hasWriteAccess = computed(() => {
+  return user.isAdmin || user.isManager;
+});
 
 const toggleMenu = () => {
   isOpen.value = !isOpen.value;
@@ -39,6 +49,7 @@ onUnmounted(() => {
     </button>
 
     <div v-if="isOpen" class="menu-dropdown m3-card elevated">
+      <!-- User Header -->
       <div class="user-info">
         <div class="avatar large">
           {{ user.name.charAt(0) }}
@@ -49,34 +60,63 @@ onUnmounted(() => {
         </div>
       </div>
       
+      <!-- Role Badges -->
       <div class="badges">
         <span v-if="user.isAdmin" class="role-badge admin">Admin</span>
         <span v-if="user.isManager" class="role-badge manager">Manager</span>
+        <span v-if="user.is6J" class="role-badge swe">6J</span>
+      </div>
+
+      <!-- User Details Grid -->
+      <div class="user-details-grid">
+        <div class="detail-row">
+          <span class="detail-label">BEMSID</span>
+          <span class="detail-value">{{ user.bemsid }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Business Unit</span>
+          <span class="detail-value">{{ user.businessUnit }}</span>
+        </div>
+      </div>
+
+      <!-- Write Access Card -->
+      <div class="write-access-card" :class="{ 'has-access': hasWriteAccess }">
+        <div class="wa-badge">{{ hasWriteAccess ? 'Editor' : 'Viewer' }}</div>
+        <div class="wa-text">
+          <div class="wa-title">Program Catalog Access</div>
+          <div class="wa-hint">{{ hasWriteAccess ? 'You have write access' : 'Read-only access' }}</div>
+        </div>
       </div>
 
       <div class="divider"></div>
 
-      <a href="https://vuejs.org" target="_blank" class="menu-item">
-        <span class="icon"><BaseIcon :path="mdiBookOpenVariant" :size="16" /></span>
-        Documentation
-      </a>
-
-      <div class="divider"></div>
-
-      <router-link to="/dashboard" class="menu-item">
+      <!-- Navigation Links -->
+      <router-link to="/dashboard" class="menu-item" @click="isOpen = false">
         <span class="icon"><BaseIcon :path="mdiChartPie" :size="16" /></span>
         Dashboard
       </router-link>
 
-      <router-link to="/403" class="menu-item">
+      <router-link to="/403" class="menu-item" @click="isOpen = false">
         <span class="icon"><BaseIcon :path="mdiLock" :size="16" /></span>
         Unauthorized (Demo)
       </router-link>
-      
-      <button class="menu-item logout">
-        <span class="icon"><BaseIcon :path="mdiLogout" :size="16" /></span>
-        Sign Out
-      </button>
+
+      <div class="divider"></div>
+
+      <!-- External Links Section -->
+      <div class="external-links-label">External Links</div>
+
+      <a href="https://compass.example.com" target="_blank" rel="noopener noreferrer" class="menu-item external" @click="isOpen = false">
+        <span class="icon"><BaseIcon :path="mdiCompass" :size="16" /></span>
+        Compass
+        <BaseIcon :path="mdiOpenInNew" :size="12" class="external-icon" />
+      </a>
+
+      <a href="https://vuejs.org" target="_blank" rel="noopener noreferrer" class="menu-item external" @click="isOpen = false">
+        <span class="icon"><BaseIcon :path="mdiBookOpenVariant" :size="16" /></span>
+        Documentation
+        <BaseIcon :path="mdiOpenInNew" :size="12" class="external-icon" />
+      </a>
     </div>
   </div>
 </template>
@@ -195,12 +235,88 @@ onUnmounted(() => {
   color: #1D192B; /* on-secondary-container */
 }
 
+.role-badge.swe {
+  background: #D6F5D6; /* green tint */
+  color: #1B5E20; /* dark green */
+}
+
 .divider {
   height: 1px;
   background: #C4C7C5; /* outline-variant */
   margin: 0.5rem 0;
 }
 
+/* User Details Grid */
+.user-details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.detail-label {
+  color: #625B71;
+  font-weight: 500;
+}
+
+.detail-value {
+  color: #1D1B20;
+  font-weight: 600;
+}
+
+/* Write Access Card */
+.write-access-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #F5F5F5;
+  margin-bottom: 8px;
+}
+
+.write-access-card.has-access {
+  background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+}
+
+.wa-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #9E9E9E;
+  color: white;
+}
+
+.write-access-card.has-access .wa-badge {
+  background: linear-gradient(180deg, #2E7D32, #1B5E20);
+}
+
+.wa-text {
+  flex: 1;
+}
+
+.wa-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1D1B20;
+}
+
+.wa-hint {
+  font-size: 11px;
+  color: #625B71;
+}
+
+/* Menu Items */
 .menu-item {
   display: flex;
   align-items: center;
@@ -222,8 +338,27 @@ onUnmounted(() => {
   background: rgba(0,0,0,0.05); /* Hover state */
 }
 
-.menu-item.logout {
-  color: #B3261E; /* Error/Logout color */
+/* External Links */
+.external-links-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #625B71;
+  padding: 4px 12px;
+  letter-spacing: 0.5px;
+}
+
+.menu-item.external {
+  color: #005AC1;
+}
+
+.external-icon {
+  margin-left: auto;
+  opacity: 0.6;
+}
+
+.menu-item.external:hover .external-icon {
+  opacity: 1;
 }
 
 .icon {

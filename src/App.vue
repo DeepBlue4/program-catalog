@@ -313,13 +313,14 @@ const currentEnvironment = computed(() => {
                         <div 
                             v-for="effort in selectedNode.softwareEfforts" 
                             :key="effort.id || effort.uuid" 
-                            class="effort-item-clean"
+                            class="effort-card"
                             @click="handleEffortClick(effort)"
                         >
-                            <div class="effort-info">
+                            <div class="effort-card-content">
                                 <span class="effort-name">{{ effort.name }}</span>
-                                <span class="effort-id">{{ effort.id || effort.uuid }}</span>
+                                <span class="effort-id"><span class="id-label">ID:</span> {{ effort.id || effort.uuid }}</span>
                             </div>
+                            <BaseIcon :path="mdiChevronRight" :size="18" class="effort-arrow" />
                         </div>
                     </div>
                </div>
@@ -527,7 +528,21 @@ const currentEnvironment = computed(() => {
 
 .root-crumb-icon {
     transform: rotate(270deg);
-    color: #FFFFFF; /* primary (on-dark) */
+    color: #FFFFFF;
+}
+
+/* Make icon crumb look clickable */
+.crumb.icon-crumb {
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.crumb.icon-crumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
 }
 
 /* Main Content Layout */
@@ -750,36 +765,65 @@ const currentEnvironment = computed(() => {
     box-shadow: 0px 1px 2px rgba(0,0,0,0.1);
 }
 
-.effort-item-clean {
+.effort-card {
     padding: 12px 16px;
     cursor: pointer;
-    border-bottom: 1px solid #F3EDF7;
-    transition: background 0.1s;
+    border-bottom: 1px solid #E7E0EC;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 
-.effort-item-clean:last-child {
+.effort-card:last-child {
     border-bottom: none;
 }
 
-.effort-item-clean:hover {
-    background: #F3EDF7; /* surface-container-high */
+.effort-card:hover {
+    background: linear-gradient(90deg, #F3EDF7 0%, #E8DEF8 100%);
+    padding-left: 20px;
 }
 
-.effort-info {
+.effort-card:hover .effort-arrow {
+    opacity: 1;
+    transform: translateX(2px);
+}
+
+.effort-card-content {
     display: flex;
     flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
 }
 
 .effort-name {
     font-size: 14px;
     color: #1D1B20;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .effort-id {
     font-size: 11px;
+    color: #79747E;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.id-label {
     color: #625B71;
-    margin-top: 2px;
+    font-weight: 600;
+    font-family: inherit;
+}
+
+.effort-arrow {
+    color: #625B71;
+    opacity: 0;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
 }
 
 .mt-2 {

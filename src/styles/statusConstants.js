@@ -18,10 +18,10 @@ export const STATUS_COLORS = {
     parent: {
         id: 'parent',
         label: 'Parent of Effort',
-        fill: '#D8E2FF',   // primaryContainer
-        border: '#005AC1', // primary
-        text: '#001D35',   // onPrimaryContainer
-        bg: '#D8E2FF'      // primaryContainer (for tags)
+        fill: '#B3D4FF',   // light blue
+        border: '#0066CC', // medium blue
+        text: '#003366',   // dark blue text
+        bg: '#B3D4FF'      // light blue (for tags)
     },
     neutral: {
         id: 'neutral',
