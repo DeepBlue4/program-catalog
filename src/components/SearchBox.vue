@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import BaseIcon from '../components/BaseIcon.vue';
 import { mdiMagnify } from '@mdi/js';
+import { STATUS_COLORS } from '../styles/statusConstants';
 
 const props = defineProps({
   items: {
@@ -53,6 +54,52 @@ const handleBlur = () => {
     isOpen.value = false;
   }, 200);
 };
+
+// Helper to get inline styles using STATUS_COLORS for consistent theming
+const getProgramStatusStyle = (item) => {
+  if (item.isSoftwareEffort) return {};
+  
+  let colors;
+  
+  // Check for Software Active (has software efforts)
+  if (item.softwareEfforts && item.softwareEfforts.length > 0) {
+    colors = STATUS_COLORS.active;
+  }
+  // Check for Expected (Missing) - expecting efforts but has none
+  else if (item.expecting_software_efforts) {
+    colors = STATUS_COLORS.gap;
+  }
+  // Check for Parent of Effort
+  else if (item.has_descendant_expecting_software_effort) {
+    colors = STATUS_COLORS.parent;
+  }
+  // Neutral
+  else {
+    colors = STATUS_COLORS.neutral;
+  }
+  
+  return {
+    backgroundColor: colors.bg,
+    color: colors.text,
+    borderColor: colors.border
+  };
+};
+
+// Helper to get program status label
+const getProgramStatusLabel = (item) => {
+  if (item.isSoftwareEffort) return '';
+  
+  if (item.softwareEfforts && item.softwareEfforts.length > 0) {
+    return 'Software Active';
+  }
+  if (item.expecting_software_efforts) {
+    return 'Expected (Missing)';
+  }
+  if (item.has_descendant_expecting_software_effort) {
+    return 'Parent of Effort';
+  }
+  return 'Neutral Program';
+};
 </script>
 
 <template>
@@ -92,14 +139,27 @@ const handleBlur = () => {
                 class="suggestion-item"
             >
                 <div class="item-content">
+                    <!-- Row 1: Name + Type Badge -->
                     <div class="item-row primary">
                         <span class="item-name">{{ item.name }}</span>
-                    </div>
-                    <div class="item-row secondary">
                         <span class="item-type-badge" :class="{ program: !item.isSoftwareEffort }">
                             {{ item.isSoftwareEffort ? 'Effort' : 'Program' }}
                         </span>
-                        <span v-if="item.programName" class="item-context">{{ item.programName }}</span>
+                    </div>
+
+                    <!-- Row 2: Parent + ID (for efforts) OR Status + ID (for programs) -->
+                    <div class="item-row meta-row">
+                        <!-- For Efforts: Parent + ID -->
+                        <template v-if="item.isSoftwareEffort">
+                            <span v-if="item.programName" class="parent-info">
+                                <span class="parent-label">Parent:</span>
+                                <span class="parent-name">{{ item.programName }}</span>
+                            </span>
+                        </template>
+                        <!-- For Programs: Status Badge -->
+                        <span v-else class="status-badge" :style="getProgramStatusStyle(item)">
+                            {{ getProgramStatusLabel(item) }}
+                        </span>
                         <span class="item-id">ID: {{ item.value }}</span>
                     </div>
                 </div>
@@ -115,7 +175,7 @@ const handleBlur = () => {
 <style scoped>
 .search-container {
   position: relative;
-  width: 320px; /* Slightly wider */
+  width: 480px; /* 50% wider (was 320px) */
 }
 
 .input-wrapper {
@@ -234,17 +294,21 @@ const handleBlur = () => {
 .item-type-badge {
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 9px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: #FFDF90; /* tertiary-container */
-  color: #241A00; /* on-tertiary-container */
-  width: fit-content;
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #FFDF90 0%, #FFD54F 100%);
+  color: #5D4037;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 }
 
 .item-type-badge.program {
-    background: #DBE2F9; /* secondary-container */
-    color: #1D192B; /* on-secondary-container */
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+    color: #1565C0;
+    border-color: rgba(21, 101, 192, 0.15);
 }
 
 .item-context {
@@ -261,7 +325,8 @@ const handleBlur = () => {
 .item-id {
     margin-left: auto; /* Push to right */
     font-family: monospace;
-    opacity: 0.7;
+    color: #625B71; /* secondary color for visibility */
+    font-size: 11px;
 }
 
 .no-results {
@@ -270,5 +335,49 @@ const handleBlur = () => {
     color: #49454F; /* on-surface-variant */
     font-size: 13px;
     font-style: italic;
+}
+
+/* Parent Row for Software Efforts */
+.item-row.parent-row {
+    font-size: 11px;
+    color: #625B71;
+    margin-top: 2px;
+}
+
+.parent-label {
+    font-weight: 500;
+    color: #79747E;
+    margin-right: 4px;
+}
+
+.parent-name {
+    color: #49454F;
+    font-weight: 500;
+}
+
+.parent-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Meta Row */
+.item-row.meta-row {
+    font-size: 11px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Status Badges for Programs - colors applied via inline styles from STATUS_COLORS */
+.status-badge {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    border-width: 1px;
+    border-style: solid;
 }
 </style>
