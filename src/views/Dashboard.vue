@@ -38,6 +38,26 @@ const activeMetricModal = ref(null);
 // List View State
 const activeListTab = ref('missing'); // 'missing', 'anomaly', 'active'
 
+// Chart Category Visibility State
+const chartVisibility = ref({
+    populated: true,
+    missing: true,
+    parent: true,
+    neutral: true,
+    unexpected: true
+});
+
+// Toggle chart category visibility
+const toggleChartCategory = (category) => {
+    // Prevent disabling all categories - at least one must remain visible
+    const visibleCount = Object.values(chartVisibility.value).filter(v => v).length;
+    if (visibleCount === 1 && chartVisibility.value[category]) {
+        return; // Can't disable the last visible category
+    }
+    chartVisibility.value[category] = !chartVisibility.value[category];
+    updateValidityChart();
+};
+
 // Metrics & Lists
 const dashboardData = computed(() => {
     const nodes = allNodes.value;
@@ -213,12 +233,29 @@ const initCharts = () => {
 
 
     // Program Status Chart (Status Distribution)
+    updateValidityChart();
+};
+
+// Separate function to update validity chart (called on toggle)
+const updateValidityChart = () => {
     if (chartRefValidity.value) {
         if (chartInstanceValidity) chartInstanceValidity.dispose();
         chartInstanceValidity = echarts.init(chartRefValidity.value);
         
         const counts = dashboardData.value.counts;
         const validPopulated = counts.active - counts.anomaly; // Expected & Active
+
+        // Build chart data based on visibility
+        const allData = [
+            { value: validPopulated, name: 'Populated', key: 'populated', itemStyle: { color: RAW_COLORS.primary } },
+            { value: counts.missing, name: 'Missing', key: 'missing', itemStyle: { color: RAW_COLORS.error } },
+            { value: counts.parent, name: 'Parent of Effort', key: 'parent', itemStyle: { color: RAW_COLORS.tertiary } },
+            { value: counts.neutral, name: 'Neutral', key: 'neutral', itemStyle: { color: '#79747E' } },
+            { value: counts.anomaly, name: 'Unexpected', key: 'unexpected', itemStyle: { color: RAW_COLORS.errorContainer } }
+        ];
+        
+        // Filter based on visibility state
+        const visibleData = allData.filter(item => chartVisibility.value[item.key]);
 
         chartInstanceValidity.setOption({
             tooltip: { trigger: 'item' },
@@ -236,13 +273,7 @@ const initCharts = () => {
                     fontSize: 14
                 },
                 emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold' } },
-                data: [
-                    { value: validPopulated, name: 'Populated', itemStyle: { color: RAW_COLORS.primary } },
-                    { value: counts.missing, name: 'Missing', itemStyle: { color: RAW_COLORS.error } },
-                    { value: counts.parent, name: 'Parent of Effort', itemStyle: { color: RAW_COLORS.tertiary } },
-                    { value: counts.neutral, name: 'Neutral', itemStyle: { color: '#79747E' } },
-                    { value: counts.anomaly, name: 'Unexpected', itemStyle: { color: RAW_COLORS.errorContainer } }
-                ]
+                data: visibleData
             }]
         });
     }
@@ -309,12 +340,52 @@ onUnmounted(() => {
                     <p>Breakdown of all programs by their operational state (Active, Missing, Neutral).</p>
                 </div>
                 <div class="chart-wrapper" ref="chartRefValidity"></div>
-                <div class="legend-mini wrap-legend">
-                     <div class="legend-item"><span class="dot" :style="{ backgroundColor: RAW_COLORS.primary }"></span> Populated</div>
-                     <div class="legend-item"><span class="dot" :style="{ backgroundColor: RAW_COLORS.error }"></span> Missing</div>
-                     <div class="legend-item"><span class="dot" :style="{ backgroundColor: RAW_COLORS.tertiary }"></span> Parent</div>
-                     <div class="legend-item"><span class="dot" style="background-color: #79747E"></span> Neutral</div>
-                     <div class="legend-item"><span class="dot" :style="{ backgroundColor: RAW_COLORS.errorContainer }"></span> Unexpected</div>
+                <div class="legend-mini wrap-legend interactive-legend">
+                     <div 
+                         class="legend-item toggle" 
+                         :class="{ disabled: !chartVisibility.populated }"
+                         @click="toggleChartCategory('populated')"
+                         title="Click to toggle"
+                     >
+                         <span class="dot" :style="{ backgroundColor: RAW_COLORS.primary }"></span>
+                         <span class="legend-text">Populated ({{ dashboardData.counts.active - dashboardData.counts.anomaly }})</span>
+                     </div>
+                     <div 
+                         class="legend-item toggle" 
+                         :class="{ disabled: !chartVisibility.missing }"
+                         @click="toggleChartCategory('missing')"
+                         title="Click to toggle"
+                     >
+                         <span class="dot" :style="{ backgroundColor: RAW_COLORS.error }"></span>
+                         <span class="legend-text">Missing ({{ dashboardData.counts.missing }})</span>
+                     </div>
+                     <div 
+                         class="legend-item toggle" 
+                         :class="{ disabled: !chartVisibility.parent }"
+                         @click="toggleChartCategory('parent')"
+                         title="Click to toggle"
+                     >
+                         <span class="dot" :style="{ backgroundColor: RAW_COLORS.tertiary }"></span>
+                         <span class="legend-text">Parent ({{ dashboardData.counts.parent }})</span>
+                     </div>
+                     <div 
+                         class="legend-item toggle" 
+                         :class="{ disabled: !chartVisibility.neutral }"
+                         @click="toggleChartCategory('neutral')"
+                         title="Click to toggle"
+                     >
+                         <span class="dot" style="background-color: #79747E"></span>
+                         <span class="legend-text">Neutral ({{ dashboardData.counts.neutral }})</span>
+                     </div>
+                     <div 
+                         class="legend-item toggle" 
+                         :class="{ disabled: !chartVisibility.unexpected }"
+                         @click="toggleChartCategory('unexpected')"
+                         title="Click to toggle"
+                     >
+                         <span class="dot" :style="{ backgroundColor: RAW_COLORS.errorContainer }"></span>
+                         <span class="legend-text">Unexpected ({{ dashboardData.counts.anomaly }})</span>
+                     </div>
                 </div>
             </div>
         </div>
@@ -1025,5 +1096,40 @@ onUnmounted(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+/* Interactive Legend Toggles */
+.interactive-legend {
+    user-select: none;
+}
+
+.legend-item.toggle {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-item.toggle:hover {
+    background-color: rgba(0, 90, 193, 0.08);
+}
+
+.legend-item.toggle.disabled {
+    opacity: 0.4;
+}
+
+.legend-item.toggle.disabled .legend-text {
+    text-decoration: line-through;
+}
+
+.legend-item.toggle.disabled .dot {
+    opacity: 0.5;
+}
+
+.legend-text {
+    font-size: 12px;
+    color: #49454F;
 }
 </style>
