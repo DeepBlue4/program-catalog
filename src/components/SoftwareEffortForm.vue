@@ -189,7 +189,7 @@ const addLink = (effort) => {
         formData.value.linked_software_efforts.push({
             uuid: effort.id,
             name: effort.name,
-            program_id: effort.program_id || '', // Assuming flat candidates have this
+            program_id: effort._programId || '', 
             program_name: effort._programName || ''
         });
         linkSearchQuery.value = ''; // Reset search
@@ -547,13 +547,15 @@ const WORK_LOCATION_OPTIONS = [
                                             <span class="name">{{ cand.name }}</span>
                                             <span class="id-badge">ID: {{ cand.id }}</span>
                                         </div>
-                                        <div class="item-sub">
-                                            <span class="program-name">
-                                                <BaseIcon :path="mdiLayersOutline" :size="10" /> {{ cand._programName }}
-                                                <span class="program-id-sub">({{ cand._programId }})</span>
-                                            </span>
-                                            <span class="separator">•</span>
-                                            <span class="type">{{ cand.type }}</span>
+                                        <div class="item-sub-grid">
+                                            <div class="sub-field">
+                                                <span class="label">Program:</span>
+                                                <span class="value">{{ cand._programName }}</span>
+                                            </div>
+                                            <div class="sub-field">
+                                                <span class="label">Prog ID:</span>
+                                                <span class="value code">{{ cand._programId }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -567,13 +569,22 @@ const WORK_LOCATION_OPTIONS = [
                                      <BaseIcon :path="mdiLinkVariant" :size="20" />
                                 </div>
                                 <div class="row-content">
-                                    <div class="row-main">{{ link.name }}</div>
-                                    <div class="row-sub">
-                                        <span class="program-tag">{{ link._programName || 'Unknown Program' }}</span>
-                                        <span class="id-text">{{ link.id }}</span>
+                                    <div class="row-top">
+                                        <span class="row-name">{{ link.name }}</span>
+                                        <span class="row-id-badge">ID: {{ link.uuid || link.id }}</span>
+                                    </div>
+                                    <div class="row-meta-grid">
+                                        <div class="meta-pair">
+                                            <span class="meta-label">Program:</span>
+                                            <span class="meta-val">{{ link.program_name || link._programName || 'Unknown' }}</span>
+                                        </div>
+                                        <div class="meta-pair">
+                                            <span class="meta-label">Prog ID:</span>
+                                            <span class="meta-val code">{{ link.program_id || link._programId || 'N/A' }}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <button class="btn-icon-danger" @click.stop="removeLink(link.id)" title="Remove Link">
+                                <button class="btn-icon-danger" @click.stop="removeLink(link.uuid || link.id)" title="Remove Link">
                                     <BaseIcon :path="mdiClose" :size="18" />
                                 </button>
                             </div>
@@ -1533,7 +1544,7 @@ const WORK_LOCATION_OPTIONS = [
 
 .dropdown-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* Align top for multi-line */
     gap: 12px;
     padding: 12px 16px;
     cursor: pointer;
@@ -1559,13 +1570,14 @@ const WORK_LOCATION_OPTIONS = [
     align-items: center;
     justify-content: center;
     font-size: 14px;
+    flex-shrink: 0;
 }
 
 .item-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 6px;
 }
 
 .item-main {
@@ -1590,30 +1602,96 @@ const WORK_LOCATION_OPTIONS = [
     border-radius: 4px;
 }
 
-.item-sub {
+/* New Grid Layout for Dropdown Sub-info */
+.item-sub-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    color: #49454F;
+    margin-top: 4px;
+}
+
+.sub-field {
+    display: flex;
+    flex-direction: row; /* Change to row */
+    align-items: center;
+    gap: 8px; /* Slightly bigger gap for separation */
+}
+
+.sub-field .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #625B71; /* secondary */
+    font-weight: 600;
+    min-width: 55px; /* Fixed width for alignment */
+}
+
+.sub-field .value {
+    color: #1D1B20;
+    font-weight: 500;
+}
+
+.sub-field .value.code {
+    font-family: monospace;
+    font-size: 10px;
+    background: #F2F2F2;
+    padding: 1px 4px;
+    border-radius: 3px;
+    width: fit-content;
+}
+
+/* List Item Styles */
+.row-top {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: #625B71; /* secondary */
+    gap: 8px;
+    margin-bottom: 2px;
 }
 
-.item-sub .program-name i {
-    font-size: 10px;
-    margin-right: 2px;
-    opacity: 0.7;
-}
-
-.item-sub .program-name {
+.row-name {
     font-weight: 500;
+    color: #1D1B20;
+    font-size: 14px;
+}
+
+.row-id-badge {
+    font-size: 10px;
+    background: #E8F0FE;
+    color: #005AC1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.row-meta-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    align-items: flex-start;
+    margin-top: 4px;
+}
+
+.meta-pair {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.program-id-sub {
+.meta-label {
+    color: #625B71;
+    font-size: 11px;
+    min-width: 55px; /* Match dropdown width */
+}
+
+.meta-val {
+    color: #1D1B20;
+    font-weight: 500;
+}
+
+.meta-val.code {
     font-family: monospace;
-    opacity: 0.8;
     font-size: 11px;
 }
 
