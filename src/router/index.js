@@ -39,6 +39,12 @@ async function fetchCurrentUser() {
   1. The flat structure from our Mock data.
   2. The nested structure coming from the real backend (cached properties, daf_user, etc).
 */
+/* 
+  Central place to decide if a user has "Write" access.
+  We have to handle two different data shapes here:
+  1. The flat structure from our Mock data.
+  2. The nested structure coming from the real backend (cached properties, daf_user, etc).
+*/
 export function evaluateWriteAccess(user) {
     if (!user) return false;
 
@@ -53,6 +59,22 @@ export function evaluateWriteAccess(user) {
         const isStaff = Boolean(user?.daf_user?.is_staff);
         const isAdmin = Boolean(user?.daf_user?.is_superuser);
         return isManager || isStaff || isAdmin;
+    }
+}
+
+/*
+  New rule: Dashboard is Restricted.
+  Only Admins or Staff can see it. Managers are NOT allowed unless they also have these flags.
+*/
+export function evaluateDashboardAccess(user) {
+    if (!user) return false;
+
+    if (CompassAPIService.useTestData) {
+        return user.isAdmin || user.isStaff;
+    } else {
+        const isStaff = Boolean(user?.daf_user?.is_staff);
+        const isAdmin = Boolean(user?.daf_user?.is_superuser);
+        return isStaff || isAdmin;
     }
 }
 
@@ -94,7 +116,8 @@ const routes = [
     {
         path: '/dashboard',
         name: 'Dashboard',
-        component: () => import('../views/Dashboard.vue')
+        component: () => import('../views/Dashboard.vue'),
+        meta: { requiresDashboardAccess: true }
     },
     {
         path: '/403',
@@ -115,13 +138,35 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
     const requiresAuth = to.meta && to.meta.requiresAuth;
-    if (!requiresAuth) return next();
+    const requiresDashboard = to.meta && to.meta.requiresDashboardAccess;
+
+    // Fast path: if no special requirements, let them through
+    if (!requiresAuth && !requiresDashboard) return next();
+
+    // If we're here, we need to check permissions, so make sure user data is loaded
+    if (currentUserRef.value === null) {
+        // This might be redundant if fetchCurrentUser() already started, 
+        // but we await it here to be safe.
+        await fetchCurrentUser();
+    }
 
     try {
-        const allowed = await checkPermission();
-        if (allowed) return next();
-        // redirect to forbidden if not allowed
-        return next({ name: "PermissionDenied" });
+        const user = currentUserRef.value;
+
+        // 1. Check Write Access (for /efforts/:id)
+        if (requiresAuth) {
+            // Using our cached check logic is fine here
+            const allowed = await checkPermission();
+            if (!allowed) return next({ name: "PermissionDenied" });
+        }
+
+        // 2. Check Dashboard Access (Strict: Admin/Staff only)
+        if (requiresDashboard) {
+            const hasDashboardAccess = evaluateDashboardAccess(user);
+            if (!hasDashboardAccess) return next({ name: "PermissionDenied" });
+        }
+
+        return next();
     } catch (err) {
         // on fetch/network errors, block access for safety
         console.error("Permission check failed:", err);
@@ -130,3 +175,6 @@ router.beforeEach(async (to, from, next) => {
 });
 
 export default router;
+
+// Kick off user fetch immediately so the UI (UserMenu) populates even on public pages.
+fetchCurrentUser();

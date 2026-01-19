@@ -91,23 +91,22 @@ async function fetchItems() {
  * 
  * Populates state.currentUser based on the environment (Mock vs Prod).
  */
-function fetchCurrentUser() {
+async function fetchCurrentUser() {
     if (CompassAPIService.useTestData) {
         console.log("[Store] Loading Mock User Data...");
         state.currentUser = MockApiData.getMockUser();
     } else {
-        // Just filler data until the real auth flow is ready.
-        console.log("[Store] Loading Default User Data (N/A)...");
-        state.currentUser = {
-            name: 'N/A',
-            email: 'N/A',
-            bemsid: 'N/A',
-            businessUnit: 'N/A',
-            isManager: false,
-            isAdmin: false,
-            isStaff: false,
-            is6J: false
-        };
+        console.log("[Store] Fetching Production User Data...");
+        try {
+            const response = await CompassAPIService.getCurrentUser();
+            if (response.success) {
+                state.currentUser = response.data;
+            } else {
+                console.warn("[Store] Failed to fetch user data", response);
+            }
+        } catch (err) {
+            console.error("[Store] Exception fetching user:", err);
+        }
     }
 }
 
