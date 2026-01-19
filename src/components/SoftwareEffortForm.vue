@@ -140,7 +140,16 @@ watch(() => props.effort, (newVal) => {
     if (!safeVal.statement_of_work_profile) safeVal.statement_of_work_profile = {};
     if (!safeVal.technical_points_of_contact) safeVal.technical_points_of_contact = {};
     if (!safeVal.developer_setup) safeVal.developer_setup = {};
+    if (!safeVal.developer_setup) safeVal.developer_setup = {};
     if (!safeVal.work_location) safeVal.work_location = {};
+    
+    // Restore parent Selection from UUID if ID is missing (e.g. fresh load from backend)
+    if (!safeVal.parent && safeVal.parent_uuid) {
+        const foundParent = props.availableParents.find(p => p.uuid === safeVal.parent_uuid);
+        if (foundParent) {
+            safeVal.parent = foundParent.id;
+        }
+    }
     
     formData.value = safeVal;
     initialState.value = JSON.stringify(safeVal);
