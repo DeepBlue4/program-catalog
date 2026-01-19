@@ -162,6 +162,7 @@ const displayedEfforts = computed(() => {
 });
 
 // --- Tree Building Logic ---
+// --- Tree Building Logic ---
 const effortTree = computed(() => {
     const map = {};
     const roots = [];
@@ -169,11 +170,17 @@ const effortTree = computed(() => {
     // Shallow copy for tree construction
     const nodes = props.efforts.map(e => ({ ...e, children: [] }));
     
-    nodes.forEach(node => { map[node.id] = node; });
+    // Map by UUID (Contract source of truth)
+    nodes.forEach(node => { 
+        if (node.uuid) {
+            map[node.uuid] = node; 
+        }
+    });
 
     nodes.forEach(node => {
-        if (node.parent && map[node.parent]) {
-            map[node.parent].children.push(node);
+        // Use parent_uuid to find parent
+        if (node.parent_uuid && map[node.parent_uuid]) {
+            map[node.parent_uuid].children.push(node);
         } else {
             roots.push(node);
         }

@@ -140,16 +140,10 @@ watch(() => props.effort, (newVal) => {
     if (!safeVal.statement_of_work_profile) safeVal.statement_of_work_profile = {};
     if (!safeVal.technical_points_of_contact) safeVal.technical_points_of_contact = {};
     if (!safeVal.developer_setup) safeVal.developer_setup = {};
-    if (!safeVal.developer_setup) safeVal.developer_setup = {};
     if (!safeVal.work_location) safeVal.work_location = {};
     
-    // Restore parent Selection from UUID if ID is missing (e.g. fresh load from backend)
-    if (!safeVal.parent && safeVal.parent_uuid) {
-        const foundParent = props.availableParents.find(p => p.uuid === safeVal.parent_uuid);
-        if (foundParent) {
-            safeVal.parent = foundParent.id;
-        }
-    }
+    // No restoration needed. We rely on parent_uuid as the source of truth.
+    // Ensure parent_uuid is set (it should be from props).
     
     formData.value = safeVal;
     initialState.value = JSON.stringify(safeVal);
@@ -158,7 +152,8 @@ watch(() => props.effort, (newVal) => {
 // Valid parents: exclude self if editing
 const validParents = computed(() => {
     if (!props.isEdit) return props.availableParents;
-    return props.availableParents.filter(p => p.id !== formData.value.id);
+    // Filter by UUID to be safe and robust
+    return props.availableParents.filter(p => p.uuid !== formData.value.uuid);
 });
 
 // Filtered Candidates for Linking
@@ -166,10 +161,10 @@ const filteredLinkCandidates = computed(() => {
     const query = linkSearchQuery.value.toLowerCase().trim();
     return allEffortCandidates.value.filter(e => {
         // Exclude self (if editing)
-        if (formData.value.id && e.id === formData.value.id) return false;
+        if (formData.value.uuid && e.uuid === formData.value.uuid) return false;
         
         // Exclude already linked
-        if (formData.value.linked_software_efforts && formData.value.linked_software_efforts.some(l => l.uuid === e.id || l.id === e.id)) return false;
+        if (formData.value.linked_software_efforts && formData.value.linked_software_efforts.some(l => l.uuid === e.uuid)) return false;
 
         // Apply Search
         if (!query) return false; // Hide if no query to prevent overwhelming list
@@ -187,7 +182,8 @@ const linkedEffortObjects = computed(() => {
     // If it has strings (legacy/mock intermediate), map them.
     return formData.value.linked_software_efforts.map(link => {
         if (typeof link === 'string') {
-             return allEffortCandidates.value.find(e => e.id === link) || { id: link, name: 'Unknown/External Effort', _programName: 'Unknown' };
+            // Try matching by UUID first, then ID (legacy support)
+             return allEffortCandidates.value.find(e => e.uuid === link || e.id === link) || { id: link, name: 'Unknown/External Effort', _programName: 'Unknown' };
         }
         return link; // It's already an object
     });
@@ -195,12 +191,12 @@ const linkedEffortObjects = computed(() => {
 
 const addLink = (effort) => {
     if (!formData.value.linked_software_efforts) formData.value.linked_software_efforts = [];
-    // Check duplication by ID
-    const exists = formData.value.linked_software_efforts.some(l => (l.uuid || l.id) === effort.id);
+    // Check duplication by UUID
+    const exists = formData.value.linked_software_efforts.some(l => l.uuid === effort.uuid);
     if (!exists) {
         // Push the structure expected by Pydantic: { uuid, name, program_id, program_name }
         formData.value.linked_software_efforts.push({
-            uuid: effort.id,
+            uuid: effort.uuid,
             name: effort.name,
             program_id: effort._programId || '', 
             program_name: effort._programName || ''
@@ -210,32 +206,27 @@ const addLink = (effort) => {
 };
 
 const removeLink = (id) => {
-    formData.value.linked_software_efforts = formData.value.linked_software_efforts.filter(l => (l.uuid || l.id) !== id);
+    // ID here could be UUID
+    formData.value.linked_software_efforts = formData.value.linked_software_efforts.filter(l => (l.uuid) !== id);
 };
 
 // Inheritance Resolution Logic
 const effortMap = computed(() => {
     const map = {};
-    props.availableParents.forEach(p => map[p.id] = p);
+    // Map available parents by UUID for robust lookup
+    props.availableParents.forEach(p => {
+        if (p.uuid) map[p.uuid] = p;
+    });
     return map;
 });
 
 const parentEffort = computed(() => {
-    if (!formData.value.parent) return null;
-    return effortMap.value[formData.value.parent];
+    if (!formData.value.parent_uuid) return null;
+    return effortMap.value[formData.value.parent_uuid];
 });
 
-// Sync parent_uuid when parent selection changes
-watch(() => formData.value.parent, (newId) => {
-    if (!newId) {
-        formData.value.parent_uuid = null;
-    } else {
-        const p = effortMap.value[newId];
-        if (p && p.uuid) {
-            formData.value.parent_uuid = p.uuid;
-        }
-    }
-});
+// NO watcher needed for parent -> parent_uuid sync.
+// We bind directly to parent_uuid in the template.
 
 const getEffectiveValue = (section, field) => {
     // If not inheriting, return local value
@@ -246,18 +237,17 @@ const getEffectiveValue = (section, field) => {
     }
 
     // If inheriting, walk up parents
-    let currentParentId = formData.value.parent;
-    // Map parent_uuid if parent is null but uuid present (rare in this logic, relies on parent ID)
+    let currentParentUuid = formData.value.parent_uuid;
     
     const inheritFlag = `inherit_${section}`;
 
-    while (currentParentId) {
-        const parent = effortMap.value[currentParentId];
+    while (currentParentUuid) {
+        const parent = effortMap.value[currentParentUuid];
         if (!parent) break; // Parent not in list?
 
         // If parent also inherits, keep going up
         if (parent[inheritFlag]) {
-            currentParentId = parent.parent;
+            currentParentUuid = parent.parent_uuid;
             continue;
         }
 
@@ -492,9 +482,9 @@ const WORK_LOCATION_OPTIONS = [
         <div class="header-meta">
             <div class="meta-field">
                  <label>Parent:</label>
-                 <select v-model="formData.parent" class="std-select">
+                 <select v-model="formData.parent_uuid" class="std-select">
                     <option :value="null">None (Root)</option>
-                    <option v-for="p in validParents" :key="p.id" :value="p.id">{{ p.name }}</option>
+                    <option v-for="p in validParents" :key="p.id" :value="p.uuid">{{ p.name }}</option>
                  </select>
             </div>
              <div class="meta-field">
