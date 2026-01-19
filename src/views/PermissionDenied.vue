@@ -1,7 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import BaseIcon from '../components/BaseIcon.vue';
-import { mdiShield, mdiLock, mdiHome } from '@mdi/js';
+import { mdiShield, mdiLock, mdiHelpCircle, mdiSitemap } from '@mdi/js';
 
 const router = useRouter();
 
@@ -23,12 +23,23 @@ const goHome = () => {
       
       <div class="details">
         <p>This area requires elevated privileges (Error 403).</p>
-        <p>If you believe this is a mistake, please contact your system administrator.</p>
+        <p class="help-text">
+            If you need help getting access, please reach out to the 
+            <strong>DAF: Metrics</strong> Mattermost channel.
+        </p>
       </div>
       
       <div class="actions">
+        <a 
+            href="https://mattermost.web.boeing.com/devhub/channels/data-analytics-force" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            class="btn-text"
+        >
+            <BaseIcon :path="mdiHelpCircle" /> Contact Support
+        </a>
         <button class="btn-filled" @click="goHome">
-            <BaseIcon :path="mdiHome" /> Go to Home
+            <BaseIcon :path="mdiSitemap" class="catalog-icon" /> Go to Catalog
         </button>
       </div>
     </div>
@@ -98,7 +109,14 @@ h1 {
 }
 
 .actions {
-    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 16px; /* Space between buttons */
+}
+
+.help-text {
+    margin-top: 12px;
+    font-size: 15px;
 }
 
 .btn-filled {
@@ -113,10 +131,35 @@ h1 {
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: box-shadow 0.2s;
+    transition: all 0.2s;
+}
+
+.btn-text {
+    background: transparent;
+    color: #005AC1; /* primary */
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-weight: 500;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.btn-text:hover {
+    background: rgba(0, 90, 193, 0.08); /* primary opacity */
 }
 
 .btn-filled:hover {
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+
+.catalog-icon {
+    transform: rotate(270deg);
 }
 </style>

@@ -23,6 +23,36 @@ onMounted(() => {
   store.fetchCurrentUser();
 });
 
+// Dynamic Compass URL based on environment
+const compassUrl = computed(() => {
+  if (typeof window === 'undefined') return '/403';
+  
+  const host = window.location.hostname || '';
+  
+  // Local
+  if (host.includes('localhost')) {
+      return 'http://localhost:8000/ui/accounts/overview';
+  }
+
+  // Determine Prefix (Env)
+  let prefix = 'daf-compass';
+  if (host.includes('daf-compass-dev') || host.includes('-dev')) {
+      prefix = 'daf-compass-dev';
+  } else if (host.includes('daf-compass-stage') || host.includes('-stage')) {
+      prefix = 'daf-compass-stage';
+  }
+  
+  // Determine Region
+  if (host.includes('global')) {
+      return `https://${prefix}.common.global.bsf.tools/`;
+  } else if (host.includes('us')) {
+      return `https://${prefix}.common.us.bsf.tools/`;
+  }
+  
+  // Default fallback if neither keyword found
+  return '/403';
+});
+
 // Determine Write Access: Admin OR Manager
 const hasWriteAccess = computed(() => {
   return user.isAdmin || user.isManager;
@@ -111,13 +141,14 @@ onUnmounted(() => {
       <!-- External Links Section -->
       <div class="external-links-label">External Links</div>
 
-      <a href="https://compass.example.com" target="_blank" rel="noopener noreferrer" class="menu-item external" @click="isOpen = false">
+      <a :href="compassUrl" target="_blank" rel="noopener noreferrer" class="menu-item external" @click="isOpen = false">
         <span class="icon"><BaseIcon :path="mdiCompass" :size="16" /></span>
         Compass
         <BaseIcon :path="mdiOpenInNew" :size="12" class="external-icon" />
       </a>
 
-      <a href="https://vuejs.org" target="_blank" rel="noopener noreferrer" class="menu-item external" @click="isOpen = false">
+      <a href="
+https://data-analytics-force.pages.global.bsf.tools/products/compass/latest/pages/program-catalog/program-catalog-overview/" target="_blank" rel="noopener noreferrer" class="menu-item external" @click="isOpen = false">
         <span class="icon"><BaseIcon :path="mdiBookOpenVariant" :size="16" /></span>
         Documentation
         <BaseIcon :path="mdiOpenInNew" :size="12" class="external-icon" />
