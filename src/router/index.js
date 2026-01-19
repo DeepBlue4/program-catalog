@@ -33,39 +33,43 @@ async function fetchCurrentUser() {
     }
 }
 
+
 /* 
   Central place to decide if a user has "Write" access.
-  We check BOTH Mock (flat) and Real (nested) structures to be robust.
+  Using the user's provided logic which handles the real backend structure.
 */
 export function evaluateWriteAccess(user) {
     if (!user) return false;
 
-    // Check Mock/Flat properties
-    const mockAccess = user.isManager || user.isAdmin || user.isStaff;
+    // Check for Real Backend Structure
+    const isManager = Boolean(user?.cached?.manager_status);
+    const isStaff = Boolean(user?.daf_user?.is_staff);
+    const isAdmin = Boolean(user?.daf_user?.is_superuser);
 
-    // Check Real/Backend nested properties
-    const realManager = Boolean(user?.cached?.manager_status);
-    const realStaff = Boolean(user?.daf_user?.is_staff);
-    const realAdmin = Boolean(user?.daf_user?.is_superuser);
+    // Check for Mock Structure (fallback for local dev)
+    const isMockManager = Boolean(user.isManager);
+    const isMockStaff = Boolean(user.isStaff);
+    const isMockAdmin = Boolean(user.isAdmin);
 
-    return mockAccess || realManager || realStaff || realAdmin;
+    return isManager || isStaff || isAdmin || isMockManager || isMockStaff || isMockAdmin;
 }
 
 /*
-  New rule: Dashboard is Restricted to Admin or Staff.
-  Again, checks both data shapes.
+  New rule: Dashboard is Restricted.
+  Only Admins or Staff can see it. Managers are NOT allowed unless they also have these flags.
 */
 export function evaluateDashboardAccess(user) {
     if (!user) return false;
 
-    // Mock/Flat
-    const mockAccess = user.isAdmin || user.isStaff;
+    // Real structure check
+    const isStaff = Boolean(user?.daf_user?.is_staff);
+    const isAdmin = Boolean(user?.daf_user?.is_superuser);
 
-    // Real/Backend
-    const realStaff = Boolean(user?.daf_user?.is_staff);
-    const realAdmin = Boolean(user?.daf_user?.is_superuser);
+    // Mock structure check
+    const isMockStaff = Boolean(user.isStaff);
+    const isMockAdmin = Boolean(user.isAdmin);
 
-    return mockAccess || realStaff || realAdmin;
+    return isStaff || isAdmin || isMockStaff || isMockAdmin;
 }
 
 /* 
