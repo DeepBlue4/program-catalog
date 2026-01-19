@@ -130,19 +130,19 @@ const metricDefinitions = {
     },
     totalEfforts: {
         title: 'Software Efforts',
-        shortDesc: 'Individual software projects',
+        shortDesc: 'Individual software efforts count',
         desc: 'The total number of individual software efforts (projects, products, teams) tracked across all programs.',
         context: 'A single program may manage multiple software efforts. This metric captures the total volume of software work.'
     },
     expecting: {
         title: 'Expecting Software',
-        shortDesc: 'Flagged for software delivery',
-        desc: 'Programs that have been flagged as requiring software deliverables.',
+        shortDesc: 'Programs flagged for software effort(s)',
+        desc: 'Programs that have been flagged as requiring software effort(s).',
         context: 'This is the baseline for our compliance tracking. Every program here should eventually have an active effort.'
     },
     active: {
         title: 'Active (Has Effort)',
-        shortDesc: 'Currently delivering software',
+        shortDesc: 'Currently assigned software effort(s)',
         desc: 'Programs that currently have at least one assigned Software Effort.',
         context: 'These programs are actively delivering software functionality.'
     },
