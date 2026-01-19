@@ -89,25 +89,29 @@ const toggleHelp = (id) => {
 };
 
 const helpContent = {
+    overview: {
+        title: 'What is a Software Effort?',
+        text: 'A Software Effort is a central hub for a distinct unit of software work. This could be a Software Team, a Product, a Component (CSCI), or a specific Project. You are editing this effort\'s profile, which tracks its key contacts, developer setup, work location, and relationships to other efforts.'
+    },
     sow: {
         title: 'About Statement of Work',
-        text: 'The Statement of Work (SOW) defines the specific scope, deliverables, timeline, and governing standards for this effort. It serves as the contract between the program and the engineering team, ensuring clear alignment on *what* is being delivered and the constraints under which it must be built.'
+        text: 'The statement-of-work (SOW) profile for an effort: captures high-level scope, mission-critical flags, personnel constraints, and applicable security or safety classifications.'
     },
     pocs: {
         title: 'Points of Contact',
-        text: 'Identifies the key individuals responsible for technical leadership, security, and operational management. Keeping this up-to-date allows automated tools and other teams to quickly find the right person for approvals, incident response, or technical questions.'
+        text: 'A compact record listing primary technical contacts for the effort. Tell managers this stores the go-to technical points for questions, escalations, and clarifications about the work or architecture.'
     },
     dev: {
         title: 'Developer Setup',
-        text: 'Specifies the approved technical stack, including programming languages, operating systems, and development environments. This information automates onboarding for new engineers by telling them exactly what tools they need and where to find the source code.'
+        text: 'Developer tooling profile for an effort. Use these records environment details, source control, issue-tracking tools, SBOM locations, and supported languages/OS — critical for planning onboarding, resource allocation, and technical readiness.'
     },
     location: {
         title: 'Work Locations',
-        text: 'Lists the authorized physical or virtual locations where this work is performed. This is critical for compliance with export controls, security zones, and resource planning for on-site facilities.'
+        text: 'The work-location profile describing where the effort is performed (on-site, remote, hybrid, or specific sites). Used as the place to record constraints and logistics that affect staffing, travel, and security.'
     },
     general: {
         title: 'General & Links',
-        text: 'Manage high-level relationships for this effort. Use "Linked Efforts" to connect this software to dependencies or related components across different programs in the catalog.'
+        text: 'Use to record direct relationships between this effort and other efforts in the catalog — for example a dependency, an integration partner, or a contractually connected work package. Linking efforts makes it easy to navigate related work, understand impact when requirements or schedules change, and produce traceability reports across development and contract boundaries.'
     }
 };
 
@@ -210,6 +214,18 @@ const effortMap = computed(() => {
 const parentEffort = computed(() => {
     if (!formData.value.parent) return null;
     return effortMap.value[formData.value.parent];
+});
+
+// Sync parent_uuid when parent selection changes
+watch(() => formData.value.parent, (newId) => {
+    if (!newId) {
+        formData.value.parent_uuid = null;
+    } else {
+        const p = effortMap.value[newId];
+        if (p && p.uuid) {
+            formData.value.parent_uuid = p.uuid;
+        }
+    }
 });
 
 const getEffectiveValue = (section, field) => {
@@ -428,7 +444,19 @@ const WORK_LOCATION_OPTIONS = [
     <header class="form-header-persistent">
         <div class="header-main">
             <div class="name-input-wrapper" :class="{ 'has-error': errors.name }">
-                <label>Effort Name <span class="required-star">*</span></label>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <label style="margin-bottom: 0;">Effort Name <span class="required-star">*</span></label>
+                    <button class="btn-icon-sm" @click="toggleHelp('overview')" :class="{ 'active': activeHelp === 'overview' }" title="What is a Software Effort?">
+                        <BaseIcon :path="mdiInformationOutline" :size="16" />
+                    </button>
+                </div>
+                <!-- Overview Help Card -->
+                <transition name="expand">
+                    <div v-if="activeHelp === 'overview'" class="help-card m3-surface-variant" style="margin-bottom: 1rem;">
+                        <h4>{{ helpContent.overview.title }}</h4>
+                        <p>{{ helpContent.overview.text }}</p>
+                    </div>
+                </transition>
                 <input v-model="formData.name" type="text" class="clean-input-lg" placeholder="Enter Effort Name...">
             </div>
             
