@@ -245,14 +245,27 @@ export class MockApiData {
 
     static getMockUser() {
         return {
-            name: 'Sawyer',
-            email: 'sawyer@example.com',
-            bemsid: 'SW12345',
-            businessUnit: 'Digital Platform',
-            isManager: true,
-            isAdmin: true,
-            isStaff: true,
-            is6J: true
+            id: 1,
+            daf_user: {
+                username: "1234567",
+                bemsid: "1234567",
+                first_name: "Mock",
+                last_name: "User",
+                email: "mock.user@company.com",
+                boeing_contractor: false,
+                is_active: true,
+                is_staff: true,
+                is_superuser: true
+            },
+            cached: {
+                bemsid: "1234567",
+                name: "Mock User",
+                business_unit: "Digital Platform",
+                manager_status: true,
+                swe_status: null,
+                email: "mock.user@company.com"
+            },
+            display_name: "Mock User"
         };
     }
 

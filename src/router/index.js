@@ -18,22 +18,30 @@ const permissionCache = new Map();
   If it fails or returns bad data, we just leave the user as null.
 */
 async function fetchCurrentUser() {
+    console.log("[Router] fetchCurrentUser started...");
     try {
         const resp = await CompassAPIService.getCurrentUser();
+        console.log("[Router] CompassAPIService.getCurrentUser response:", resp);
+
         if (resp && resp.success) {
             currentUserRef.value = resp.data;
+            console.log("[Router] currentUserRef set to:", currentUserRef.value);
         } else {
             currentUserRef.value = resp ? resp.data : null;
-            console.warn("getCurrentUser returned success:false or no data");
+            console.warn("[Router] getCurrentUser returned success:false or no data", resp);
         }
     } catch (err) {
-        console.error("Error fetching current user:", err);
+        console.error("[Router] Error fetching current user:", err);
         currentUserRef.value = null;
         throw err;
     }
 }
 
 
+/* 
+  Central place to decide if a user has "Write" access.
+  Using the user's provided logic which handles the real backend structure.
+*/
 /* 
   Central place to decide if a user has "Write" access.
   Using the user's provided logic which handles the real backend structure.
@@ -46,12 +54,7 @@ export function evaluateWriteAccess(user) {
     const isStaff = Boolean(user?.daf_user?.is_staff);
     const isAdmin = Boolean(user?.daf_user?.is_superuser);
 
-    // Check for Mock Structure (fallback for local dev)
-    const isMockManager = Boolean(user.isManager);
-    const isMockStaff = Boolean(user.isStaff);
-    const isMockAdmin = Boolean(user.isAdmin);
-
-    return isManager || isStaff || isAdmin || isMockManager || isMockStaff || isMockAdmin;
+    return isManager || isStaff || isAdmin;
 }
 
 /*
@@ -65,11 +68,7 @@ export function evaluateDashboardAccess(user) {
     const isStaff = Boolean(user?.daf_user?.is_staff);
     const isAdmin = Boolean(user?.daf_user?.is_superuser);
 
-    // Mock structure check
-    const isMockStaff = Boolean(user.isStaff);
-    const isMockAdmin = Boolean(user.isAdmin);
-
-    return isStaff || isAdmin || isMockStaff || isMockAdmin;
+    return isStaff || isAdmin;
 }
 
 /* 

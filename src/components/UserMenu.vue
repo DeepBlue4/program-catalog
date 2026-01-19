@@ -25,18 +25,18 @@ const user = computed(() => {
         };
     }
     
-    // If it's the simple mock data, just use it directly.
-    if (currentUser.value.name) return currentUser.value;
-
-    // Otherwise, we have to map the real backend structure to what our UI expects.
+    // Unified Mapping for both Prod and Mock (since Mock now matches Prod structure)
     const u = currentUser.value;
+    const daf = u.daf_user || {};
+    const cached = u.cached || {};
+
     return {
-        name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User',
-        email: u.email || '',
-        bemsid: u.username || '', 
-        businessUnit: u.cached?.business_unit || 'N/A',
-        isAdmin: u.daf_user?.is_superuser,
-        isManager: u.cached?.manager_status,
+        name: u.display_name || `${daf.first_name || ''} ${daf.last_name || ''}`.trim() || 'User',
+        email: daf.email || cached.email || '',
+        bemsid: daf.bemsid || daf.username || '', 
+        businessUnit: cached.business_unit || 'N/A',
+        isAdmin: daf.is_superuser,
+        isManager: cached.manager_status,
         is6J: false 
     };
 });
