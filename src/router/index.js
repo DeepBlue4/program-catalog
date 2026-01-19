@@ -35,47 +35,37 @@ async function fetchCurrentUser() {
 
 /* 
   Central place to decide if a user has "Write" access.
-  We have to handle two different data shapes here:
-  1. The flat structure from our Mock data.
-  2. The nested structure coming from the real backend (cached properties, daf_user, etc).
-*/
-/* 
-  Central place to decide if a user has "Write" access.
-  We have to handle two different data shapes here:
-  1. The flat structure from our Mock data.
-  2. The nested structure coming from the real backend (cached properties, daf_user, etc).
+  We check BOTH Mock (flat) and Real (nested) structures to be robust.
 */
 export function evaluateWriteAccess(user) {
     if (!user) return false;
 
-    // Strict separation based on configuration
-    if (CompassAPIService.useTestData) {
-        // Simple flags for local dev/mocking
-        if (user.isManager || user.isAdmin || user.isStaff) return true;
-        return false;
-    } else {
-        // The real backend nests these permissions, so check them carefully.
-        const isManager = Boolean(user?.cached?.manager_status);
-        const isStaff = Boolean(user?.daf_user?.is_staff);
-        const isAdmin = Boolean(user?.daf_user?.is_superuser);
-        return isManager || isStaff || isAdmin;
-    }
+    // Check Mock/Flat properties
+    const mockAccess = user.isManager || user.isAdmin || user.isStaff;
+
+    // Check Real/Backend nested properties
+    const realManager = Boolean(user?.cached?.manager_status);
+    const realStaff = Boolean(user?.daf_user?.is_staff);
+    const realAdmin = Boolean(user?.daf_user?.is_superuser);
+
+    return mockAccess || realManager || realStaff || realAdmin;
 }
 
 /*
-  New rule: Dashboard is Restricted.
-  Only Admins or Staff can see it. Managers are NOT allowed unless they also have these flags.
+  New rule: Dashboard is Restricted to Admin or Staff.
+  Again, checks both data shapes.
 */
 export function evaluateDashboardAccess(user) {
     if (!user) return false;
 
-    if (CompassAPIService.useTestData) {
-        return user.isAdmin || user.isStaff;
-    } else {
-        const isStaff = Boolean(user?.daf_user?.is_staff);
-        const isAdmin = Boolean(user?.daf_user?.is_superuser);
-        return isStaff || isAdmin;
-    }
+    // Mock/Flat
+    const mockAccess = user.isAdmin || user.isStaff;
+
+    // Real/Backend
+    const realStaff = Boolean(user?.daf_user?.is_staff);
+    const realAdmin = Boolean(user?.daf_user?.is_superuser);
+
+    return mockAccess || realStaff || realAdmin;
 }
 
 /* 
