@@ -53,6 +53,7 @@ classDiagram
         +Sidebar
         +Breadcrumbs
         +GlobalSearch
+        +UserMenu
     }
     class Dashboard {
         +MetricCards
@@ -78,15 +79,21 @@ classDiagram
         +TabNavigation
         +ContextualHelp
     }
+    class PermissionDenied {
+        +ContactSupportInfo
+    }
     class Store {
         +State: items (Tree)
+        +State: currentUser
         +Action: fetchItems()
+        +Action: fetchCurrentUser()
         +Getter: findByOrgId()
     }
 
     App --> Dashboard : Route /dashboard
     App --> ProgramTreeView : Route /
     App --> ProgramEffortsView : Route /efforts/:id
+    App --> PermissionDenied : Route /permission-denied
     
     ProgramEffortsView *-- SoftwareEffortsList
     SoftwareEffortsList *-- SoftwareEffortForm
@@ -94,6 +101,7 @@ classDiagram
     Dashboard ..> Store : Reads Data
     ProgramTreeView ..> Store : Reads Data
     ProgramEffortsView ..> Store : Syncs Selection
+    App ..> Store : Checks User Info
 ```
 
 ### Data Flow
@@ -108,18 +116,63 @@ sequenceDiagram
     participant API as CompassAPIService
 
     User->>View: Navigates / Refreshes
-    View->>Hook: useProgramData()
-    Hook->>Store: fetchItems()
-    alt Data Cached
-        Store-->>Hook: Return State.items
-    else Data Missing
-        Store->>API: getEnterpriseHierarchy()
-        API->>API: Generate Deterministic Mock Tree
-        API-->>Store: JSON Tree Data
-        Store-->>Hook: Updates Reactive State
+    
+    par Parallel Fetching
+        View->>Store: fetchCurrentUser()
+        Store->>API: getCurrentUser()
+        API-->>Store: User Object
+    and
+        View->>Hook: useProgramData()
+        Hook->>Store: fetchItems()
+        alt Data Cached
+            Store-->>Hook: Return State.items
+        else Data Missing
+            Store->>API: getEnterpriseHierarchy()
+            API->>API: Generate Deterministic Mock Tree
+            API-->>Store: JSON Tree Data
+            
+            opt Prod Mode
+                Store->>API: populateSoftwareEfforts(nodes)
+                API-->>Store: Batch Effort Data
+            end
+            
+            Store-->>Hook: Updates Reactive State
+        end
     end
+
     Hook-->>View: Computes currentProgram / chartData
     View->>View: Renders (Charts/Tree/Forms)
+```
+
+### Authentication & Permissions
+The app strictly separates **Mock** (Dev) and **Real** (Prod) access logic to ensure rigorous security in deployment while allowing flexible testing.
+
+```mermaid
+sequenceDiagram
+    participant Router
+    participant Guard as Permission Guard
+    participant API as CompassAPIService
+    participant Util as evaluateWriteAccess()
+    
+    Router->>Guard: Navigation to /efforts/:id (Write Protected)
+    Guard->>API: getCurrentUser()
+    API-->>Guard: User Object (Mock or Real)
+    
+    Guard->>Util: evaluateWriteAccess(user)
+    
+    alt Env: Mock Data
+        Util->>Util: Check Flat Flags (isAdmin, isManager)
+    else Env: Real Backend
+        Util->>Util: Check Nested Claims (daf_user.is_staff, cached.manager_status)
+    end
+    
+    Util-->>Guard: boolean hasAccess
+    
+    alt hasAccess == true
+        Guard->>Router: Proceed to Route
+    else hasAccess == false
+        Guard->>Router: Redirect to /permission-denied
+    end
 ```
 
 ### Contextual Help Breakdown

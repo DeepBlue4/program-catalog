@@ -15,9 +15,8 @@ const route = useRoute();
 const { allNodes, selectedNode, chartData, selectNode } = useProgramData();
 
 // --- View Logic ---
-// We let the router handle the main view.
-// 'catalog' = '/' route
-// 'efforts' = '/efforts/:id' route
+// We let the router decide what to show in the main area.
+// But we still need to know if we're on the main dashboard to show the sidebar.
 const isDashboard = computed(() => route.name === 'ProgramTree' || route.path === '/');
 
 const handleNodeSelect = (node) => {
@@ -29,13 +28,11 @@ const handleNodeSelect = (node) => {
             query: { effort_id: node.program_id }
         });
     } else {
-        // Do NOT select the node here. 
-        // We navigate to the route, and let ProgramEffortsView handle the selection logic/data fetching.
-        // This ensures that if we are currently on a page with unsaved changes, 
-        // the router guards act BEFORE the state changes and component destroys.
+        // If it's a program node, we don't just "select" it instantly.
+        // We push to the route, and let the view verify everything and handle the selection.
+        // This is safer because if they have unsaved changes, the router guard will catch it first.
         
-        // Always navigate to the program's efforts view when selected via search
-        // This ensures the Search function acts as a navigation tool to the details page
+        // Using the search box also just navigates you straight to the details page.
         router.push({ 
             name: 'ProgramEfforts', 
             params: { programId: node.program_id } 
@@ -65,16 +62,16 @@ const handleBackToCatalog = () => {
 
 // --- Breadcrumb Logic ---
 const breadcrumbs = computed(() => {
-    // UPDATED: Default to Icon instead of Text 'Home'
+    // Start with the 'Home' icon or text
     const crumbs = [{ icon: mdiSitemap, name: 'Program Tree', id: null, path: '/' }]; 
     
-    // Reset to default on specific pages
+    // If we're just on the dashboard or an error page, that's all we need.
     if (['Dashboard', 'PermissionDenied'].includes(route.name)) {
         return crumbs;
     }
 
     if (selectedNode.value && chartData.value) {
-        // Helper to find path in tree
+        // Helper to crawl up the tree and find our path home
         const findPath = (node, targetId, currentPath = []) => {
             const nodeId = node.program_id;
             if (String(nodeId) === String(targetId)) return [...currentPath, node];
@@ -88,17 +85,18 @@ const breadcrumbs = computed(() => {
             return null;
         };
         
-        // Ensure we're looking for the ID correctly regardless of which property holds it
+        // Make sure we're matching types correctly (string vs int)
         const targetId = selectedNode.value.program_id;
         const treePath = findPath(chartData.value, targetId);
         if (treePath) {
-             crumbs.pop(); // Remove static root
+             crumbs.pop(); // Swap out the generic root for the specific path
              treePath.forEach(n => crumbs.push({ 
                  name: n.name, 
                  id: n.program_id,
-                 children: n.children // Pass children for dropdown
+                 children: n.children // We keep children so the dropdown works
              }));
         } else {
+             // Fallback if we can't find the path (shouldn't really happen)
              crumbs.push({ 
                  name: selectedNode.value.name, 
                  id: selectedNode.value.program_id,
@@ -109,7 +107,7 @@ const breadcrumbs = computed(() => {
     return crumbs;
 });
 
-// Smart Breadcrumbs (Truncated)
+// Condense the breadcrumbs if they get too long (4+ levels deep)
 const displayedBreadcrumbs = computed(() => {
     const all = breadcrumbs.value;
     if (all.length <= 4) return all;

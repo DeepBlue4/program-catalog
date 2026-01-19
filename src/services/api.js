@@ -5,36 +5,37 @@ export class CompassAPIService {
     static useTestData = true;
 
     /**
-     * API Response
+     * Standard response format for our API calls.
      * @typedef {Object} APIResponse
-     * @property {bool} success - True if the request was successful
-     * @property {Array | Object | undefined} response - the API response.
+     * @property {bool} success - Did it work?
+     * @property {Array | Object | undefined} response - The actual data payload.
      */
 
     /**
-     * Helper for fetching the CSRF token.
+     * Grabs the CSRF token so Django doesn't block our unsafe requests (POST/PUT/DELETE).
+     * 
+     * In prod, we usually pluck this from the DOM hidden input.
+     * In local dev, we might have to fish it out of a cookie.
      *
      * @static
-     * @returns {string | null} - null of the token could not be fetched
-     * @see https://docs.djangoproject.com/en/5.2/howto/csrf/#using-csrf-protection-with-ajax
+     * @returns {string | null} - The token string or null if we can't find it.
      */
     static getCSRFToken() {
-        // For production, we should be able to get this from the DOM since that is where Django
-        // sets it in the template that contains the app
+        // Try to get it from the DOM first (standard Django template way)
         const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]");
         if (csrfToken !== null) {
             return csrfToken.value;
         }
-        // Code path for dev since the index.html is not hosted via Django and running locally. Here,
-        // the value is pulled from a cookie. When running locally, the cookie is not restricted to
-        // HTTP Only thus is available to the JS code
+
+        // If we're running locally (not served by Django), we might need to check the cookies.
+        // This is mostly a dev-environment workaround.
         console.warn("CSRF via cookie should be in local development only");
         let cookieValue = null;
         if (document.cookie && document.cookie !== "") {
             const cookies = document.cookie.split(";");
             for (const rawCookie of cookies) {
                 const cookie = rawCookie.trim();
-                // Does this cookie string begin with the name we want?
+                // Simple string match to find the token
                 if (cookie.substring(0, 10) === "csrftoken" + "=") {
                     cookieValue = decodeURIComponent(cookie.substring(10));
                     break;
@@ -45,11 +46,11 @@ export class CompassAPIService {
     }
 
     /**
-     * Performs a PUT with the CSRF token in the header.
+     * Wrapper for HTTP PUT requests. Handles headers and JSON conversion for you.
      *
-     * @param {string} path - the path to the API endpoint
-     * @param {object} payload - the payload in the body
-     * @returns {APIResponse} - the API response
+     * @param {string} path - API endpoint
+     * @param {object} payload - What you're sending
+     * @returns {APIResponse}
      */
     static async performPut(path, payload) {
         if (CompassAPIService.useTestData) {
@@ -79,12 +80,11 @@ export class CompassAPIService {
     }
 
     /**
-     * Helper for performing an HTTP GET to the Compass Server/
+     * Basic GET wrapper.
      *
-     * @param {string} pathSuffix - the suffixed used to completer the URL
-     * @param {any} defaultValue - the objected returned if an error occurred while making the call.
-     * @returns {any} - the result of the request
-     * @see SoftwareEffort in core/src/models/program/software_effort.py
+     * @param {string} pathSuffix - Endpoint to hit (e.g. 'current-user')
+     * @param {any} defaultValue - What to return if things explode.
+     * @returns {any}
      */
     static async performGet(pathSuffix, defaultValue = undefined) {
         const endpointPath = `${CompassAPIService.pathPrefix}${pathSuffix}`;
@@ -109,11 +109,8 @@ export class CompassAPIService {
     }
 
     /**
-     * Gets all Software Efforts assigned to a program.
-     *
-     * @param {string} hierarchyNodeUUID - the UUID of the node in the hierarchy
-     * @returns {APIResponse} - the API response containing the list of efforts (if any)
-     * @see SoftwareEffort in core/src/models/program/software_effort.py
+     * Fetches all software efforts for a specific program node.
+     * This is separate because the main tree payload is usually too light to include them.
      */
     static async getSoftwareEfforts(hierarchyNodeUUID) {
         if (CompassAPIService.useTestData) {
@@ -135,10 +132,10 @@ export class CompassAPIService {
     }
 
     /**
-     * Saves a single software effort (Create or Update).
-     * @param {string} hierarchyNodeUUID - the UUID of the program
-     * @param {Object} effort - the effort object to save
-     * @returns {APIResponse}
+     * Create or Update a software effort.
+     *
+     * @param {string} hierarchyNodeUUID - Program UUID context
+     * @param {Object} effort - The actual effort data
      */
     static async saveSoftwareEffort(hierarchyNodeUUID, effort) {
         if (CompassAPIService.useTestData) {
@@ -158,10 +155,7 @@ export class CompassAPIService {
     }
 
     /**
-     * Deletes a single software effort.
-     * @param {string} hierarchyNodeUUID - the UUID of the program 
-     * @param {string} effortId - the ID/UUID of the effort to delete
-     * @returns {APIResponse}
+     * Removes an effort from existence.
      */
     static async deleteSoftwareEffort(hierarchyNodeUUID, effortId) {
         if (CompassAPIService.useTestData) {
@@ -194,10 +188,7 @@ export class CompassAPIService {
     }
 
     /**
-     * Gets organization / program information.
-     *
-     * @param {string} hierarchyNodeUUID - the UUID of the node in the hierarchy
-     * @returns {APIResponse} - the requested program, or an empty object if there was an error
+     * Get details for a single program node.
      */
     static async getProgram(hierarchyNodeUUID) {
         if (CompassAPIService.useTestData) {
@@ -215,8 +206,7 @@ export class CompassAPIService {
     }
 
     /**
-     * Get the hierarchy as a tree
-     * @returns {APIResponse} - the hierarchy as a tree, or an empty object if there was an error
+     * Fetches the entire organization hierarchy tree (the "Program Catalog").
      */
     static async getEnterpriseHierarchy() {
         if (CompassAPIService.useTestData) {
@@ -231,9 +221,7 @@ export class CompassAPIService {
     }
 
     /**
-     * Get the currently authenticated user.
-     *
-     * @returns {APIResponse} - the current user object or an empty object if there was an error
+     * Info about who is currently logged in.
      */
     static async getCurrentUser() {
         if (CompassAPIService.useTestData) {
@@ -247,9 +235,7 @@ export class CompassAPIService {
     }
 
     /**
-     * Get the registered emails.
-     *
-     * @returns {APIResponse} - the list of emails or an empty object if there was an error
+     * Fetch a list of known emails (for autocomplete, etc).
      */
     static async getEmails() {
         if (CompassAPIService.useTestData) {

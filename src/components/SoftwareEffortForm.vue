@@ -79,10 +79,10 @@ const tabs = [
 ];
 
 const store = useProgramCatalogStore();
-const allEffortCandidates = ref([]); // Global list of efforts
+const allEffortCandidates = ref([]); // Everyone we can link to
 const linkSearchQuery = ref('');
 
-// Contextual Help Content
+// Helpful tooltips content
 const activeHelp = ref(null); // ID of currently open help section
 const toggleHelp = (id) => {
     activeHelp.value = activeHelp.value === id ? null : id;
@@ -143,16 +143,16 @@ watch(() => props.effort, (newVal) => {
     if (!safeVal.work_location) safeVal.work_location = {};
     
     // No restoration needed. We rely on parent_uuid as the source of truth.
-    // Ensure parent_uuid is set (it should be from props).
+    // Ensure parent_uuid is set (it should generally come from props).
     
     formData.value = safeVal;
     initialState.value = JSON.stringify(safeVal);
 }, { deep: true, immediate: true });
 
-// Valid parents: exclude self if editing
+// Valid parents: exclude self if checking against the list while editing.
 const validParents = computed(() => {
     if (!props.isEdit) return props.availableParents;
-    // Filter by UUID to be safe and robust
+    // Just to be safe, don't let a node parent itself.
     return props.availableParents.filter(p => p.uuid !== formData.value.uuid);
 });
 
@@ -160,32 +160,32 @@ const validParents = computed(() => {
 const filteredLinkCandidates = computed(() => {
     const query = linkSearchQuery.value.toLowerCase().trim();
     return allEffortCandidates.value.filter(e => {
-        // Exclude self (if editing)
+        // Can't link to yourself
         if (formData.value.uuid && e.uuid === formData.value.uuid) return false;
         
-        // Exclude already linked
+        // Or things you're already linked to
         if (formData.value.linked_software_efforts && formData.value.linked_software_efforts.some(l => l.uuid === e.uuid)) return false;
 
         // Apply Search
-        if (!query) return false; // Hide if no query to prevent overwhelming list
+        if (!query) return false; // Don't show anything until they type
         
         return (e.name && e.name.toLowerCase().includes(query)) || 
                (e._programName && e._programName.toLowerCase().includes(query));
     }).slice(0, 10);
 });
 
-// Objects for currently linked IDs
+// Convert the linked IDs/UUIDs into full objects for display
 const linkedEffortObjects = computed(() => {
     if (!formData.value.linked_software_efforts) return [];
-    // The backend now returns objects { uuid, name, ... }.
-    // If the form data has full objects, use them.
-    // If it has strings (legacy/mock intermediate), map them.
+    
+    // We might have a mix of raw strings (legacy) or full objects.
+    // We want to normalize everything into a nice object for the UI.
     return formData.value.linked_software_efforts.map(link => {
         if (typeof link === 'string') {
-            // Try matching by UUID first, then ID (legacy support)
+            // Try matching by UUID first, then ID
              return allEffortCandidates.value.find(e => e.uuid === link || e.id === link) || { id: link, name: 'Unknown/External Effort', _programName: 'Unknown' };
         }
-        return link; // It's already an object
+        return link; 
     });
 });
 
@@ -226,7 +226,7 @@ const parentEffort = computed(() => {
 });
 
 // NO watcher needed for parent -> parent_uuid sync.
-// We bind directly to parent_uuid in the template.
+// We just bind directly to parent_uuid in the dropdown.
 
 const getEffectiveValue = (section, field) => {
     // If not inheriting, return local value
@@ -264,7 +264,7 @@ const sv = (section, field) => getEffectiveValue(section, field);
 // Handling writes: only update local if not inheriting
 const updateLocal = (section, field, value) => {
     const inheritKey = `inherit_${section}`;
-    if (formData.value[inheritKey]) return; // Read only
+    if (formData.value[inheritKey]) return; // Can't touch it if we're inheriting!
     
     if (!formData.value[section]) formData.value[section] = {};
     formData.value[section][field] = value;
@@ -368,7 +368,7 @@ const toArray = (str) => {
     return str.split(',').map(s => s.trim()).filter(s => s);
 };
 
-// Helper for Tri-State Booleans (Select inputs return strings)
+// Helper for Tri-State Booleans (Select inputs give us strings usually)
 const parseTriState = (val) => {
     if (val === 'true') return true;
     if (val === 'false') return false;

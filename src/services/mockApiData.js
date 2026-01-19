@@ -6,7 +6,7 @@ export class MockApiData {
     }
 
     static generateMockHierarchy() {
-        // Deterministic Random Generator (Seeded)
+        // Create a random-ish generator that gives the same results every time (Seeded).
         let seed = 5678;
         const random = () => {
             seed = (seed * 9301 + 49297) % 233280;
@@ -15,16 +15,16 @@ export class MockApiData {
 
         const effortTypes = ['System', 'Service', 'Component', 'Application', 'Library'];
 
-        // Updated pick to use deterministic random
+        // Helper to pick a random item from an array
         const pick = (arr) => arr[Math.floor(random() * arr.length)];
 
-        // Scale Factor: Increase for larger tree
-        const MAX_DEPTH = 4; // 0-indexed, so 5 levels
+        // Configuration for how big our fake tree gets
+        const MAX_DEPTH = 4; // 0-indexed, so 5 levels deep
         const MIN_CHILDREN = 2;
         const MAX_CHILDREN = 5;
 
         const createNode = (depth, parentName, parentPath = '', forceName = null) => {
-            // Deterministic ID generation logic
+            // Generate a consistent ID based on our seed
             const id = Math.floor(random() * 10000000);
             let name;
 
@@ -146,13 +146,13 @@ export class MockApiData {
             if (expectsEffort) hasDescendantExpecting = true;
 
             return {
-                // ProgramCatalogModel fields (implied/merged)
+                // Program Properties
                 id: id,
-                program_id: id, // Replaces value for OrgChart/Frontend ID
+                program_id: id,
                 active: true,
                 critical: random() > 0.9,
 
-                // ProgramCatalogInfoModel fields
+                // Metadata
                 date: new Date().toISOString().split('T')[0],
                 name: name,
                 program_path: currentPath,

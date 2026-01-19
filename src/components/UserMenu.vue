@@ -1,40 +1,57 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
 import BaseIcon from '../components/BaseIcon.vue';
 import { mdiAccountCircle, mdiBookOpenVariant, mdiChartPie, mdiLock, mdiOpenInNew, mdiCompass } from '@mdi/js';
-import { useProgramCatalogStore } from '../store/programCatalogStore';
+import { evaluateWriteAccess } from '../router';
 
 const isOpen = ref(false);
 const menuRef = ref(null);
 
-const store = useProgramCatalogStore();
-const user = computed(() => store.state.currentUser || {
-  name: 'Loading...',
-  email: '',
-  bemsid: '',
-  businessUnit: '',
-  isManager: false,
-  isAdmin: false,
-  isStaff: false,
-  is6J: false
+// Grab the user we hooked up in main.js
+const currentUser = inject('currentUser');
+
+// Handle what we show in the menu before the user loads, or if they're missing info.
+const user = computed(() => {
+    if (!currentUser.value) {
+        return {
+            name: 'Loading...',
+            email: '',
+            bemsid: '',
+            businessUnit: '',
+            // defaulting these to false so we don't accidentally show admin stuff
+            isAdmin: false, 
+            isManager: false,
+            is6J: false 
+        };
+    }
+    
+    // If it's the simple mock data, just use it directly.
+    if (currentUser.value.name) return currentUser.value;
+
+    // Otherwise, we have to map the real backend structure to what our UI expects.
+    const u = currentUser.value;
+    return {
+        name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User',
+        email: u.email || '',
+        bemsid: u.username || '', 
+        businessUnit: u.cached?.business_unit || 'N/A',
+        isAdmin: u.daf_user?.is_superuser,
+        isManager: u.cached?.manager_status,
+        is6J: false 
+    };
 });
 
-onMounted(() => {
-  store.fetchCurrentUser();
-});
-
-// Dynamic Compass URL based on environment
+// Calculate the Compass link based on where we are running (local, dev, stage, prod).
 const compassUrl = computed(() => {
   if (typeof window === 'undefined') return '/403';
   
   const host = window.location.hostname || '';
   
-  // Local
   if (host.includes('localhost')) {
       return 'http://localhost:8000/ui/accounts/overview';
   }
 
-  // Determine Prefix (Env)
+  // Figure out which environment we're in
   let prefix = 'daf-compass';
   if (host.includes('daf-compass-dev') || host.includes('-dev')) {
       prefix = 'daf-compass-dev';
@@ -42,20 +59,20 @@ const compassUrl = computed(() => {
       prefix = 'daf-compass-stage';
   }
   
-  // Determine Region
+  // And which region
   if (host.includes('global')) {
       return `https://${prefix}.common.global.bsf.tools/`;
   } else if (host.includes('us')) {
       return `https://${prefix}.common.us.bsf.tools/`;
   }
   
-  // Default fallback if neither keyword found
+  // If we can't figure it out, send them to the 403 page so they don't get lost.
   return '/403';
 });
 
-// Determine Write Access: Admin OR Manager
+// Re-use the router logic so the "You have write access" badge is honest.
 const hasWriteAccess = computed(() => {
-  return user.isAdmin || user.isManager;
+  return evaluateWriteAccess(currentUser.value);
 });
 
 const toggleMenu = () => {

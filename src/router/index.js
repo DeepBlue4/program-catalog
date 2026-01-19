@@ -4,15 +4,19 @@ import { CompassAPIService } from '../services/api.js';
 import ProgramTreeView from '../views/ProgramTreeView.vue';
 import ProgramEffortsView from '../views/ProgramEffortsView.vue';
 
-/*
-  Shared reactive user ref exported so main.js can provide it to the app.
-  Initialize to null meaning "not fetched yet / unknown".
+/* 
+  We modify the currentUserRef here so the rest of the app (via main.js) 
+  can reactively see who is logged in. 
+  Starts as null until the API call finishes.
 */
 export const currentUserRef = ref(null);
 
 const permissionCache = new Map();
 
-/* fetch current user using your existing service */
+/* 
+  Hit the backend to get the user context. 
+  If it fails or returns bad data, we just leave the user as null.
+*/
 async function fetchCurrentUser() {
     try {
         const resp = await CompassAPIService.getCurrentUser();
@@ -29,29 +33,33 @@ async function fetchCurrentUser() {
     }
 }
 
-/* evaluate the "write" rule you want enforced throughout the app */
-function evaluateWriteAccess(user) {
+/* 
+  Central place to decide if a user has "Write" access.
+  We have to handle two different data shapes here:
+  1. The flat structure from our Mock data.
+  2. The nested structure coming from the real backend (cached properties, daf_user, etc).
+*/
+export function evaluateWriteAccess(user) {
     if (!user) return false;
-    // Adjust property access based on actual API response structure (usually flat or specific nesting)
-    // Assuming the Mock/API returns a flat object or structured as expected.
-    // The provided snippet used user?.cached?.manager_status etc, checking if that matches our API.
-    // Our MockApiData returns flat properties: isManager, isAdmin, etc.
-    // BUT the user snippet expects: user?.cached?.manager_status, user?.daf_user?.is_staff
-    // Let's assume the backend aligns with the snippet OR we need to adapt.
-    // Given we are using MockApiData.getMockUser() which returns { isManager: true, isAdmin: true... }
-    // We should probably support BOTH structures to be safe or check MockApiData.
 
-    // Safe check for Mock Data Structure (flat)
-    if (user.isManager || user.isAdmin || user.isStaff) return true;
-
-    // Snippet Structure (Real Backend?)
-    const isManager = Boolean(user?.cached?.manager_status);
-    const isStaff = Boolean(user?.daf_user?.is_staff);
-    const isAdmin = Boolean(user?.daf_user?.is_superuser);
-    return isManager || isStaff || isAdmin;
+    // Strict separation based on configuration
+    if (CompassAPIService.useTestData) {
+        // Simple flags for local dev/mocking
+        if (user.isManager || user.isAdmin || user.isStaff) return true;
+        return false;
+    } else {
+        // The real backend nests these permissions, so check them carefully.
+        const isManager = Boolean(user?.cached?.manager_status);
+        const isStaff = Boolean(user?.daf_user?.is_staff);
+        const isAdmin = Boolean(user?.daf_user?.is_superuser);
+        return isManager || isStaff || isAdmin;
+    }
 }
 
-/* checkPermission now enforces the write rule for protected routes */
+/* 
+  The router guard calls this. We cache the result so we don't 
+  spam the login check on every route change.
+*/
 async function checkPermission() {
     const cacheKey = "global_write_access";
     if (permissionCache.has(cacheKey)) return permissionCache.get(cacheKey);
@@ -65,7 +73,7 @@ async function checkPermission() {
     return allowed;
 }
 
-/* clear caches on logout or roles change */
+/* Clear everything out if the user logs out so we don't use stale permissions. */
 export function clearPermissionCache() {
     permissionCache.clear();
     currentUserRef.value = null;

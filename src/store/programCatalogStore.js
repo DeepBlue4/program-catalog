@@ -7,22 +7,23 @@ import { MockApiData } from "../services/mockApiData.js";
 // ==============================================================================
 
 /**
- * FETCH_ALL_EFFORTS: Controls how software efforts are hydrated after initial load.
+ * FETCH_ALL_EFFORTS: Decides how aggressively we load software efforts.
  * 
- * - true  (NEW): Fetch software efforts for ALL programs in the hierarchy.
- *         Pros: Complete data coverage, no missing efforts, accurate anomaly detection.
- *         Cons: More API calls, potentially slower initial load for large hierarchies.
+ * - true (New approach): Grabs efforts for every single program in the tree.
+ *   Good: We don't miss anything, even if it's in a weird spot.
+ *   Bad: Uses more bandwidth, might slow down the initial load a bit.
  *
- * - false (OLD): Only fetch for programs with 'expecting_software_efforts' flag set.
- *         Pros: Fewer API calls, faster initial load.
- *         Cons: May miss unexpected/anomalous efforts, incomplete data.
+ * - false (Old approach): Only looks where the 'expecting_software_efforts' flag tells us to.
+ *   Good: Faster startup, fewer API calls.
+ *   Bad: Could potentialy miss data if the flags aren't perfect.
  *
- * Toggle this flag to compare performance between approaches.
+ * Flip this to test out performance differences.
  */
 const FETCH_ALL_EFFORTS = true;
 
 // ==============================================================================
 
+// Basic reactive state for the catalog
 const state = reactive({
     items: shallowRef(null),
     currentUser: ref(null),
@@ -30,8 +31,8 @@ const state = reactive({
     error: null,
 });
 
-// Version counter that increments when software efforts are hydrated
-// Computeds can depend on this to trigger re-evaluation after hydration
+// Simple counter we bump whenever we load new efforts.
+// This lets computed properties know they need to re-run.
 const hydrationVersion = ref(0);
 
 let fetchPromise = null;
@@ -62,13 +63,13 @@ async function fetchItems() {
 
                 state.items = response.data;
 
-                // DUMMY DATA INJECTION for "Missing Efforts" verification
+                // If we're mocking, let's inject some fake "missing efforts" data to test that edge case.
                 if (CompassAPIService.useTestData) {
                     MockApiData.injectMissingEffortsNode(state.items);
                 }
 
-                // In production, the hierarchy endpoint does NOT include software efforts.
-                // We must fetch them separately for relevant nodes.
+                // In prod, the main tree endpoint is lightweight and doesn't include the actual efforts.
+                // So we have to go back and fetch them for the relevant nodes.
                 if (!CompassAPIService.useTestData) {
                     console.log("[Store] Triggering populateSoftwareEfforts...");
                     await populateSoftwareEfforts(state.items);
@@ -78,7 +79,7 @@ async function fetchItems() {
             state.error = err.message || "Failed to fetch items";
         } finally {
             state.loading = false;
-            fetchPromise = null; // Reset promise so we can retry on error or subsequent invalidation
+            fetchPromise = null; // Clear the promise so we can try again if needed.
         }
     })();
 
@@ -95,7 +96,7 @@ function fetchCurrentUser() {
         console.log("[Store] Loading Mock User Data...");
         state.currentUser = MockApiData.getMockUser();
     } else {
-        // Default to N/A / False for production until real auth is hooked up
+        // Just filler data until the real auth flow is ready.
         console.log("[Store] Loading Default User Data (N/A)...");
         state.currentUser = {
             name: 'N/A',
@@ -124,7 +125,7 @@ function extractNameFromNode(node) {
         }
     }
 
-    // Fallback to program_id if present
+    // Fallback: use the program_id if we really can't find a name.
     if (node.program_id != null) {
         return String(node.program_id);
     }
@@ -215,7 +216,7 @@ function getFilteredSWEItems(root) {
         if (filteredChildren.length > 0) {
             copy.children = filteredChildren;
         } else {
-            // Leaf node in this view (relevant, no relevant children)
+            // Leaf node in this specific view
             copy.children = [];
         }
 
@@ -250,13 +251,12 @@ function findByOrgId(orgId, node = state.items) {
         return null;
     }
 
-    // Check if current node matches (compare as strings to handle route params)
-    // Support both program_id (API) and value (Mock)
+    // Check if current node matches (using string comparison to be safe)
     if (String(node.program_id) === String(orgId) || String(node.value) === String(orgId)) {
         return node;
     }
 
-    // If node has children, search recursively
+    // Keep digging down recursively
     if (node.children && node.children.length > 0) {
         for (const child of node.children) {
             const found = findByOrgId(orgId, child);
@@ -316,12 +316,10 @@ async function findByOrgName(name) {
 
 /**
  * getOrgPathByID
- *
- * Returns an array of nodes from the root down to the node matching orgId (inclusive).
- * The returned array always includes the target node as the last element.
- * If not found returns null.
- *
- * Example return: [ rootNode, ..., parentNode, targetNode ]
+ * 
+ * Returns the breadcrumb trail from the root down to the specific orgId.
+ * Includes the target node itself at the end.
+ * Returns null if we can't find it.
  */
 async function getOrgPathByID(orgId) {
     // Ensure we have items loaded
@@ -441,7 +439,7 @@ async function populateSoftwareEfforts(root) {
                     node.softwareEfforts = resp.data;
                     node.hasSoftwareEffort = resp.data.length > 0;
                 } else {
-                    // Initialize empty if failed or empty
+                    // Start fresh if nothing came back
                     if (!node.softwareEfforts) node.softwareEfforts = [];
                 }
             });
@@ -483,8 +481,8 @@ async function populateSoftwareEfforts(root) {
 /**
  * saveSoftwareEffort
  *
- * Centrally handles saving a software effort (create/update), updating the local state,
- * and triggering reactivity.
+ * One-stop shop for creating or updating an effort.
+ * Handles the API call and makes sure the local state stays in sync so the UI updates instantly.
  */
 async function saveSoftwareEffort(programId, effortData) {
     const res = await CompassAPIService.saveSoftwareEffort(programId, effortData);
