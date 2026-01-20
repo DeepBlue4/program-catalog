@@ -164,7 +164,9 @@ export class CompassAPIService {
             return { success: true };
         }
 
-        const path = `enterprise-hierarchy/${hierarchyNodeUUID}/software-effort/${effortId}`;
+        // Django URL pattern: enterprise-hierarchy/delete-software-effort/<str:id>
+        // The id parameter is the effortId (UUID), not the programId
+        const path = `enterprise-hierarchy/delete-software-effort/${effortId}`;
 
         // We need a performDelete helper or use fetch directly
         const csrfToken = CompassAPIService.getCSRFToken();

@@ -534,27 +534,23 @@ async function deleteSoftwareEffort(programId, effortId) {
         // Find the program node to update local state
         const programNode = findByOrgId(programId);
 
-        if (programNode && programNode.softwareEfforts) {
-            // Remove the effort from the array
-            const index = programNode.softwareEfforts.findIndex(e =>
-                String(e.id) === String(effortId) || String(e.uuid) === String(effortId)
-            );
+        if (programNode) {
+            // Like save, re-fetch to get fresh data instead of manually mutating
+            console.log('[Store] Re-fetching efforts after delete to ensure cache consistency...');
+            const freshData = await CompassAPIService.getSoftwareEfforts(programId);
 
-            if (index !== -1) {
-                programNode.softwareEfforts.splice(index, 1);
-
-                // Update metadata if no efforts remain
-                if (programNode.softwareEfforts.length === 0) {
-                    programNode.hasSoftwareEffort = false;
-                }
-
-                // Force UI update
-                triggerRef(state.items);
-                hydrationVersion.value++;
-                console.log('[Store] deleteSoftwareEffort - hydrationVersion incremented to:', hydrationVersion.value);
+            if (freshData.success && Array.isArray(freshData.data)) {
+                programNode.softwareEfforts = freshData.data;
+                programNode.hasSoftwareEffort = freshData.data.length > 0;
+                console.log('[Store] Refreshed with', freshData.data.length, 'efforts from GET endpoint');
             } else {
-                console.warn(`[Store] Effort ${effortId} not found in program ${programId} softwareEfforts array.`);
+                console.warn('[Store] Failed to re-fetch efforts after delete, cache may be stale');
             }
+
+            // Force UI update
+            triggerRef(state.items);
+            hydrationVersion.value++;
+            console.log('[Store] deleteSoftwareEffort - hydrationVersion incremented to:', hydrationVersion.value);
         } else {
             console.warn(`[Store] Could not find program node ${programId} to update state.`);
         }
