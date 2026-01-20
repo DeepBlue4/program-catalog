@@ -497,39 +497,17 @@ async function saveSoftwareEffort(programId, effortData) {
         const programNode = findByOrgId(programId);
 
         if (programNode) {
-            if (!programNode.softwareEfforts) programNode.softwareEfforts = [];
+            // Instead of trying to parse the potentially malformed PUT response,
+            // just re-fetch using the GET endpoint that returns correct data
+            console.log('[Store] Re-fetching efforts after save to get fresh data...');
+            const freshData = await CompassAPIService.getSoftwareEfforts(programId);
 
-            const savedEffort = res.data || effortData;
-
-            console.log('[Store] savedEffort structure:', {
-                isArray: Array.isArray(savedEffort),
-                hasId: !!savedEffort?.id,
-                hasUuid: !!savedEffort?.uuid,
-                type: typeof savedEffort
-            });
-
-            // Handle backend returning array of all efforts
-            if (Array.isArray(savedEffort)) {
-                console.log('[Store] Backend returned array of all efforts, replacing entire array');
-                // Backend returned all efforts for this program - replace the entire array
-                programNode.softwareEfforts = savedEffort;
-                programNode.hasSoftwareEffort = savedEffort.length > 0;
+            if (freshData.success && Array.isArray(freshData.data)) {
+                programNode.softwareEfforts = freshData.data;
+                programNode.hasSoftwareEffort = freshData.data.length > 0;
+                console.log('[Store] Refreshed with', freshData.data.length, 'efforts from GET endpoint');
             } else {
-                // Backend returned single effort - find and update/create it
-                const existingIndex = programNode.softwareEfforts.findIndex(e =>
-                    e.id === savedEffort.id || (e.uuid && e.uuid === savedEffort.uuid)
-                );
-
-                if (existingIndex !== -1) {
-                    // Update
-                    programNode.softwareEfforts[existingIndex] = savedEffort;
-                    console.log('[Store] Updated existing effort at index:', existingIndex);
-                } else {
-                    // Create
-                    programNode.softwareEfforts.push(savedEffort);
-                    programNode.hasSoftwareEffort = true;
-                    console.log('[Store] Created new effort, total count:', programNode.softwareEfforts.length);
-                }
+                console.warn('[Store] Failed to re-fetch efforts, cache may be stale');
             }
 
             // Force UI update
