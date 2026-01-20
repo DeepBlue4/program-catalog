@@ -15,11 +15,15 @@ import { MockApiData } from "../services/mockApiData.js";
  *
  * - false (Old approach): Only looks where the 'expecting_software_efforts' flag tells us to.
  *   Good: Faster startup, fewer API calls.
- *   Bad: Could potentialy miss data if the flags aren't perfect.
+ *   Bad: Could potentially miss data if the flags aren't perfect.
  *
  * Flip this to test out performance differences.
+ * 
+ * IMPORTANT: Set to false in production to avoid overwhelming the browser with thousands
+ * of parallel API calls. With production data (2000+ programs), fetching all causes
+ * ERR_INSUFFICIENT_RESOURCES errors.
  */
-const FETCH_ALL_EFFORTS = true;
+const FETCH_ALL_EFFORTS = false;
 
 // ==============================================================================
 
@@ -486,6 +490,8 @@ async function populateSoftwareEfforts(root) {
 async function saveSoftwareEffort(programId, effortData) {
     const res = await CompassAPIService.saveSoftwareEffort(programId, effortData);
 
+    console.log('[Store] saveSoftwareEffort response:', res);
+
     if (res.success) {
         // Find the program node to update local state
         const programNode = findByOrgId(programId);
@@ -494,6 +500,14 @@ async function saveSoftwareEffort(programId, effortData) {
             if (!programNode.softwareEfforts) programNode.softwareEfforts = [];
 
             const savedEffort = res.data || effortData;
+
+            console.log('[Store] savedEffort structure:', {
+                isArray: Array.isArray(savedEffort),
+                hasId: !!savedEffort?.id,
+                hasUuid: !!savedEffort?.uuid,
+                savedEffort: savedEffort
+            });
+
             // Ensure ID is present (if backend didn't return it but we generated it, or fallback)
             // The backend MUST return the new ID for this to work correctly with the tree.
 
@@ -502,11 +516,13 @@ async function saveSoftwareEffort(programId, effortData) {
             if (existingIndex !== -1) {
                 // Update
                 programNode.softwareEfforts[existingIndex] = savedEffort;
+                console.log('[Store] Updated existing effort at index:', existingIndex);
             } else {
                 // Create
                 programNode.softwareEfforts.push(savedEffort);
                 // Also update metadata if needed
                 programNode.hasSoftwareEffort = true;
+                console.log('[Store] Created new effort, total count:', programNode.softwareEfforts.length);
             }
 
             // Force UI update
