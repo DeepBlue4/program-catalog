@@ -58,7 +58,7 @@ export class MockApiData {
                 const numEfforts = Math.floor(random() * 5) + 1;
 
                 for (let j = 0; j < numEfforts; j++) {
-                    const effId = `EFF-${id}-${j}`;
+                    const effId = `${id}-${j}`;
                     // Use closure-safe pick
                     const effType = pick(effortTypes);
                     // Differentiate names slightly
@@ -71,7 +71,7 @@ export class MockApiData {
                     if (j > 0 && random() > 0.3) {
                         // Pick a random parent from 0 to j-1
                         const parentIndex = Math.floor(random() * j);
-                        parentId = `EFF-${id}-${parentIndex}`;
+                        parentId = `${id}-${parentIndex}`;
                     }
 
                     softwareEfforts.push({
@@ -177,7 +177,57 @@ export class MockApiData {
             };
         };
 
-        return createNode(0, "Root");
+        const root = createNode(0, "Root");
+
+        // --- Post-Process: Add Linked Efforts ---
+        // 1. Flatten all efforts to a list so we can pick from them
+        const allEfforts = [];
+        const traverse = (node) => {
+            if (node.softwareEfforts) {
+                node.softwareEfforts.forEach(eff => {
+                    // Enrich with program info for the link display
+                    eff._programName = node.name;
+                    eff._programId = node.program_id;
+                    allEfforts.push(eff);
+                });
+            }
+            if (node.children) {
+                node.children.forEach(traverse);
+            }
+        };
+        traverse(root);
+
+        // 2. Randomly assign links
+        allEfforts.forEach(eff => {
+            // 30% chance to have links
+            if (random() > 0.7) {
+                const numLinks = Math.floor(random() * 3) + 1; // 1-3 links
+                for (let k = 0; k < numLinks; k++) {
+                    const target = pick(allEfforts);
+                    // Don't link to self
+                    if (target.id !== eff.id) {
+                        // Check if already linked to avoid duplicates
+                        if (!eff.linked_software_efforts.find(l => l.id === target.id)) {
+                            // Context: The UI expects certain fields to display the "Program" info in the link row.
+                            // See SoftwareEffortForm.vue: cand._programName / cand._programId
+                            eff.linked_software_efforts.push({
+                                id: target.id,
+                                uuid: target.uuid,
+                                name: target.name,
+                                // The form uses these for display in the "Linked Items" list
+                                _programName: target._programName,
+                                _programId: target._programId,
+                                // Fallback standard fields
+                                program_name: target._programName,
+                                program_id: target._programId
+                            });
+                        }
+                    }
+                }
+            }
+        });
+
+        return root;
     }
 
     static getMockSoftwareEfforts(hierarchyNodeUUID) {

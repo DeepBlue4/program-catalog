@@ -285,9 +285,6 @@ const showNotification = (message, type = 'success') => {
     }, 3000);
 };
 
-// Import API
-import { CompassAPIService } from '../services/api';
-
 // Import Store
 import { useProgramCatalogStore } from '../store/programCatalogStore';
 const store = useProgramCatalogStore();
@@ -298,12 +295,11 @@ const confirmDelete = async () => {
         if (index !== -1) {
             const deletedItem = props.efforts[index];
             
-            // Call API with Granular Delete
-            const res = await CompassAPIService.deleteSoftwareEffort(props.programId, deletedItem.id);
+            // Call Store's Delete Method (which handles both API and cache update)
+            const res = await store.deleteSoftwareEffort(props.programId, deletedItem.id);
             
             if (res.success) {
-                // Remove from local list upon success
-                // Remove from local list upon success
+                // Emit event to parent for any additional UI updates
                 emit('effort-deleted', deletedItem.id);
                 showNotification(`Deleted '${deletedItem.name}' successfully.`);
                 if (String(props.selectedId) === String(deletedItem.id)) {

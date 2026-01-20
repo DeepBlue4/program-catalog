@@ -519,6 +519,45 @@ async function saveSoftwareEffort(programId, effortData) {
     return res;
 }
 
+/**
+ * deleteSoftwareEffort
+ *
+ * Deletes a software effort and updates the local cache to reflect the change.
+ */
+async function deleteSoftwareEffort(programId, effortId) {
+    const res = await CompassAPIService.deleteSoftwareEffort(programId, effortId);
+
+    if (res.success) {
+        // Find the program node to update local state
+        const programNode = findByOrgId(programId);
+
+        if (programNode && programNode.softwareEfforts) {
+            // Remove the effort from the array
+            const index = programNode.softwareEfforts.findIndex(e =>
+                String(e.id) === String(effortId) || String(e.uuid) === String(effortId)
+            );
+
+            if (index !== -1) {
+                programNode.softwareEfforts.splice(index, 1);
+
+                // Update metadata if no efforts remain
+                if (programNode.softwareEfforts.length === 0) {
+                    programNode.hasSoftwareEffort = false;
+                }
+
+                // Force UI update
+                triggerRef(state.items);
+            } else {
+                console.warn(`[Store] Effort ${effortId} not found in program ${programId} softwareEfforts array.`);
+            }
+        } else {
+            console.warn(`[Store] Could not find program node ${programId} to update state.`);
+        }
+    }
+
+    return res;
+}
+
 export function useProgramCatalogStore() {
     return {
         state,
@@ -533,5 +572,6 @@ export function useProgramCatalogStore() {
         getOrgPathByID,
         getAllSoftwareEfforts,
         saveSoftwareEffort,
+        deleteSoftwareEffort,
     };
 }
