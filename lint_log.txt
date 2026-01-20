@@ -1,0 +1,42 @@
+
+> pgc@0.0.0 lint
+> eslint src --fix
+
+
+C:\Users\sawye\repos\work\pgc\src\App.vue
+   2:32  error  'onUnmounted' is defined but never used                   @typescript-eslint/no-unused-vars
+   2:45  error  'provide' is defined but never used                       @typescript-eslint/no-unused-vars
+   2:54  error  'onErrorCaptured' is defined but never used               @typescript-eslint/no-unused-vars
+   7:10  error  'useProgramCatalogStore' is defined but never used        @typescript-eslint/no-unused-vars
+   9:38  error  'mdiCodeBraces' is defined but never used                 @typescript-eslint/no-unused-vars
+  11:8   error  'MultiSelectDropdown' is defined but never used           @typescript-eslint/no-unused-vars
+  15:44  error  'selectNode' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  59:7   error  'handleBackToCatalog' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\sawye\repos\work\pgc\src\components\ConfirmationModal.vue
+  25:7  error  'emit' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\sawye\repos\work\pgc\src\components\SoftwareEffortForm.vue
+   16:3  error  'mdiLayersOutline' is defined but never used    @typescript-eslint/no-unused-vars
+  365:7  error  'toArray' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  379:7  error  'fromArray' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\sawye\repos\work\pgc\src\components\SoftwareEffortsList.vue
+  306:17  error  Unexpected mutation of "efforts" prop  vue/no-mutating-props
+
+C:\Users\sawye\repos\work\pgc\src\composables\useProgramData.js
+   45:15  error  '_version' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   98:15  error  '_version' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  112:15  error  '_items' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+C:\Users\sawye\repos\work\pgc\src\services\mockApiData.js
+  189:19  error  'effType' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\sawye\repos\work\pgc\src\views\Dashboard.vue
+  22:3  error  'mdiFormatListBulleted' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\sawye\repos\work\pgc\src\views\ProgramEffortsView.vue
+  24:11  error  '_tick' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 19 problems (19 errors, 0 warnings)
+

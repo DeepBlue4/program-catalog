@@ -18,8 +18,7 @@ import {
   mdiLightbulb,
   mdiAlert,
   mdiAlertCircle, // Keep
-  mdiTable,       // Keep
-  mdiFormatListBulleted
+  mdiTable       // Keep
 } from '@mdi/js';
 import { useProgramData } from '../composables/useProgramData';
 import { STATUS_COLORS, RAW_COLORS } from '../styles/statusConstants'; // Import Colors

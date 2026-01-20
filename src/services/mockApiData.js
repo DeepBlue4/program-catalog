@@ -20,8 +20,8 @@ export class MockApiData {
 
         // Configuration for how big our fake tree gets
         const MAX_DEPTH = 4; // 0-indexed, so 5 levels deep
-        const MIN_CHILDREN = 2;
-        const MAX_CHILDREN = 5;
+        const MIN_CHILDREN = 3;
+        const MAX_CHILDREN = 10;
 
         const createNode = (depth, parentName, parentPath = '', forceName = null) => {
             // Generate a consistent ID based on our seed
@@ -185,8 +185,8 @@ export class MockApiData {
         const efforts = [];
         for (let i = 0; i < count; i++) {
             const effId = `eff-${hierarchyNodeUUID}-${i}`;
-            // eslint-disable-next-line no-unused-vars
-            const effType = i % 3 === 0 ? 'System' : 'Service';
+
+
 
             efforts.push({
                 id: effId,

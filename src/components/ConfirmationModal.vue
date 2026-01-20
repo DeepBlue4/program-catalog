@@ -22,7 +22,7 @@ defineProps({
   }
 });
 
-const emit = defineEmits(['confirm', 'cancel']);
+defineEmits(['confirm', 'cancel']);
 </script>
 
 <template>

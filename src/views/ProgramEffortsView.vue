@@ -21,6 +21,9 @@ const programId = computed(() => route.params.programId);
 const currentProgram = computed(() => {
     // Force dependency on store updates (triggered by triggerRef in store actions)
     // We access it here so Vue knows to re-evaluate this computed when store.state.items is triggered.
+     
+     
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _tick = store.state.items; 
 
     // If we have a selected node and it matches, use it (updates from store)
@@ -115,7 +118,20 @@ const handleEffortSelection = (id) => {
              delete query.effort_id;
         }
         router.replace({ query });
+
     }
+};
+
+const handleEffortDeletion = (id) => {
+   // We need to remove it from the reactive graph so the list updates immediately
+   // without waiting for a full refetch (though refetch would be safer).
+   // `currentProgram` matches `selectedNode` from `useProgramData`.
+   if (currentProgram.value && currentProgram.value.softwareEfforts) {
+       const idx = currentProgram.value.softwareEfforts.findIndex(e => e.id === id);
+       if (idx !== -1) {
+           currentProgram.value.softwareEfforts.splice(idx, 1);
+       }
+   }
 };
 
 onBeforeRouteLeave(handleNavigation);
@@ -135,6 +151,7 @@ onBeforeRouteUpdate(handleNavigation);
             :selected-id="route.query.effort_id"
             @back="goBack"
             @selection-change="handleEffortSelection"
+            @effort-deleted="handleEffortDeletion"
           />
       </div>
       <div v-else class="state-container">

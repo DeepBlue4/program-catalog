@@ -13,7 +13,6 @@ import {
   mdiInformationOutline,
   mdiMagnify,
   mdiSourceBranch,
-  mdiLayersOutline,
   mdiClose
 } from '@mdi/js';
 
@@ -361,12 +360,7 @@ const handleSave = () => {
     emit('save', formData.value);
 };
 
-// Helper for comma-separated list to array
-const toArray = (str) => {
-    if (!str) return [];
-    if (Array.isArray(str)) return str;
-    return str.split(',').map(s => s.trim()).filter(s => s);
-};
+
 
 // Helper for Tri-State Booleans (Select inputs give us strings usually)
 const parseTriState = (val) => {
@@ -375,12 +369,7 @@ const parseTriState = (val) => {
     return null;
 };
 
-// Helper for array to comma-separated list (for textareas)
-const fromArray = (arr) => {
-    if (!arr) return '';
-    if (typeof arr === 'string') return arr;
-    return arr.join(', ');
-};
+
 // Expose resetForm to parent
 const resetForm = () => {
     formData.value = JSON.parse(initialState.value);

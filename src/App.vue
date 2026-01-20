@@ -1,18 +1,17 @@
 <script setup>
-import { computed, ref, watch, onUnmounted, provide, onErrorCaptured } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import SearchBox from './components/SearchBox.vue';
 import UserMenu from './components/UserMenu.vue';
 import { useProgramData } from './composables/useProgramData.js';
 import { useProgramCatalogStore } from './store/programCatalogStore';
 import BaseIcon from './components/BaseIcon.vue';
-import { mdiChevronDown, mdiSitemap, mdiCodeBraces, mdiChevronRight } from '@mdi/js';
+import { mdiChevronDown, mdiSitemap, mdiChevronRight } from '@mdi/js';
 import { STATUS_COLORS } from './styles/statusConstants'; // Import Colors
-import MultiSelectDropdown from './components/MultiSelectDropdown.vue';
 
 const router = useRouter();
 const route = useRoute();
-const { allNodes, selectedNode, chartData, selectNode } = useProgramData();
+const { allNodes, selectedNode, chartData } = useProgramData();
 
 // --- View Logic ---
 // We let the router decide what to show in the main area.
@@ -56,9 +55,7 @@ const handleEffortClick = (effort) => {
     });
 };
 
-const handleBackToCatalog = () => {
-    router.push('/');
-};
+
 
 // --- Breadcrumb Logic ---
 const breadcrumbs = computed(() => {

@@ -92,7 +92,7 @@ const statusConfig = computed(() => {
     }
 });
 
-const emit = defineEmits(['back', 'selection-change']);
+const emit = defineEmits(['back', 'selection-change', 'effort-deleted']);
 
 const showModal = ref(false);
 const showDeleteModal = ref(false);
@@ -303,7 +303,8 @@ const confirmDelete = async () => {
             
             if (res.success) {
                 // Remove from local list upon success
-                props.efforts.splice(index, 1);
+                // Remove from local list upon success
+                emit('effort-deleted', deletedItem.id);
                 showNotification(`Deleted '${deletedItem.name}' successfully.`);
                 if (String(props.selectedId) === String(deletedItem.id)) {
                     // Emit null to clear selection via parent
@@ -321,7 +322,7 @@ const confirmDelete = async () => {
 };
 
 const saveEffort = async (effortData) => {
-    let isNew = !effortData.id;
+    const isNew = !effortData.id;
 
     // Call Store Action
     const res = await store.saveSoftwareEffort(props.programId, effortData);

@@ -42,6 +42,8 @@ export function useProgramData() {
 
     const chartData = computed(() => {
         // Access hydrationVersion to establish dependency - triggers recompute when hydration completes
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const _version = store.hydrationVersion.value;
         return normalizeTree(store.state.items);
     });
@@ -95,6 +97,8 @@ export function useProgramData() {
 
     const allNodes = computed(() => {
         // Depend on hydrationVersion to trigger recompute when efforts are loaded
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const _version = store.hydrationVersion.value;
         return flattenNodes(store.state.items);
     });
@@ -109,6 +113,7 @@ export function useProgramData() {
         if (!selectedNodeId.value) return null;
         // Access store.state.items to establish reactivity dependency
         // even though findByOrgId also reads from it
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const _items = store.state.items;
         return store.findByOrgId(selectedNodeId.value);
     });
