@@ -108,13 +108,13 @@ export function useProgramData() {
     };
 
     // Computed that always reads fresh node data from the tree
-    // This ensures reactivity when softwareEfforts are hydrated asynchronously
+    // This ensures reactivity when softwareEfforts are hydrated asynchronously or modified
     const selectedNode = computed(() => {
         if (!selectedNodeId.value) return null;
-        // Access store.state.items to establish reactivity dependency
-        // even though findByOrgId also reads from it
+        // Access hydrationVersion to establish reactivity dependency
+        // This triggers when softwareEfforts are loaded or CRUD operations occur
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const _items = store.state.items;
+        const _version = store.hydrationVersion.value;
         return store.findByOrgId(selectedNodeId.value);
     });
 

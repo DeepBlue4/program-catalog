@@ -19,12 +19,10 @@ const showDebug = ref(false);
 const programId = computed(() => route.params.programId);
 
 const currentProgram = computed(() => {
-    // Force dependency on store updates (triggered by triggerRef in store actions)
-    // We access it here so Vue knows to re-evaluate this computed when store.state.items is triggered.
-     
-     
+    // Force reactivity on store updates by depending on hydrationVersion
+    // This counter is incremented whenever softwareEfforts are mutated
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _tick = store.state.items; 
+    const _tick = store.hydrationVersion.value;
 
     // If we have a selected node and it matches, use it (updates from store)
     if (selectedNode.value && selectedNode.value.value == programId.value) {

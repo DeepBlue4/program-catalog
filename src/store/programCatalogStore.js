@@ -511,6 +511,8 @@ async function saveSoftwareEffort(programId, effortData) {
 
             // Force UI update
             triggerRef(state.items);
+            hydrationVersion.value++;
+            console.log('[Store] saveSoftwareEffort - hydrationVersion incremented to:', hydrationVersion.value);
         } else {
             console.warn(`[Store] Could not find program node ${programId} to update state.`);
         }
@@ -547,6 +549,8 @@ async function deleteSoftwareEffort(programId, effortId) {
 
                 // Force UI update
                 triggerRef(state.items);
+                hydrationVersion.value++;
+                console.log('[Store] deleteSoftwareEffort - hydrationVersion incremented to:', hydrationVersion.value);
             } else {
                 console.warn(`[Store] Effort ${effortId} not found in program ${programId} softwareEfforts array.`);
             }
