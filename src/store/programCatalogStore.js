@@ -505,24 +505,31 @@ async function saveSoftwareEffort(programId, effortData) {
                 isArray: Array.isArray(savedEffort),
                 hasId: !!savedEffort?.id,
                 hasUuid: !!savedEffort?.uuid,
-                savedEffort: savedEffort
+                type: typeof savedEffort
             });
 
-            // Ensure ID is present (if backend didn't return it but we generated it, or fallback)
-            // The backend MUST return the new ID for this to work correctly with the tree.
-
-            const existingIndex = programNode.softwareEfforts.findIndex(e => e.id === savedEffort.id || (e.uuid && e.uuid === savedEffort.uuid));
-
-            if (existingIndex !== -1) {
-                // Update
-                programNode.softwareEfforts[existingIndex] = savedEffort;
-                console.log('[Store] Updated existing effort at index:', existingIndex);
+            // Handle backend returning array of all efforts
+            if (Array.isArray(savedEffort)) {
+                console.log('[Store] Backend returned array of all efforts, replacing entire array');
+                // Backend returned all efforts for this program - replace the entire array
+                programNode.softwareEfforts = savedEffort;
+                programNode.hasSoftwareEffort = savedEffort.length > 0;
             } else {
-                // Create
-                programNode.softwareEfforts.push(savedEffort);
-                // Also update metadata if needed
-                programNode.hasSoftwareEffort = true;
-                console.log('[Store] Created new effort, total count:', programNode.softwareEfforts.length);
+                // Backend returned single effort - find and update/create it
+                const existingIndex = programNode.softwareEfforts.findIndex(e =>
+                    e.id === savedEffort.id || (e.uuid && e.uuid === savedEffort.uuid)
+                );
+
+                if (existingIndex !== -1) {
+                    // Update
+                    programNode.softwareEfforts[existingIndex] = savedEffort;
+                    console.log('[Store] Updated existing effort at index:', existingIndex);
+                } else {
+                    // Create
+                    programNode.softwareEfforts.push(savedEffort);
+                    programNode.hasSoftwareEffort = true;
+                    console.log('[Store] Created new effort, total count:', programNode.softwareEfforts.length);
+                }
             }
 
             // Force UI update
