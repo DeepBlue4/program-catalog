@@ -32,6 +32,21 @@ const currentProgram = computed(() => {
     return findNodeById(programId.value);
 });
 
+// Computed for efforts that ensures reactivity to CRUD operations
+const currentEfforts = computed(() => {
+    const program = currentProgram.value;
+    if (!program) return [];
+    
+    // Depend on hydrationVersion to trigger re-computation
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _tick = store.hydrationVersion.value;
+    
+    // Return a fresh reference to ensure Vue detects changes
+    const efforts = program.softwareEfforts ? [...program.softwareEfforts] : [];
+    console.log('[PEV] currentEfforts computed - hydrationVersion:', _tick, 'efforts count:', efforts.length);
+    return efforts;
+});
+
 // Sync store selection if accessing directly via URL
 onMounted(() => {
     console.log('[PEV] Mounted. ID:', programId.value);
@@ -145,7 +160,7 @@ onBeforeRouteUpdate(handleNavigation);
             :program="currentProgram"
             :program-name="currentProgram.name" 
             :program-id="currentProgram.program_id" 
-            :efforts="currentProgram.softwareEfforts"
+            :efforts="currentEfforts"
             :selected-id="route.query.effort_id"
             @back="goBack"
             @selection-change="handleEffortSelection"
