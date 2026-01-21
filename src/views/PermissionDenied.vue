@@ -2,164 +2,164 @@
 import { useRouter } from 'vue-router';
 import BaseIcon from '../components/BaseIcon.vue';
 import { mdiShield, mdiLock, mdiHelpCircle, mdiSitemap } from '@mdi/js';
-
+ 
 const router = useRouter();
-
+ 
 const goHome = () => {
-    router.push('/');
+  router.push('/');
 };
 </script>
-
+ 
 <template>
-  <div class="forbidden-container">
-    <div class="content m3-card elevated">
-      <div class="icon-area">
-        <BaseIcon :path="mdiShield" class="shield" :size="80" />
-        <BaseIcon :path="mdiLock" class="lock" :size="40" />
-      </div>
-      
-      <h1>Access Denied</h1>
-      <p class="subtitle">You don't have permission to view this page.</p>
-      
-      <div class="details">
-        <p>This area requires elevated privileges (Error 403).</p>
-        <p class="help-text">
-            If you need help getting access, please reach out to the 
-            <strong>DAF: Metrics</strong> Mattermost channel.
-        </p>
-      </div>
-      
-      <div class="actions">
-        <a 
-            href="https://mattermost.web.boeing.com/devhub/channels/data-analytics-force" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="btn-text"
-        >
-            <BaseIcon :path="mdiHelpCircle" /> Contact Support
-        </a>
-        <button class="btn-filled" @click="goHome">
-            <BaseIcon :path="mdiSitemap" class="catalog-icon" /> Go to Catalog
-        </button>
-      </div>
-    </div>
+ <div class="forbidden-container">
+  <div class="content m3-card elevated">
+   <div class="icon-area">
+    <BaseIcon :path="mdiShield" class="shield" :size="80" />
+    <BaseIcon :path="mdiLock" class="lock" :size="40" />
+   </div>
+    
+   <h1>Access Denied</h1>
+   <p class="subtitle">You don't have permission to view this page.</p>
+    
+   <div class="details">
+    <p>This area requires elevated privileges (Error 403).</p>
+    <p class="help-text">
+      If you need help getting access, please reach out to the 
+      <strong>DAF: Metrics</strong> Mattermost channel.
+    </p>
+   </div>
+    
+   <div class="actions">
+    <a 
+      href="https://mattermost.web.boeing.com/devhub/channels/data-analytics-force" 
+      target="_blank" 
+      rel="noopener noreferrer"
+      class="btn-text"
+    >
+      <BaseIcon :path="mdiHelpCircle" /> Contact Support
+    </a>
+    <button class="btn-filled" @click="goHome">
+      <BaseIcon :path="mdiSitemap" class="catalog-icon" /> Go to Catalog
+    </button>
+   </div>
   </div>
+ </div>
 </template>
-
+ 
 <style scoped>
 .forbidden-container {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #FEF7FF; /* background */
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #FEF7FF; /* background */
 }
-
+ 
 .content {
-    text-align: center;
-    padding: 3rem;
-    max-width: 500px;
-    background: #FEF7FF; /* surface */
-    border-radius: 28px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
+  text-align: center;
+  padding: 3rem;
+  max-width: 500px;
+  background: #FEF7FF; /* surface */
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
 }
-
+ 
 .icon-area {
-    position: relative;
-    font-size: 80px;
-    margin-bottom: 1rem;
-    color: #E7E0EC; /* surface-variant */
+  position: relative;
+  font-size: 80px;
+  margin-bottom: 1rem;
+  color: #E7E0EC; /* surface-variant */
 }
-
+ 
 .shield {
-    color: #ECE6F0; /* surface-container-high */
+  color: #ECE6F0; /* surface-container-high */
 }
-
+ 
 .lock {
-    position: absolute;
-    bottom: -10px;
-    right: -10px;
-    font-size: 40px;
-    color: #BA1A1A; /* error */
-    background: #FEF7FF; /* surface */
-    border-radius: 50%;
-    padding: 4px;
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  font-size: 40px;
+  color: #BA1A1A; /* error */
+  background: #FEF7FF; /* surface */
+  border-radius: 50%;
+  padding: 4px;
 }
-
+ 
 h1 {
-    font-size: 32px;
-    color: #1D1B20; /* on-surface */
-    margin: 0;
+  font-size: 32px;
+  color: #1D1B20; /* on-surface */
+  margin: 0;
 }
-
+ 
 .subtitle {
-    font-size: 18px;
-    color: #625B71; /* secondary */
-    margin: 0;
+  font-size: 18px;
+  color: #625B71; /* secondary */
+  margin: 0;
 }
-
+ 
 .details {
-    font-size: 14px;
-    color: #79747E; /* outline */
-    line-height: 1.5;
+  font-size: 14px;
+  color: #79747E; /* outline */
+  line-height: 1.5;
 }
-
+ 
 .actions {
-    display: flex;
-    align-items: center;
-    gap: 16px; /* Space between buttons */
+  display: flex;
+  align-items: center;
+  gap: 16px; /* Space between buttons */
 }
-
+ 
 .help-text {
-    margin-top: 12px;
-    font-size: 15px;
+  margin-top: 12px;
+  font-size: 15px;
 }
-
+ 
 .btn-filled {
-    background: #005AC1; /* primary */
-    color: #FFFFFF; /* on-primary */
-    border: none;
-    padding: 12px 32px;
-    border-radius: 100px;
-    font-weight: 500;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
+  background: #005AC1; /* primary */
+  color: #FFFFFF; /* on-primary */
+  border: none;
+  padding: 12px 32px;
+  border-radius: 100px;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
 }
-
+ 
 .btn-text {
-    background: transparent;
-    color: #005AC1; /* primary */
-    padding: 12px 24px;
-    border-radius: 100px;
-    font-weight: 500;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    border: 1px solid transparent;
-    transition: all 0.2s;
+  background: transparent;
+  color: #005AC1; /* primary */
+  padding: 12px 24px;
+  border-radius: 100px;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: all 0.2s;
 }
-
+ 
 .btn-text:hover {
-    background: rgba(0, 90, 193, 0.08); /* primary opacity */
+  background: rgba(0, 90, 193, 0.08); /* primary opacity */
 }
-
+ 
 .btn-filled:hover {
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transform: translateY(-1px);
 }
-
+ 
 .catalog-icon {
-    transform: rotate(270deg);
+  transform: rotate(270deg);
 }
 </style>

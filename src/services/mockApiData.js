@@ -1,361 +1,361 @@
 export class MockApiData {
-    static async simulateLatency(useTestData) {
-        if (!useTestData) return;
-        const ms = Math.floor(Math.random() * 800) + 800; // 800 - 1600ms
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    static generateMockHierarchy() {
-        // Create a random-ish generator that gives the same results every time (Seeded).
-        let seed = 5678;
-        const random = () => {
-            seed = (seed * 9301 + 49297) % 233280;
-            return seed / 233280;
-        };
-
-        const effortTypes = ['System', 'Service', 'Component', 'Application', 'Library'];
-
-        // Helper to pick a random item from an array
-        const pick = (arr) => arr[Math.floor(random() * arr.length)];
-
-        // Configuration for how big our fake tree gets
-        const MAX_DEPTH = 4; // 0-indexed, so 5 levels deep
-        const MIN_CHILDREN = 3;
-        const MAX_CHILDREN = 10;
-
-        const createNode = (depth, parentName, parentPath = '', forceName = null) => {
-            // Generate a consistent ID based on our seed
-            const id = Math.floor(random() * 10000000);
-            let name;
-
-            if (forceName) {
-                name = forceName;
-            } else if (depth === 0) name = "Company PGC";
-            else if (depth === 1) name = `${pick(['Space', 'Defense', 'Commercial', 'Global'])} Division ${id.toString().slice(-2)}`;
-            else if (depth === 2) name = `${pick(['X', 'Y', 'Z', 'Alpha', 'Beta', 'Gamma', 'Delta'])} Program ${id.toString().slice(-3)}`;
-            else if (depth === 3) name = `${pick(['Avionics', 'Propulsion', 'Software', 'Logistics', 'Mission', 'Ground'])} Team ${id.toString().slice(-3)}`;
-            else name = `Unit ${Math.floor(random() * 1000)}`;
-
-            const isTargetNeutral = name === "Commercial Division 37";
-
-            // Program Properties
-            const organization_leader_name = `Leader ${pick(['Smith', 'Johnson', 'Williams', 'Brown'])}`;
-            const chief_engineer_name = `Eng. ${pick(['Davis', 'Miller', 'Wilson', 'Moore'])}`;
-            const primary_location = pick(['Seattle, WA', 'St. Louis, MO', 'Huntsville, AL', 'Arlington, VA']);
-            const program_type = pick(['Production', 'Development', 'Sustainment', 'R&D']);
-            const program_value = `$${(random() * 100 + 10).toFixed(1)}M`;
-            const description = `This is a mock description for ${name}. It contains generic information.`;
-            const aliases = random() > 0.7 ? `Alias-${id}` : null;
-            const status = "Green";
-
-            const currentPath = parentPath ? `${parentPath}.${id}` : `${id}`;
-
-            const isLeafCandidate = depth >= 3;
-            const softwareEfforts = [];
-
-            if (isLeafCandidate && !isTargetNeutral && random() > 0.3) {
-                // Generate 1 to 5 efforts to ensure "more than just 1" is common
-                const numEfforts = Math.floor(random() * 5) + 1;
-
-                for (let j = 0; j < numEfforts; j++) {
-                    const effId = `${id}-${j}`;
-                    // Use closure-safe pick
-                    const effType = pick(effortTypes);
-                    // Differentiate names slightly
-                    const baseName = name.split(' ')[0] || 'Project';
-                    const effName = j === 0
-                        ? `${baseName} Platform`
-                        : `${baseName} ${effType} ${j + 1}`;
-
-                    let parentId = null;
-                    if (j > 0 && random() > 0.3) {
-                        // Pick a random parent from 0 to j-1
-                        const parentIndex = Math.floor(random() * j);
-                        parentId = `${id}-${parentIndex}`;
-                    }
-
-                    softwareEfforts.push({
-                        id: effId,
-                        uuid: effId,
-                        name: effName,
-                        parent: parentId,
-                        parent_uuid: parentId,
-
-                        inherit_statement_of_work_profile: false,
-                        statement_of_work_profile: {
-                            program_manager_email: `manager.${j}@example.com`,
-                            allow_non_us: random() > 0.5,
-                            mission_critical: random() > 0.8,
-                            program_phase: pick(['Design', 'Development', 'Production']),
-                            security_clearance: [pick(['None', 'Secret'])],
-                            safety_criticality: [pick(['None', 'DAL D / LOR 4'])]
-                        },
-
-                        inherit_technical_points_of_contact: false,
-                        technical_points_of_contact: {
-                            software_lead: `lead.${j}@example.com`,
-                            security_focal: `sec.${j}@example.com`
-                        },
-
-                        inherit_developer_setup: false,
-                        developer_setup: {
-                            programming_languages: [pick(['Python', 'C++', 'Java'])],
-                            operating_systems: [pick(['Linux', 'Windows'])],
-                            development_environments: [pick(['BSF-Global', 'BSF-US'])],
-                            source_control_tools: [pick(['GitLab', 'Bitbucket'])],
-                            issue_tracking_tools: [pick(['Jira', 'GitLab'])],
-                            dp_assessment_name: `DP-Assess-${j}`,
-                            sbom_location: [pick(['Artifactory', 'Nexus'])]
-                        },
-
-                        inherit_work_location: false,
-                        work_location: {
-                            locations: [primary_location, 'Remote']
-                        },
-
-                        children: [],
-                        linked_software_efforts: []
-                    });
-                }
-            }
-
-            const children = [];
-            let hasDescendantExpecting = false;
-
-            if (depth < MAX_DEPTH && !isTargetNeutral) {
-                // If Root, ensure one child is Commercial Division 37
-                const numChildren = Math.floor(random() * (MAX_CHILDREN - MIN_CHILDREN + 1)) + MIN_CHILDREN;
-
-                for (let i = 0; i < numChildren; i++) {
-                    let childNode;
-                    // Force the neutral node as the FIRST child of Root
-                    if (depth === 0 && i === 0) {
-                        childNode = createNode(depth + 1, name, currentPath, "Commercial Division 37");
-                    } else {
-                        childNode = createNode(depth + 1, name, currentPath);
-                    }
-                    children.push(childNode);
-                    if (childNode.hasSoftwareEffort || childNode.has_descendant_expecting_software_effort) {
-                        hasDescendantExpecting = true;
-                    }
-                }
-            }
-
-            // Compliance Requirement simulation
-            const expectsEffort = isLeafCandidate && random() > 0.4;
-            if (expectsEffort) hasDescendantExpecting = true;
-
-            return {
-                // Program Properties
-                id: id,
-                program_id: id,
-                active: true,
-                critical: random() > 0.9,
-
-                // Metadata
-                date: new Date().toISOString().split('T')[0],
-                name: name,
-                program_path: currentPath,
-                expect_software_effort: expectsEffort,
-                description: description,
-                aliases: aliases,
-                status: status,
-                primary_location: primary_location,
-                organization_leader_name: organization_leader_name,
-                chief_engineer_name: chief_engineer_name,
-                program_affiliation: parentName, // Rough approx
-                program_value: program_value,
-                program_type: program_type,
-
-                // Tree structure
-                children: children,
-
-                softwareEfforts: softwareEfforts,
-                hasSoftwareEffort: softwareEfforts.length > 0,
-                expecting_software_efforts: expectsEffort,
-                has_descendant_expecting_software_effort: hasDescendantExpecting
-            };
-        };
-
-        const root = createNode(0, "Root");
-
-        // --- Post-Process: Add Linked Efforts ---
-        // 1. Flatten all efforts to a list so we can pick from them
-        const allEfforts = [];
-        const traverse = (node) => {
-            if (node.softwareEfforts) {
-                node.softwareEfforts.forEach(eff => {
-                    // Enrich with program info for the link display
-                    eff._programName = node.name;
-                    eff._programId = node.program_id;
-                    allEfforts.push(eff);
-                });
-            }
-            if (node.children) {
-                node.children.forEach(traverse);
-            }
-        };
-        traverse(root);
-
-        // 2. Randomly assign links
-        allEfforts.forEach(eff => {
-            // 30% chance to have links
-            if (random() > 0.7) {
-                const numLinks = Math.floor(random() * 3) + 1; // 1-3 links
-                for (let k = 0; k < numLinks; k++) {
-                    const target = pick(allEfforts);
-                    // Don't link to self
-                    if (target.id !== eff.id) {
-                        // Check if already linked to avoid duplicates
-                        if (!eff.linked_software_efforts.find(l => l.id === target.id)) {
-                            // Context: The UI expects certain fields to display the "Program" info in the link row.
-                            // See SoftwareEffortForm.vue: cand._programName / cand._programId
-                            eff.linked_software_efforts.push({
-                                id: target.id,
-                                uuid: target.uuid,
-                                name: target.name,
-                                // The form uses these for display in the "Linked Items" list
-                                _programName: target._programName,
-                                _programId: target._programId,
-                                // Fallback standard fields
-                                program_name: target._programName,
-                                program_id: target._programId
-                            });
-                        }
-                    }
-                }
-            }
+  static async simulateLatency(useTestData) {
+    if (!useTestData) return;
+    const ms = Math.floor(Math.random() * 800) + 800; // 800 - 1600ms
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+ 
+  static generateMockHierarchy() {
+    // Create a random-ish generator that gives the same results every time (Seeded).
+    let seed = 5678;
+    const random = () => {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    };
+ 
+    const effortTypes = ['System', 'Service', 'Component', 'Application', 'Library'];
+ 
+    // Helper to pick a random item from an array
+    const pick = (arr) => arr[Math.floor(random() * arr.length)];
+ 
+    // Configuration for how big our fake tree gets
+    const MAX_DEPTH = 4; // 0-indexed, so 5 levels deep
+    const MIN_CHILDREN = 3;
+    const MAX_CHILDREN = 10;
+ 
+    const createNode = (depth, parentName, parentPath = '', forceName = null) => {
+      // Generate a consistent ID based on our seed
+      const id = Math.floor(random() * 10000000);
+      let name;
+ 
+      if (forceName) {
+        name = forceName;
+      } else if (depth === 0) name = "Company PGC";
+      else if (depth === 1) name = `${pick(['Space', 'Defense', 'Commercial', 'Global'])} Division ${id.toString().slice(-2)}`;
+      else if (depth === 2) name = `${pick(['X', 'Y', 'Z', 'Alpha', 'Beta', 'Gamma', 'Delta'])} Program ${id.toString().slice(-3)}`;
+      else if (depth === 3) name = `${pick(['Avionics', 'Propulsion', 'Software', 'Logistics', 'Mission', 'Ground'])} Team ${id.toString().slice(-3)}`;
+      else name = `Unit ${Math.floor(random() * 1000)}`;
+ 
+      const isTargetNeutral = name === "Commercial Division 37";
+ 
+      // Program Properties
+      const organization_leader_name = `Leader ${pick(['Smith', 'Johnson', 'Williams', 'Brown'])}`;
+      const chief_engineer_name = `Eng. ${pick(['Davis', 'Miller', 'Wilson', 'Moore'])}`;
+      const primary_location = pick(['Seattle, WA', 'St. Louis, MO', 'Huntsville, AL', 'Arlington, VA']);
+      const program_type = pick(['Production', 'Development', 'Sustainment', 'R&D']);
+      const program_value = `$${(random() * 100 + 10).toFixed(1)}M`;
+      const description = `This is a mock description for ${name}. It contains generic information.`;
+      const aliases = random() > 0.7 ? `Alias-${id}` : null;
+      const status = "Green";
+ 
+      const currentPath = parentPath ? `${parentPath}.${id}` : `${id}`;
+ 
+      const isLeafCandidate = depth >= 3;
+      const softwareEfforts = [];
+ 
+      if (isLeafCandidate && !isTargetNeutral && random() > 0.3) {
+        // Generate 1 to 5 efforts to ensure "more than just 1" is common
+        const numEfforts = Math.floor(random() * 5) + 1;
+ 
+        for (let j = 0; j < numEfforts; j++) {
+          const effId = `${id}-${j}`;
+          // Use closure-safe pick
+          const effType = pick(effortTypes);
+          // Differentiate names slightly
+          const baseName = name.split(' ')[0] || 'Project';
+          const effName = j === 0
+            ? `${baseName} Platform`
+            : `${baseName} ${effType} ${j + 1}`;
+ 
+          let parentId = null;
+          if (j > 0 && random() > 0.3) {
+            // Pick a random parent from 0 to j-1
+            const parentIndex = Math.floor(random() * j);
+            parentId = `${id}-${parentIndex}`;
+          }
+ 
+          softwareEfforts.push({
+            id: effId,
+            uuid: effId,
+            name: effName,
+            parent: parentId,
+            parent_uuid: parentId,
+ 
+            inherit_statement_of_work_profile: false,
+            statement_of_work_profile: {
+              program_manager_email: `manager.${j}@example.com`,
+              allow_non_us: random() > 0.5,
+              mission_critical: random() > 0.8,
+              program_phase: pick(['Design', 'Development', 'Production']),
+              security_clearance: [pick(['None', 'Secret'])],
+              safety_criticality: [pick(['None', 'DAL D / LOR 4'])]
+            },
+ 
+            inherit_technical_points_of_contact: false,
+            technical_points_of_contact: {
+              software_lead: `lead.${j}@example.com`,
+              security_focal: `sec.${j}@example.com`
+            },
+ 
+            inherit_developer_setup: false,
+            developer_setup: {
+              programming_languages: [pick(['Python', 'C++', 'Java'])],
+              operating_systems: [pick(['Linux', 'Windows'])],
+              development_environments: [pick(['BSF-Global', 'BSF-US'])],
+              source_control_tools: [pick(['GitLab', 'Bitbucket'])],
+              issue_tracking_tools: [pick(['Jira', 'GitLab'])],
+              dp_assessment_name: `DP-Assess-${j}`,
+              sbom_location: [pick(['Artifactory', 'Nexus'])]
+            },
+ 
+            inherit_work_location: false,
+            work_location: {
+              locations: [primary_location, 'Remote']
+            },
+ 
+            children: [],
+            linked_software_efforts: []
+          });
+        }
+      }
+ 
+      const children = [];
+      let hasDescendantExpecting = false;
+ 
+      if (depth < MAX_DEPTH && !isTargetNeutral) {
+        // If Root, ensure one child is Commercial Division 37
+        const numChildren = Math.floor(random() * (MAX_CHILDREN - MIN_CHILDREN + 1)) + MIN_CHILDREN;
+ 
+        for (let i = 0; i < numChildren; i++) {
+          let childNode;
+          // Force the neutral node as the FIRST child of Root
+          if (depth === 0 && i === 0) {
+            childNode = createNode(depth + 1, name, currentPath, "Commercial Division 37");
+          } else {
+            childNode = createNode(depth + 1, name, currentPath);
+          }
+          children.push(childNode);
+          if (childNode.hasSoftwareEffort || childNode.has_descendant_expecting_software_effort) {
+            hasDescendantExpecting = true;
+          }
+        }
+      }
+ 
+      // Compliance Requirement simulation
+      const expectsEffort = isLeafCandidate && random() > 0.4;
+      if (expectsEffort) hasDescendantExpecting = true;
+ 
+      return {
+        // Program Properties
+        id: id,
+        program_id: id,
+        active: true,
+        critical: random() > 0.9,
+ 
+        // Metadata
+        date: new Date().toISOString().split('T')[0],
+        name: name,
+        program_path: currentPath,
+        expect_software_effort: expectsEffort,
+        description: description,
+        aliases: aliases,
+        status: status,
+        primary_location: primary_location,
+        organization_leader_name: organization_leader_name,
+        chief_engineer_name: chief_engineer_name,
+        program_affiliation: parentName, // Rough approx
+        program_value: program_value,
+        program_type: program_type,
+ 
+        // Tree structure
+        children: children,
+ 
+        softwareEfforts: softwareEfforts,
+        hasSoftwareEffort: softwareEfforts.length > 0,
+        expecting_software_efforts: expectsEffort,
+        has_descendant_expecting_software_effort: hasDescendantExpecting
+      };
+    };
+ 
+    const root = createNode(0, "Root");
+ 
+    // --- Post-Process: Add Linked Efforts ---
+    // 1. Flatten all efforts to a list so we can pick from them
+    const allEfforts = [];
+    const traverse = (node) => {
+      if (node.softwareEfforts) {
+        node.softwareEfforts.forEach(eff => {
+          // Enrich with program info for the link display
+          eff._programName = node.name;
+          eff._programId = node.program_id;
+          allEfforts.push(eff);
         });
-
-        return root;
-    }
-
-    static getMockSoftwareEfforts(hierarchyNodeUUID) {
-        const count = 45; // Test pagination
-        const efforts = [];
-        for (let i = 0; i < count; i++) {
-            const effId = `eff-${hierarchyNodeUUID}-${i}`;
-
-
-
-            efforts.push({
-                id: effId,
-                uuid: effId,
-                name: `Mock Effort ${i + 1}`,
-                parent: null,
-                parent_uuid: null,
-
-                inherit_statement_of_work_profile: false,
-                statement_of_work_profile: {
-                    program_manager_email: `manager.${i}@example.com`,
-                    allow_non_us: i % 2 === 0,
-                    mission_critical: i % 4 === 0,
-                    program_phase: 'Development',
-                    security_clearance: ['None'],
-                    safety_criticality: ['None']
-                },
-
-                inherit_technical_points_of_contact: false,
-                technical_points_of_contact: {
-                    software_lead: `lead.${i}@example.com`,
-                    security_focal: `sec.${i}@example.com`
-                },
-
-                inherit_developer_setup: false,
-                developer_setup: {
-                    programming_languages: ['Python', 'Java'],
-                    operating_systems: ['Linux'],
-                    development_environments: ['BSF-Global'],
-                    source_control_tools: ['GitLab'],
-                    issue_tracking_tools: ['Jira'],
-                    dp_assessment_name: `DP-Assess-${i}`,
-                    sbom_location: ['Artifactory']
-                },
-
-                inherit_work_location: false,
-                work_location: {
-                    locations: ['Seattle, WA', 'Remote']
-                },
-
-                children: [],
-                linked_software_efforts: []
-            });
+      }
+      if (node.children) {
+        node.children.forEach(traverse);
+      }
+    };
+    traverse(root);
+ 
+    // 2. Randomly assign links
+    allEfforts.forEach(eff => {
+      // 30% chance to have links
+      if (random() > 0.7) {
+        const numLinks = Math.floor(random() * 3) + 1; // 1-3 links
+        for (let k = 0; k < numLinks; k++) {
+          const target = pick(allEfforts);
+          // Don't link to self
+          if (target.id !== eff.id) {
+            // Check if already linked to avoid duplicates
+            if (!eff.linked_software_efforts.find(l => l.id === target.id)) {
+              // Context: The UI expects certain fields to display the "Program" info in the link row.
+              // See SoftwareEffortForm.vue: cand._programName / cand._programId
+              eff.linked_software_efforts.push({
+                id: target.id,
+                uuid: target.uuid,
+                name: target.name,
+                // The form uses these for display in the "Linked Items" list
+                _programName: target._programName,
+                _programId: target._programId,
+                // Fallback standard fields
+                program_name: target._programName,
+                program_id: target._programId
+              });
+            }
+          }
         }
-        return efforts;
+      }
+    });
+ 
+    return root;
+  }
+ 
+  static getMockSoftwareEfforts(hierarchyNodeUUID) {
+    const count = 45; // Test pagination
+    const efforts = [];
+    for (let i = 0; i < count; i++) {
+      const effId = `eff-${hierarchyNodeUUID}-${i}`;
+ 
+ 
+ 
+      efforts.push({
+        id: effId,
+        uuid: effId,
+        name: `Mock Effort ${i + 1}`,
+        parent: null,
+        parent_uuid: null,
+ 
+        inherit_statement_of_work_profile: false,
+        statement_of_work_profile: {
+          program_manager_email: `manager.${i}@example.com`,
+          allow_non_us: i % 2 === 0,
+          mission_critical: i % 4 === 0,
+          program_phase: 'Development',
+          security_clearance: ['None'],
+          safety_criticality: ['None']
+        },
+ 
+        inherit_technical_points_of_contact: false,
+        technical_points_of_contact: {
+          software_lead: `lead.${i}@example.com`,
+          security_focal: `sec.${i}@example.com`
+        },
+ 
+        inherit_developer_setup: false,
+        developer_setup: {
+          programming_languages: ['Python', 'Java'],
+          operating_systems: ['Linux'],
+          development_environments: ['BSF-Global'],
+          source_control_tools: ['GitLab'],
+          issue_tracking_tools: ['Jira'],
+          dp_assessment_name: `DP-Assess-${i}`,
+          sbom_location: ['Artifactory']
+        },
+ 
+        inherit_work_location: false,
+        work_location: {
+          locations: ['Seattle, WA', 'Remote']
+        },
+ 
+        children: [],
+        linked_software_efforts: []
+      });
     }
-
-    static getMockProgram(hierarchyNodeUUID) {
-        return {
-            program_id: hierarchyNodeUUID,
-            program_name: "Mock Program",
-            program_manager: "Jane Doe",
-            description: "This is a mock program description.",
-        };
+    return efforts;
+  }
+ 
+  static getMockProgram(hierarchyNodeUUID) {
+    return {
+      program_id: hierarchyNodeUUID,
+      program_name: "Mock Program",
+      program_manager: "Jane Doe",
+      description: "This is a mock program description.",
+    };
+  }
+ 
+  static getMockUser() {
+    return {
+      id: 1,
+      daf_user: {
+        username: "1234567",
+        bemsid: "1234567",
+        first_name: "Mock",
+        last_name: "User",
+        email: "mock.user@company.com",
+        boeing_contractor: false,
+        is_active: true,
+        is_staff: true,
+        is_superuser: true
+      },
+      cached: {
+        bemsid: "1234567",
+        name: "Mock User",
+        business_unit: "Digital Platform",
+        manager_status: true,
+        swe_status: null,
+        email: "mock.user@company.com"
+      },
+      display_name: "Mock User"
+    };
+  }
+ 
+  static getMockEmails() {
+    const firstNames = ["James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", "William", "Elizabeth", "David", "Barbara", "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah", "Charles", "Karen"];
+    const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin"];
+ 
+    const emails = [
+      "jane.doe@company.com",
+      "john.smith@company.com",
+      "admin@company.com",
+      "developer@company.com"
+    ];
+ 
+    // Generate more realistic emails
+    for (let i = 0; i < 40; i++) {
+      const fn = firstNames[Math.floor(Math.random() * firstNames.length)].toLowerCase();
+      const ln = lastNames[Math.floor(Math.random() * lastNames.length)].toLowerCase();
+      emails.push(`${fn}.${ln}@company.com`);
     }
-
-    static getMockUser() {
-        return {
-            id: 1,
-            daf_user: {
-                username: "1234567",
-                bemsid: "1234567",
-                first_name: "Mock",
-                last_name: "User",
-                email: "mock.user@company.com",
-                boeing_contractor: false,
-                is_active: true,
-                is_staff: true,
-                is_superuser: true
-            },
-            cached: {
-                bemsid: "1234567",
-                name: "Mock User",
-                business_unit: "Digital Platform",
-                manager_status: true,
-                swe_status: null,
-                email: "mock.user@company.com"
-            },
-            display_name: "Mock User"
-        };
+ 
+    // Deduplicate
+    return [...new Set(emails)].sort();
+  }
+  static injectMissingEffortsNode(data) {
+    const dummyNode = {
+      program_id: 9991234,
+      name: "Test Program (Missing Efforts)",
+      value: 9991234,
+      expecting_software_efforts: true,
+      hasSoftwareEffort: false,
+      softwareEfforts: [], // Explicitly empty
+      details: { organization_leader_name: "TEST ADMIN" },
+      children: []
+    };
+ 
+    if (Array.isArray(data)) {
+      data.push(dummyNode);
+    } else if (data && data.children) {
+      data.children.push(dummyNode);
     }
-
-    static getMockEmails() {
-        const firstNames = ["James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", "William", "Elizabeth", "David", "Barbara", "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah", "Charles", "Karen"];
-        const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin"];
-
-        const emails = [
-            "jane.doe@company.com",
-            "john.smith@company.com",
-            "admin@company.com",
-            "developer@company.com"
-        ];
-
-        // Generate more realistic emails
-        for (let i = 0; i < 40; i++) {
-            const fn = firstNames[Math.floor(Math.random() * firstNames.length)].toLowerCase();
-            const ln = lastNames[Math.floor(Math.random() * lastNames.length)].toLowerCase();
-            emails.push(`${fn}.${ln}@company.com`);
-        }
-
-        // Deduplicate
-        return [...new Set(emails)].sort();
-    }
-    static injectMissingEffortsNode(data) {
-        const dummyNode = {
-            program_id: 9991234,
-            name: "Test Program (Missing Efforts)",
-            value: 9991234,
-            expecting_software_efforts: true,
-            hasSoftwareEffort: false,
-            softwareEfforts: [], // Explicitly empty
-            details: { organization_leader_name: "TEST ADMIN" },
-            children: []
-        };
-
-        if (Array.isArray(data)) {
-            data.push(dummyNode);
-        } else if (data && data.children) {
-            data.children.push(dummyNode);
-        }
-    }
+  }
 }
