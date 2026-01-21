@@ -33,7 +33,7 @@ const initChart = () => {
   if (!chartRef.value) return;
   
   chartInstance = echarts.init(chartRef.value, null, {
-    renderer: 'canvas',
+    renderer: 'svg',
     useDirtyRect: false
   });
 
@@ -122,10 +122,39 @@ const updateChart = () => {
              color = STATUS_COLORS.neutral.border;
           }
           
+
+          // Calculate Metrics
+          const childrenCount = d.children ? d.children.length : 0;
+          const effortsCount = d.softwareEfforts ? d.softwareEfforts.length : 0;
+
+          // Row Helper
+          const createRow = (label, value) => `
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="color: #666; font-size: 12px;">${label}</span>
+                  <span style="color: #333; font-weight: 500; font-size: 12px;">${value}</span>
+              </div>
+          `;
+
           return `
-            <div style="font-weight: 500; font-size: 14px; margin-bottom: 4px;">${d.name}</div>
-            <div style="font-size: 12px; color: ${color}; margin-bottom: 4px; font-weight: 500;">● ${status}</div>
-            <div style="font-size: 11px; color: ${colors.neutral};">ID: ${d.program_id}</div>
+            <div style="font-family: 'Roboto', sans-serif; min-width: 200px; padding: 4px;">
+              <div style="font-weight: 600; font-size: 14px; color: #1f1f1f; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                  ${d.name}
+              </div>
+              
+              <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                  <span style="font-size: 11px; font-weight: 600; color: ${color}; background: ${color}1A; padding: 4px 8px; border-radius: 12px;">
+                      ${status}
+                  </span>
+              </div>
+
+              ${childrenCount > 0 ? createRow('Sub-programs', childrenCount) : ''}
+              ${effortsCount > 0 ? createRow('Software Efforts', effortsCount) : ''}
+              ${childrenCount === 0 && effortsCount === 0 ? '<div style="font-size:12px; color:#999; font-style:italic;">No direct children</div>' : ''}
+              
+              <div style="margin-top: 12px; text-align: right; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 6px;">
+                  ID: ${d.program_id}
+              </div>
+            </div>
           `;
       }
     },
@@ -170,6 +199,7 @@ const updateChart = () => {
           }
         },
         
+        initialTreeDepth: -1,
         // Disable internal expansion management to prevent conflicts
         expandAndCollapse: false,
         animationDuration: 550,
@@ -252,6 +282,9 @@ const updateNodeVisuals = (node) => {
         if (node.itemStyle.shadowColor) delete node.itemStyle.shadowColor;
     }
     
+    // Explicit ID for ECharts identity tracking
+    node.id = String(node.program_id);
+
     // Apply Managed Collapsed State
     if (collapsedState.value.has(node.program_id)) {
         node.collapsed = collapsedState.value.get(node.program_id);
