@@ -5,32 +5,30 @@ import SoftwareEffortTreeItem from './SoftwareEffortTreeItem.vue';
 import ConfirmationModal from './ConfirmationModal.vue';
 import BaseIcon from './BaseIcon.vue';
 import {
- mdiArrowLeft,
- mdiInformation,
- mdiPlus,
- mdiChevronLeft,
- mdiChevronRight,
- mdiHandPointingLeft,
-
- mdiCube,
- mdiSitemap,
- mdiClipboardCheck,
- mdiCheckCircle,
- mdiAlertCircle,
- mdiClose,
- mdiAlert,
- mdiCheckCircleOutline,
- mdiMinusCircleOutline
+  mdiArrowLeft,
+  mdiInformation,
+  mdiPlus,
+  mdiChevronLeft,
+  mdiChevronRight,
+  mdiHandPointingLeft,
+  mdiCube,
+  mdiSitemap,
+  mdiClipboardCheck,
+  mdiCheckCircle,
+  mdiAlertCircle,
+  mdiClose,
+  mdiAlert,
+  mdiCheckCircleOutline,
+  mdiMinusCircleOutline
 } from '@mdi/js';
 import { STATUS_COLORS } from '../styles/statusConstants';
 
-
 const props = defineProps({
- programName: { type: String, required: true },
- programId: { type: [String, Number], required: true },
- program: { type: Object, default: () => ({}) }, // Full program details
- efforts: { type: Array, default: () => [] },
- selectedId: { type: [String, Number], default: null }
+  programName: { type: String, required: true },
+  programId: { type: [String, Number], required: true },
+  program: { type: Object, default: () => ({}) }, // Full program details
+  efforts: { type: Array, default: () => [] },
+  selectedId: { type: [String, Number], default: null }
 });
 
 const statusConfig = computed(() => {
@@ -39,24 +37,24 @@ const statusConfig = computed(() => {
   const propEfforts = props.efforts || [];
   const objEfforts = p.softwareEfforts || [];
   const hasEfforts = propEfforts.length > 0 || objEfforts.length > 0;
-  
+
   // Ensure boolean
   const expecting = !!p.expecting_software_efforts;
 
-  console.log('[statusConfig 1] Debug for:', p.name, { 
-    expecting, 
-    hasEfforts, 
-    propEffortsLen: propEfforts.length, 
-    objEffortsLen: objEfforts.length 
+  console.log('[statusConfig 1] Debug for:', p.name, {
+    expecting,
+    hasEfforts,
+    propEffortsLen: propEfforts.length,
+    objEffortsLen: objEfforts.length
   });
 
   if (expecting && !hasEfforts) {
-    console.log('[statusConfig 2] Debug for:', p.name, { 
-    expecting, 
-    hasEfforts, 
-    propEffortsLen: propEfforts.length, 
-    objEffortsLen: objEfforts.length 
-  });
+    console.log('[statusConfig 2] Debug for:', p.name, {
+      expecting,
+      hasEfforts,
+      propEffortsLen: propEfforts.length,
+      objEffortsLen: objEfforts.length
+    });
     return {
       ...STATUS_COLORS.gap,
       label: 'Expected (Missing)',
@@ -64,18 +62,18 @@ const statusConfig = computed(() => {
       isWarning: true
     };
   } else if (hasEfforts && !expecting) {
-    console.log('[statusConfig 3] Debug for:', p.name, { 
-    expecting, 
-    hasEfforts, 
-    propEffortsLen: propEfforts.length, 
-    objEffortsLen: objEfforts.length 
-  });
+    console.log('[statusConfig 3] Debug for:', p.name, {
+      expecting,
+      hasEfforts,
+      propEffortsLen: propEfforts.length,
+      objEffortsLen: objEfforts.length
+    });
     // Anomaly / Unexpected
     return {
-       ...STATUS_COLORS.gap,
-       label: 'Unexpected (Assigned)',
-       icon: mdiAlertCircle,
-       isWarning: true 
+      ...STATUS_COLORS.gap,
+      label: 'Unexpected (Assigned)',
+      icon: mdiAlertCircle,
+      isWarning: true
     };
   } else if (hasEfforts) {
     return {
@@ -99,7 +97,7 @@ const showDeleteModal = ref(false);
 const showUnsavedChangesModal = ref(false);
 const editingEffort = ref(null);
 const itemToDelete = ref(null);
-const isFormDirty = ref(false); 
+const isFormDirty = ref(false);
 const pendingConfirm = ref(null);
 const pendingCancel = ref(null);
 
@@ -118,7 +116,7 @@ const triggerActionWithCheck = (onConfirm, onCancel = null) => {
 };
 
 const confirmUnsavedChanges = () => {
-  isFormDirty.value = false; 
+  isFormDirty.value = false;
   showUnsavedChangesModal.value = false;
   if (pendingConfirm.value) {
     pendingConfirm.value();
@@ -141,22 +139,27 @@ const currentPage = ref(1);
 const itemsPerPage = 10;
 
 // Reset page when program changes
-watch(() => props.programId, () => {
-  currentPage.value = 1;
-});
+watch(
+  () => props.programId,
+  () => {
+    currentPage.value = 1;
+  }
+);
 
-const totalPages = computed(() => Math.ceil(props.efforts.length / itemsPerPage));
+const totalPages = computed(() =>
+  Math.ceil(props.efforts.length / itemsPerPage)
+);
 
 const displayedEfforts = computed(() => {
   // Slice raw efforts for pagination
-  // Note: This simplistic pagination flattens the view of roots. 
+  // Note: This simplistic pagination flattens the view of roots.
   // If deep hierarchy navigation is desired, we might paginate only roots.
   // For now, based on mock data which is mostly flat list of efforts per program (or shallow tree),
   // we slice the computed roots.
 
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
-  
+
   // We paginate the ROOTS of the tree view
   return effortTree.value.slice(start, end);
 });
@@ -166,18 +169,18 @@ const displayedEfforts = computed(() => {
 const effortTree = computed(() => {
   const map = {};
   const roots = [];
-  
+
   // Shallow copy for tree construction
-  const nodes = props.efforts.map(e => ({ ...e, children: [] }));
-  
+  const nodes = props.efforts.map((e) => ({ ...e, children: [] }));
+
   // Map by UUID (Contract source of truth)
-  nodes.forEach(node => { 
+  nodes.forEach((node) => {
     if (node.uuid) {
-      map[node.uuid] = node; 
+      map[node.uuid] = node;
     }
   });
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     // Use parent_uuid to find parent
     if (node.parent_uuid && map[node.parent_uuid]) {
       map[node.parent_uuid].children.push(node);
@@ -191,7 +194,7 @@ const effortTree = computed(() => {
 const selectedEffort = computed(() => {
   const id = props.selectedId;
   if (!id) return null;
-  
+
   // Recursive helper to find node in tree
   const findInTree = (nodes) => {
     for (const node of nodes) {
@@ -204,7 +207,7 @@ const selectedEffort = computed(() => {
     }
     return null;
   };
-  
+
   const res = findInTree(props.efforts);
   console.log('[SEL] Found effort?', !!res, 'for id:', id);
   return res;
@@ -214,7 +217,7 @@ const selectedEffort = computed(() => {
 const hasDescendant = (node, id) => {
   if (String(node.id) === String(id)) return true;
   if (node.children && node.children.length > 0) {
-    return node.children.some(child => hasDescendant(child, id));
+    return node.children.some((child) => hasDescendant(child, id));
   }
   return false;
 };
@@ -222,54 +225,55 @@ const hasDescendant = (node, id) => {
 const jumpToSelection = (id) => {
   if (!id || !effortTree.value.length) return;
 
-  const rootIndex = effortTree.value.findIndex(root => {
+  const rootIndex = effortTree.value.findIndex((root) => {
     return String(root.id) === String(id) || hasDescendant(root, id);
   });
 
   if (rootIndex !== -1) {
     const page = Math.floor(rootIndex / itemsPerPage) + 1;
     if (currentPage.value !== page) {
-       console.log('[Pagination] Jumping to page:', page, 'for item:', id);
-       currentPage.value = page;
+      console.log('[Pagination] Jumping to page:', page, 'for item:', id);
+      currentPage.value = page;
     }
   }
 };
 
 // Auto-jump when selection changes or data loads
-watch(() => props.selectedId, (newId) => {
-  if (newId) jumpToSelection(newId);
-}, { immediate: true });
+watch(
+  () => props.selectedId,
+  (newId) => {
+    if (newId) jumpToSelection(newId);
+  },
+  { immediate: true }
+);
 
 watch(effortTree, () => {
   if (props.selectedId) jumpToSelection(props.selectedId);
 });
-
 
 // Select tree item
 const handleSelect = (effort) => {
   triggerActionWithCheck(() => {
     // Toggle logic: If already selected, deselect (emit null)
     if (String(props.selectedId) === String(effort.id)) {
-       emit('selection-change', null);
+      emit('selection-change', null);
     } else {
-       emit('selection-change', effort.id);
+      emit('selection-change', effort.id);
     }
   });
 };
 
 const handleCreate = () => {
   triggerActionWithCheck(() => {
-     editingEffort.value = null;
-     showModal.value = true;
+    editingEffort.value = null;
+    showModal.value = true;
   });
 };
-
-
 
 const handleDelete = (effort) => {
   const target = effort || selectedEffort.value;
   if (!target) return;
-  
+
   itemToDelete.value = target;
   showDeleteModal.value = true;
 };
@@ -291,13 +295,18 @@ const store = useProgramCatalogStore();
 
 const confirmDelete = async () => {
   if (itemToDelete.value) {
-    const index = props.efforts.findIndex(e => e.id === itemToDelete.value.id);
+    const index = props.efforts.findIndex(
+      (e) => e.id === itemToDelete.value.id
+    );
     if (index !== -1) {
       const deletedItem = props.efforts[index];
-      
+
       // Call Store's Delete Method (which handles both API and cache update)
-      const res = await store.deleteSoftwareEffort(props.programId, deletedItem.uuid);
-      
+      const res = await store.deleteSoftwareEffort(
+        props.programId,
+        deletedItem.uuid
+      );
+
       if (res.success) {
         // Emit event to parent for any additional UI updates
         emit('effort-deleted', deletedItem.id);
@@ -314,7 +323,7 @@ const confirmDelete = async () => {
   }
   showDeleteModal.value = false;
   itemToDelete.value = null;
-  showModal.value = false; 
+  showModal.value = false;
 };
 
 const saveEffort = async (effortData) => {
@@ -324,29 +333,34 @@ const saveEffort = async (effortData) => {
   const res = await store.saveSoftwareEffort(props.programId, effortData);
 
   if (res.success) {
-     // UI Updates only (State is handled by store)
-     const savedEffort = res.data || effortData;
-     
-     if (isNew) {
-       emit('selection-change', savedEffort.id);
-     }
-     
-     showNotification(isNew ? 'Effort created successfully.' : 'Changes saved successfully.');
-     
-     if (effortFormRef.value) {
-       effortFormRef.value.setClean();
-     }
+    // UI Updates only (State is handled by store)
+    const savedEffort = res.data || effortData;
 
-     showModal.value = false;
-     isFormDirty.value = false;
+    if (isNew) {
+      emit('selection-change', savedEffort.id);
+    }
+
+    showNotification(
+      isNew ? 'Effort created successfully.' : 'Changes saved successfully.'
+    );
+
+    if (effortFormRef.value) {
+      effortFormRef.value.setClean();
+    }
+
+    showModal.value = false;
+    isFormDirty.value = false;
   } else {
-     showNotification(res.message || 'Failed to save changes. Please try again.', 'error');
+    showNotification(
+      res.message || 'Failed to save changes. Please try again.',
+      'error'
+    );
   }
 };
 
 const handleBack = () => {
   triggerActionWithCheck(() => {
-    emit('back'); 
+    emit('back');
   });
 };
 
@@ -378,278 +392,347 @@ const showInfoModal = ref(false);
 const showHelpModal = ref(false);
 
 // ... (previous code) ...
-
 </script>
 
 <template>
- <div class="efforts-view">
-  <div class="header-section">
-   <div class="actions-row">
-     <div class="left-actions">
-       <button class="btn-outlined" @click="handleBack">
-        <BaseIcon :path="mdiArrowLeft" /> Back to Catalog
-       </button>
-     </div>
-     <div class="right-actions">
-       <!-- Info Icon now shows "What is a Software Effort?" -->
-       <button class="btn-icon-tonal" @click="showHelpModal = true" title="What is a Software Effort?">
-         <BaseIcon :path="mdiInformation" />
-       </button>
-       <button class="btn-filled" @click="handleCreate">
-         <BaseIcon :path="mdiPlus" /> New Effort
-       </button>
-     </div>
-   </div>
-   <div class="title-block">
-     <!-- Program Name is now the trigger for Program Info -->
-     <h2 class="page-title">
-      Software Efforts 
-      <button class="program-ref-btn" @click="showInfoModal = true" title="View Program Details">
-        - {{ programName }}
-      </button>
-     </h2>
-     
-   </div>
-  </div>
-
-  <!-- ... (Master Detail Container) ... -->
-  <div class="master-detail-container">
-    <!-- Sidebar: Hierarchical Tree -->
-    <div class="tree-sidebar m3-card outlined">
-      <div class="panel-header">
-        <h3 class="panel-title">Hierarchy</h3>
-        <div v-if="statusConfig.isWarning" 
-           class="sidebar-warning-badge" 
-           :style="{ backgroundColor: statusConfig.bg, color: statusConfig.text }"
-           :title="statusConfig.label">
-          <BaseIcon :path="statusConfig.icon" :size="14" />
-          <span>{{ statusConfig.label }}</span>
+  <div class="efforts-view">
+    <div class="header-section">
+      <div class="actions-row">
+        <div class="left-actions">
+          <button class="btn-outlined" @click="handleBack">
+            <BaseIcon :path="mdiArrowLeft" /> Back to Catalog
+          </button>
+        </div>
+        <div class="right-actions">
+          <!-- Info Icon now shows "What is a Software Effort?" -->
+          <button
+            class="btn-icon-tonal"
+            @click="showHelpModal = true"
+            title="What is a Software Effort?"
+          >
+            <BaseIcon :path="mdiInformation" />
+          </button>
+          <button class="btn-filled" @click="handleCreate">
+            <BaseIcon :path="mdiPlus" /> New Effort
+          </button>
         </div>
       </div>
-      <div class="tree-content">
-        <SoftwareEffortTreeItem 
-          v-for="rootNode in displayedEfforts" 
-          :key="rootNode.id" 
-          :effort="rootNode" 
-          :selected-id="selectedId"
-          @select="handleSelect"
-        />
-        <div v-if="efforts.length === 0" class="empty-tree">
-          No efforts found.
-        </div>
-      </div>
-      
-      <!-- Pagination Controls -->
-      <div v-if="efforts.length > itemsPerPage" class="pagination-controls">
-        <button 
-          class="page-btn" 
-          :disabled="currentPage === 1" 
-          @click="currentPage--"
-        >
-          <BaseIcon :path="mdiChevronLeft" />
-        </button>
-        <span class="page-info">
-          {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, efforts.length) }} of {{ efforts.length }}
-        </span>
-        <button 
-          class="page-btn" 
-          :disabled="currentPage === totalPages" 
-          @click="currentPage++"
-        >
-          <BaseIcon :path="mdiChevronRight" />
-        </button>
+      <div class="title-block">
+        <!-- Program Name is now the trigger for Program Info -->
+        <h2 class="page-title">
+          Software Efforts
+          <button
+            class="program-ref-btn"
+            @click="showInfoModal = true"
+            title="View Program Details"
+          >
+            - {{ programName }}
+          </button>
+        </h2>
       </div>
     </div>
 
-    <!-- Main Panel: Detail View -->
-    <main class="detail-panel m3-card elevated">
-      <div v-if="selectedEffort" class="detail-content-wrapper">
-         <SoftwareEffortForm
-          ref="effortFormRef"
-          :key="selectedEffort.id"
-          :effort="selectedEffort"
-          :available-parents="efforts"
-          :is-edit="true"
-          @save="saveEffort"
-          @delete="handleDelete"
-          @dirty-change="handleDirtyChange"
-          @revert="handleRevertRequest"
-          @validation-error="(msg) => showNotification(msg, 'error')"
-         />
-      </div>
-      
-      <div v-else class="empty-detail">
-        <span class="icon"><BaseIcon :path="mdiHandPointingLeft" :size="48" /></span>
-        <p>Select a Software Effort from the hierarchy to view or edit details.</p>
-      </div>
-    </main>
-  </div>
-
-  <!-- Help Modal -->
-  <div v-if="showHelpModal" class="modal-overlay" @click.self="showHelpModal = false">
-    <div class="info-modal-card m3-card elevated help-modal">
-      <div class="info-header">
-        <div class="header-text">
-          <span class="overline">Contextual Help</span>
-          <h2>What is a Software Effort?</h2>
-        </div>
-        <button class="btn-icon" @click="showHelpModal = false">
-          <BaseIcon :path="mdiClose" />
-        </button>
-      </div>
-      <div class="info-body">
-        <p class="help-text-large">
-          A <strong>Software Effort</strong> serves as the central hub for any distinct unit of software development. Whether you are managing a <strong>Software Team</strong>, delivering a specific <strong>Product</strong>, building a reusable <strong>Component (CSCI)</strong>, or executing a time-bound <strong>Project</strong>, a Software Effort encapsulates all the necessary governance, resources, and technical configurations in one place.
-        </p>
-        <div class="help-grid">
-          <div class="help-item">
-            <BaseIcon :path="mdiCube" :size="20" />
-            <div class="content">
-              <h4>Encapsulation</h4>
-              <p>It encapsulates the code, its lifecycle, compliance data, and governance in one object.</p>
-            </div>
-          </div>
-          <div class="help-item">
-            <BaseIcon :path="mdiSitemap" :size="20" />
-            <div class="content">
-              <h4>Hierarchy</h4>
-              <p>Efforts can be nested (e.g., a 'Platform' containing multiple 'Services') to model complex systems.</p>
-            </div>
-          </div>
-          <div class="help-item">
-            <BaseIcon :path="mdiClipboardCheck" :size="20" />
-            <div class="content">
-              <h4>Governance</h4>
-              <p>Track Statements of Work, Security Focals, and Developer Setup requirements centrally.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="info-footer">
-        <button class="btn-filled" @click="showHelpModal = false">Got it</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Program Info Modal -->
-  <div v-if="showInfoModal" class="modal-overlay" @click.self="showInfoModal = false">
-    <div class="info-modal-card m3-card elevated">
-      <div class="info-header">
-        <div class="header-text">
-          <span class="overline">Program Details</span>
-          <h2>{{ programName }}</h2>
-          <!-- Status Pill (Moved here) -->
-          <div class="status-pill small" :class="statusConfig.id" style="margin-top: 8px; display: inline-flex;">
-            <BaseIcon :path="statusConfig.icon" :size="16" />
+    <!-- ... (Master Detail Container) ... -->
+    <div class="master-detail-container">
+      <!-- Sidebar: Hierarchical Tree -->
+      <div class="tree-sidebar m3-card outlined">
+        <div class="panel-header">
+          <h3 class="panel-title">Hierarchy</h3>
+          <div
+            v-if="statusConfig.isWarning"
+            class="sidebar-warning-badge"
+            :style="{
+              backgroundColor: statusConfig.bg,
+              color: statusConfig.text
+            }"
+            :title="statusConfig.label"
+          >
+            <BaseIcon :path="statusConfig.icon" :size="14" />
             <span>{{ statusConfig.label }}</span>
           </div>
         </div>
-        <button class="btn-icon" @click="showInfoModal = false">
-          <BaseIcon :path="mdiClose" />
-        </button>
-      </div>
-      <div class="info-body">
-        <div class="info-grid">
-          <div class="info-item">
-            <label>Program ID</label>
-            <div class="value code">{{ program.value || programId }}</div>
-          </div>
-          
-          <div class="info-item">
-            <label>Program Leader</label>
-            <div class="value">{{ program.organization_leader_name || 'N/A' }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Chief Engineer</label>
-            <div class="value">{{ program.chief_engineer_name || 'N/A' }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Program Value</label>
-            <div class="value">{{ program.program_value || 'N/A' }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Primary Location</label>
-            <div class="value">{{ program.primary_location || 'N/A' }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Type</label>
-            <div class="value">{{ program.program_type || 'N/A' }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Expects Software Efforts</label>
-            <div class="value">{{ program.expecting_software_efforts ? 'Yes' : 'No' }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Has Descendant with Efforts</label>
-            <div class="value">{{ program.has_descendant_expecting_software_effort ? 'Yes' : 'No' }}</div>
+        <div class="tree-content">
+          <SoftwareEffortTreeItem
+            v-for="rootNode in displayedEfforts"
+            :key="rootNode.id"
+            :effort="rootNode"
+            :selected-id="selectedId"
+            @select="handleSelect"
+          />
+          <div v-if="efforts.length === 0" class="empty-tree">
+            No efforts found.
           </div>
         </div>
-        
-        <div class="info-stats m3-card outlined">
-          <div class="stat">
-            <span class="stat-num">{{ efforts.length }}</span>
-            <span class="stat-label">Software Efforts</span>
-          </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="efforts.length > itemsPerPage" class="pagination-controls">
+          <button
+            class="page-btn"
+            :disabled="currentPage === 1"
+            @click="currentPage--"
+          >
+            <BaseIcon :path="mdiChevronLeft" />
+          </button>
+          <span class="page-info">
+            {{ (currentPage - 1) * itemsPerPage + 1 }} -
+            {{ Math.min(currentPage * itemsPerPage, efforts.length) }} of
+            {{ efforts.length }}
+          </span>
+          <button
+            class="page-btn"
+            :disabled="currentPage === totalPages"
+            @click="currentPage++"
+          >
+            <BaseIcon :path="mdiChevronRight" />
+          </button>
         </div>
       </div>
-      <div class="info-footer">
-        <button class="btn-filled" @click="showInfoModal = false">Close</button>
+
+      <!-- Main Panel: Detail View -->
+      <main class="detail-panel m3-card elevated">
+        <div v-if="selectedEffort" class="detail-content-wrapper">
+          <SoftwareEffortForm
+            ref="effortFormRef"
+            :key="selectedEffort.id"
+            :effort="selectedEffort"
+            :available-parents="efforts"
+            :is-edit="true"
+            @save="saveEffort"
+            @delete="handleDelete"
+            @dirty-change="handleDirtyChange"
+            @revert="handleRevertRequest"
+            @validation-error="(msg) => showNotification(msg, 'error')"
+          />
+        </div>
+
+        <div v-else class="empty-detail">
+          <span class="icon"
+            ><BaseIcon :path="mdiHandPointingLeft" :size="48"
+          /></span>
+          <p>
+            Select a Software Effort from the hierarchy to view or edit details.
+          </p>
+        </div>
+      </main>
+    </div>
+
+    <!-- Help Modal -->
+    <div
+      v-if="showHelpModal"
+      class="modal-overlay"
+      @click.self="showHelpModal = false"
+    >
+      <div class="info-modal-card m3-card elevated help-modal">
+        <div class="info-header">
+          <div class="header-text">
+            <span class="overline">Contextual Help</span>
+            <h2>What is a Software Effort?</h2>
+          </div>
+          <button class="btn-icon" @click="showHelpModal = false">
+            <BaseIcon :path="mdiClose" />
+          </button>
+        </div>
+        <div class="info-body">
+          <p class="help-text-large">
+            A <strong>Software Effort</strong> serves as the central hub for any
+            distinct unit of software development. Whether you are managing a
+            <strong>Software Team</strong>, delivering a specific
+            <strong>Product</strong>, building a reusable
+            <strong>Component (CSCI)</strong>, or executing a time-bound
+            <strong>Project</strong>, a Software Effort encapsulates all the
+            necessary governance, resources, and technical configurations in one
+            place.
+          </p>
+          <div class="help-grid">
+            <div class="help-item">
+              <BaseIcon :path="mdiCube" :size="20" />
+              <div class="content">
+                <h4>Encapsulation</h4>
+                <p>
+                  It encapsulates the code, its lifecycle, compliance data, and
+                  governance in one object.
+                </p>
+              </div>
+            </div>
+            <div class="help-item">
+              <BaseIcon :path="mdiSitemap" :size="20" />
+              <div class="content">
+                <h4>Hierarchy</h4>
+                <p>
+                  Efforts can be nested (e.g., a 'Platform' containing multiple
+                  'Services') to model complex systems.
+                </p>
+              </div>
+            </div>
+            <div class="help-item">
+              <BaseIcon :path="mdiClipboardCheck" :size="20" />
+              <div class="content">
+                <h4>Governance</h4>
+                <p>
+                  Track Statements of Work, Security Focals, and Developer Setup
+                  requirements centrally.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="info-footer">
+          <button class="btn-filled" @click="showHelpModal = false">
+            Got it
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ... (Other Modals) ... -->
-  <!-- Modal Overlay (Edit/Create) -->
-  <div v-if="showModal" class="modal-overlay">
-    <div class="modal-card m3-card elevated">
-      <SoftwareEffortForm 
-        :effort="editingEffort || undefined" 
-        :available-parents="efforts"
-        :is-edit="!!editingEffort && !!editingEffort.id"
-        @save="saveEffort"
-        @cancel="showModal = false"
-        @validation-error="(msg) => showNotification(msg, 'error')"
-      />
+    <!-- Program Info Modal -->
+    <div
+      v-if="showInfoModal"
+      class="modal-overlay"
+      @click.self="showInfoModal = false"
+    >
+      <div class="info-modal-card m3-card elevated">
+        <div class="info-header">
+          <div class="header-text">
+            <span class="overline">Program Details</span>
+            <h2>{{ programName }}</h2>
+            <!-- Status Pill (Moved here) -->
+            <div
+              class="status-pill small"
+              :class="statusConfig.id"
+              style="margin-top: 8px; display: inline-flex"
+            >
+              <BaseIcon :path="statusConfig.icon" :size="16" />
+              <span>{{ statusConfig.label }}</span>
+            </div>
+          </div>
+          <button class="btn-icon" @click="showInfoModal = false">
+            <BaseIcon :path="mdiClose" />
+          </button>
+        </div>
+        <div class="info-body">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Program ID</label>
+              <div class="value code">{{ program.value || programId }}</div>
+            </div>
+
+            <div class="info-item">
+              <label>Program Leader</label>
+              <div class="value">
+                {{ program.organization_leader_name || 'N/A' }}
+              </div>
+            </div>
+
+            <div class="info-item">
+              <label>Chief Engineer</label>
+              <div class="value">
+                {{ program.chief_engineer_name || 'N/A' }}
+              </div>
+            </div>
+
+            <div class="info-item">
+              <label>Program Value</label>
+              <div class="value">{{ program.program_value || 'N/A' }}</div>
+            </div>
+
+            <div class="info-item">
+              <label>Primary Location</label>
+              <div class="value">{{ program.primary_location || 'N/A' }}</div>
+            </div>
+
+            <div class="info-item">
+              <label>Type</label>
+              <div class="value">{{ program.program_type || 'N/A' }}</div>
+            </div>
+
+            <div class="info-item">
+              <label>Expects Software Efforts</label>
+              <div class="value">
+                {{ program.expecting_software_efforts ? 'Yes' : 'No' }}
+              </div>
+            </div>
+
+            <div class="info-item">
+              <label>Has Descendant with Efforts</label>
+              <div class="value">
+                {{
+                  program.has_descendant_expecting_software_effort
+                    ? 'Yes'
+                    : 'No'
+                }}
+              </div>
+            </div>
+          </div>
+
+          <div class="info-stats m3-card outlined">
+            <div class="stat">
+              <span class="stat-num">{{ efforts.length }}</span>
+              <span class="stat-label">Software Efforts</span>
+            </div>
+          </div>
+        </div>
+        <div class="info-footer">
+          <button class="btn-filled" @click="showInfoModal = false">
+            Close
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Unsaved Changes Confirmation -->
-  <ConfirmationModal
-    v-if="showUnsavedChangesModal"
-    title="Unsaved Changes"
-    message="You have unsaved changes. Are you sure you want to leave? Your changes will be lost."
-    confirm-label="Discard Changes"
-    cancel-label="Keep Editing"
-    :is-danger="true"
-    @confirm="confirmUnsavedChanges"
-    @cancel="cancelUnsavedChanges"
-  />
-
-  <!-- Delete Confirmation -->
-  <ConfirmationModal
-    v-if="showDeleteModal"
-    :title="'Delete Effort?'"
-    :message="`Are you sure you want to delete '${itemToDelete?.name}'? This action cannot be undone.`"
-    confirm-label="Delete"
-    :is-danger="true"
-    @confirm="confirmDelete"
-    @cancel="showDeleteModal = false"
-  />
-
-  <!-- Notification Toast -->
-  <transition name="toast-slide">
-    <div v-if="notification.show" class="notification-toast" :class="notification.type">
-      <BaseIcon :path="notification.type === 'success' ? mdiCheckCircle : mdiAlertCircle" />
-      <span>{{ notification.message }}</span>
+    <!-- ... (Other Modals) ... -->
+    <!-- Modal Overlay (Edit/Create) -->
+    <div v-if="showModal" class="modal-overlay">
+      <div class="modal-card m3-card elevated">
+        <SoftwareEffortForm
+          :effort="editingEffort || undefined"
+          :available-parents="efforts"
+          :is-edit="!!editingEffort && !!editingEffort.id"
+          @save="saveEffort"
+          @cancel="showModal = false"
+          @validation-error="(msg) => showNotification(msg, 'error')"
+        />
+      </div>
     </div>
-  </transition>
- </div>
+
+    <!-- Unsaved Changes Confirmation -->
+    <ConfirmationModal
+      v-if="showUnsavedChangesModal"
+      title="Unsaved Changes"
+      message="You have unsaved changes. Are you sure you want to leave? Your changes will be lost."
+      confirm-label="Discard Changes"
+      cancel-label="Keep Editing"
+      :is-danger="true"
+      @confirm="confirmUnsavedChanges"
+      @cancel="cancelUnsavedChanges"
+    />
+
+    <!-- Delete Confirmation -->
+    <ConfirmationModal
+      v-if="showDeleteModal"
+      :title="'Delete Effort?'"
+      :message="`Are you sure you want to delete '${itemToDelete?.name}'? This action cannot be undone.`"
+      confirm-label="Delete"
+      :is-danger="true"
+      @confirm="confirmDelete"
+      @cancel="showDeleteModal = false"
+    />
+
+    <!-- Notification Toast -->
+    <transition name="toast-slide">
+      <div
+        v-if="notification.show"
+        class="notification-toast"
+        :class="notification.type"
+      >
+        <BaseIcon
+          :path="
+            notification.type === 'success' ? mdiCheckCircle : mdiAlertCircle
+          "
+        />
+        <span>{{ notification.message }}</span>
+      </div>
+    </transition>
+  </div>
 </template>
 
 <style scoped>
@@ -660,13 +743,13 @@ const showHelpModal = ref(false);
   left: 50%;
   transform: translateX(-50%);
   background: #313033; /* inverse-surface */
-  color: #F4EFF4; /* inverse-on-surface */
+  color: #f4eff4; /* inverse-on-surface */
   padding: 12px 24px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 12px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
   z-index: 2000;
   font-size: 14px;
   font-weight: 500;
@@ -680,8 +763,8 @@ const showHelpModal = ref(false);
 }
 
 .notification-toast.error {
-  background: #BA1A1A; /* error */
-  color: #FFFFFF; /* on-error */
+  background: #ba1a1a; /* error */
+  color: #ffffff; /* on-error */
 }
 
 .toast-slide-enter-active,
@@ -697,13 +780,13 @@ const showHelpModal = ref(false);
 
 /* Existing styles */
 .efforts-view {
- padding: 1rem;
- height: 100%;
- display: flex;
- flex-direction: column;
- background-color: #FEF7FF; /* surface */
- box-sizing: border-box;
- overflow: hidden;
+  padding: 1rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #fef7ff; /* surface */
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .header-section {
@@ -724,9 +807,8 @@ const showHelpModal = ref(false);
 .page-title {
   margin: 0;
   font-size: 24px;
-  color: #1D1B20; /* on-surface */
+  color: #1d1b20; /* on-surface */
 }
-
 
 .program-ref-btn {
   background: transparent;
@@ -734,7 +816,7 @@ const showHelpModal = ref(false);
   font-size: inherit;
   font-weight: 300;
   font-family: inherit;
-  color: #005AC1; /* primary */
+  color: #005ac1; /* primary */
   cursor: pointer;
   padding: 0 4px;
   border-radius: 4px;
@@ -744,8 +826,8 @@ const showHelpModal = ref(false);
 }
 
 .program-ref-btn:hover {
-  background: #ECE6F0; /* surface-container-high */
-  text-decoration-color: #005AC1; /* primary */
+  background: #ece6f0; /* surface-container-high */
+  text-decoration-color: #005ac1; /* primary */
 }
 
 .master-detail-container {
@@ -760,7 +842,7 @@ const showHelpModal = ref(false);
   width: 320px;
   display: flex;
   flex-direction: column;
-  background: #F7F2FA; /* surface-container-low */
+  background: #f7f2fa; /* surface-container-low */
   border-radius: 12px;
   overflow: hidden;
 }
@@ -770,15 +852,15 @@ const showHelpModal = ref(false);
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  border-bottom: 1px solid #C4C7C5; /* outline-variant */
-  background: #F7F2FA; /* surface-container-low */
+  border-bottom: 1px solid #c4c7c5; /* outline-variant */
+  background: #f7f2fa; /* surface-container-low */
 }
 
 .panel-title {
   margin: 0;
   font-size: 14px;
   text-transform: uppercase;
-  color: #625B71; /* secondary */
+  color: #625b71; /* secondary */
 }
 
 .sidebar-warning-badge {
@@ -800,14 +882,14 @@ const showHelpModal = ref(false);
 .empty-tree {
   padding: 2rem;
   text-align: center;
-  color: #625B71; /* secondary */
+  color: #625b71; /* secondary */
   font-size: 14px;
 }
 
 /* Detail Panel */
 .detail-panel {
   flex: 1;
-  background: #FEF7FF; /* surface */
+  background: #fef7ff; /* surface */
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -826,13 +908,13 @@ const showHelpModal = ref(false);
   align-items: flex-start;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #C4C7C5; /* outline-variant */
+  border-bottom: 1px solid #c4c7c5; /* outline-variant */
 }
 
 .detail-header h1 {
   margin: 0.5rem 0 0.25rem 0;
   font-size: 32px;
-  color: #1D1B20; /* on-surface */
+  color: #1d1b20; /* on-surface */
 }
 
 .badges {
@@ -844,7 +926,7 @@ const showHelpModal = ref(false);
 .type-badge {
   font-size: 11px;
   text-transform: uppercase;
-  background: #ECE6F0; /* surface-container-high */
+  background: #ece6f0; /* surface-container-high */
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 600;
@@ -854,13 +936,13 @@ const showHelpModal = ref(false);
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 12px;
-  background: #D8E2FF; /* primary-container */
-  color: #001D35; /* on-primary-container */
+  background: #d8e2ff; /* primary-container */
+  color: #001d35; /* on-primary-container */
 }
 
 .id-ref {
   font-family: monospace;
-  color: #625B71; /* secondary */
+  color: #625b71; /* secondary */
   font-size: 12px;
 }
 
@@ -873,13 +955,13 @@ const showHelpModal = ref(false);
 .detail-section h3 {
   font-size: 16px;
   font-weight: 500;
-  color: #005AC1; /* primary */
+  color: #005ac1; /* primary */
   margin: 0 0 0.75rem 0;
 }
 
 .detail-section p {
   margin: 0;
-  color: #49454F; /* on-surface-variant */
+  color: #49454f; /* on-surface-variant */
   line-height: 1.5;
 }
 
@@ -892,8 +974,8 @@ const showHelpModal = ref(false);
 .inherited-pill {
   display: inline-block;
   font-size: 12px;
-  color: #625B71; /* secondary */
-  background: rgba(0,0,0,0.05);
+  color: #625b71; /* secondary */
+  background: rgba(0, 0, 0, 0.05);
   padding: 4px 12px;
   border-radius: 16px;
   font-style: italic;
@@ -905,7 +987,7 @@ const showHelpModal = ref(false);
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #625B71; /* secondary */
+  color: #625b71; /* secondary */
 }
 
 .empty-detail .icon {
@@ -944,7 +1026,7 @@ const showHelpModal = ref(false);
 
 .status-pill.active {
   background: v-bind('STATUS_COLORS.active.bg');
-  color: white; 
+  color: white;
 }
 
 .status-pill.neutral {
@@ -968,15 +1050,16 @@ const showHelpModal = ref(false);
 }
 
 /* Actions */
-.right-actions, .left-actions {
+.right-actions,
+.left-actions {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
 
 .btn-icon-tonal {
-  background: #DBE2F9; /* secondary-container */
-  color: #1D192B; /* on-secondary-container */
+  background: #dbe2f9; /* secondary-container */
+  color: #1d192b; /* on-secondary-container */
   border: none;
   width: 40px;
   height: 40px;
@@ -996,7 +1079,7 @@ const showHelpModal = ref(false);
 .btn-icon {
   background: transparent;
   border: none;
-  color: #1D1B20; /* on-surface */
+  color: #1d1b20; /* on-surface */
   cursor: pointer;
   font-size: 1.2rem;
   padding: 8px;
@@ -1004,19 +1087,21 @@ const showHelpModal = ref(false);
 }
 
 .btn-icon:hover {
-  background: #ECE6F0; /* surface-container-high */
+  background: #ece6f0; /* surface-container-high */
 }
 
 /* Info Modal */
 .info-modal-card {
   width: 600px;
   max-width: 90vw;
-  background: #FEF7FF; /* surface */
+  background: #fef7ff; /* surface */
   border-radius: 28px; /* M3 Standard */
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 8px 3px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.3); /* Elevation 3 */
+  box-shadow:
+    0 4px 8px 3px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.3); /* Elevation 3 */
 }
 
 .info-header {
@@ -1031,7 +1116,7 @@ const showHelpModal = ref(false);
   margin: 0;
   font-size: 24px;
   line-height: 32px;
-  color: #1D1B20; /* on-surface */
+  color: #1d1b20; /* on-surface */
 }
 
 .overline {
@@ -1039,7 +1124,7 @@ const showHelpModal = ref(false);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #005AC1; /* primary */
+  color: #005ac1; /* primary */
   font-weight: 500;
   margin-bottom: 8px;
 }
@@ -1052,7 +1137,7 @@ const showHelpModal = ref(false);
 .help-text-large {
   font-size: 16px;
   line-height: 1.6;
-  color: #1D1B20; /* on-surface */
+  color: #1d1b20; /* on-surface */
   margin-bottom: 2rem;
 }
 
@@ -1071,20 +1156,20 @@ const showHelpModal = ref(false);
 
 .help-item i {
   font-size: 20px;
-  color: #005AC1; /* primary */
+  color: #005ac1; /* primary */
   margin-top: 2px;
 }
 
 .help-item h4 {
   margin: 0 0 0.25rem 0;
   font-size: 14px;
-  color: #1D1B20; /* on-surface */
+  color: #1d1b20; /* on-surface */
 }
 
 .help-item p {
   margin: 0;
   font-size: 13px;
-  color: #49454F; /* on-surface-variant */
+  color: #49454f; /* on-surface-variant */
   line-height: 1.4;
 }
 
@@ -1094,7 +1179,6 @@ const showHelpModal = ref(false);
   justify-content: flex-end;
   gap: 8px;
 }
-
 
 .info-grid {
   display: grid;
@@ -1106,20 +1190,20 @@ const showHelpModal = ref(false);
 .info-item label {
   display: block;
   font-size: 12px;
-  color: #625B71; /* secondary */
+  color: #625b71; /* secondary */
   margin-bottom: 4px;
 }
 
 .info-item .value {
   font-size: 16px;
-  color: #1D1B20; /* on-surface */
+  color: #1d1b20; /* on-surface */
   font-weight: 400;
 }
 
 .info-item .value.code {
   font-family: monospace;
   font-size: 14px;
-  background: #ECE6F0; /* surface-container-high */
+  background: #ece6f0; /* surface-container-high */
   padding: 2px 6px;
   border-radius: 4px;
   display: inline-block;
@@ -1129,7 +1213,7 @@ const showHelpModal = ref(false);
   display: flex;
   justify-content: space-around;
   padding: 1rem;
-  background: #F7F2FA; /* surface-container-low */
+  background: #f7f2fa; /* surface-container-low */
   border-radius: 12px;
 }
 
@@ -1142,21 +1226,21 @@ const showHelpModal = ref(false);
 .stat-num {
   font-size: 24px;
   font-weight: 700;
-  color: #005AC1; /* primary */
+  color: #005ac1; /* primary */
 }
 
 .stat-label {
   font-size: 12px;
-  color: #625B71; /* secondary */
+  color: #625b71; /* secondary */
   text-transform: uppercase;
 }
 
 .info-footer {
   padding: 1rem 1.5rem;
-  border-top: 1px solid #C4C7C5; /* outline-variant */
+  border-top: 1px solid #c4c7c5; /* outline-variant */
   display: flex;
   justify-content: flex-end;
-  background: #F7F2FA; /* surface-container-low */
+  background: #f7f2fa; /* surface-container-low */
 }
 
 .modal-card {
@@ -1171,7 +1255,7 @@ const showHelpModal = ref(false);
 .empty-tree {
   padding: 2rem;
   text-align: center;
-  color: #625B71; /* secondary */
+  color: #625b71; /* secondary */
   font-style: italic;
   font-size: 14px;
 }
@@ -1181,14 +1265,14 @@ const showHelpModal = ref(false);
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-top: 1px solid #C4C7C5; /* outline-variant */
-  background: #F7F2FA; /* surface-container-low */
+  border-top: 1px solid #c4c7c5; /* outline-variant */
+  background: #f7f2fa; /* surface-container-low */
 }
 
 .page-btn {
   background: transparent;
   border: none;
-  color: #1D1B20; /* on-surface */
+  color: #1d1b20; /* on-surface */
   cursor: pointer;
   padding: 8px;
   border-radius: 50%;
@@ -1199,7 +1283,7 @@ const showHelpModal = ref(false);
 }
 
 .page-btn:hover:not(:disabled) {
-  background: #ECE6F0; /* surface-container-high */
+  background: #ece6f0; /* surface-container-high */
 }
 
 .page-btn:disabled {
@@ -1209,7 +1293,7 @@ const showHelpModal = ref(false);
 
 .page-info {
   font-size: 12px;
-  color: #625B71; /* secondary */
+  color: #625b71; /* secondary */
   font-variant-numeric: tabular-nums;
 }
 </style>

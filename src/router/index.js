@@ -18,25 +18,27 @@ const permissionCache = new Map();
  If it fails or returns bad data, we just leave the user as null.
 */
 async function fetchCurrentUser() {
-  console.log("[Router] fetchCurrentUser started...");
+  console.log('[Router] fetchCurrentUser started...');
   try {
     const resp = await CompassAPIService.getCurrentUser();
-    console.log("[Router] CompassAPIService.getCurrentUser response:", resp);
+    console.log('[Router] CompassAPIService.getCurrentUser response:', resp);
 
     if (resp && resp.success) {
       currentUserRef.value = resp.data;
-      console.log("[Router] currentUserRef set to:", currentUserRef.value);
+      console.log('[Router] currentUserRef set to:', currentUserRef.value);
     } else {
       currentUserRef.value = resp ? resp.data : null;
-      console.warn("[Router] getCurrentUser returned success:false or no data", resp);
+      console.warn(
+        '[Router] getCurrentUser returned success:false or no data',
+        resp
+      );
     }
   } catch (err) {
-    console.error("[Router] Error fetching current user:", err);
+    console.error('[Router] Error fetching current user:', err);
     currentUserRef.value = null;
     throw err;
   }
 }
-
 
 /* 
  Central place to decide if a user has "Write" access.
@@ -76,7 +78,7 @@ export function evaluateDashboardAccess(user) {
  spam the login check on every route change.
 */
 async function checkPermission() {
-  const cacheKey = "global_write_access";
+  const cacheKey = 'global_write_access';
   if (permissionCache.has(cacheKey)) return permissionCache.get(cacheKey);
 
   if (currentUserRef.value === null) {
@@ -119,9 +121,9 @@ const routes = [
   },
   // Catch-all: redirect unknown routes to ProgramTree
   {
-    path: "/:pathMatch(.*)*",
-    redirect: { name: "ProgramTree" },
-  },
+    path: '/:pathMatch(.*)*',
+    redirect: { name: 'ProgramTree' }
+  }
 ];
 
 const router = createRouter({
@@ -138,7 +140,7 @@ router.beforeEach(async (to, from, next) => {
 
   // If we're here, we need to check permissions, so make sure user data is loaded
   if (currentUserRef.value === null) {
-    // This might be redundant if fetchCurrentUser() already started, 
+    // This might be redundant if fetchCurrentUser() already started,
     // but we await it here to be safe.
     await fetchCurrentUser();
   }
@@ -150,20 +152,20 @@ router.beforeEach(async (to, from, next) => {
     if (requiresAuth) {
       // Using our cached check logic is fine here
       const allowed = await checkPermission();
-      if (!allowed) return next({ name: "PermissionDenied" });
+      if (!allowed) return next({ name: 'PermissionDenied' });
     }
 
     // 2. Check Dashboard Access (Strict: Admin/Staff only)
     if (requiresDashboard) {
       const hasDashboardAccess = evaluateDashboardAccess(user);
-      if (!hasDashboardAccess) return next({ name: "PermissionDenied" });
+      if (!hasDashboardAccess) return next({ name: 'PermissionDenied' });
     }
 
     return next();
   } catch (err) {
     // on fetch/network errors, block access for safety
-    console.error("Permission check failed:", err);
-    return next({ name: "PermissionDenied" });
+    console.error('Permission check failed:', err);
+    return next({ name: 'PermissionDenied' });
   }
 });
 
