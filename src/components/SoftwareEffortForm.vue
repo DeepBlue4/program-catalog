@@ -4,6 +4,19 @@ import { useProgramCatalogStore } from '../store/programCatalogStore'; // Import
 import BaseIcon from '../components/BaseIcon.vue';
 import MultiSelectDropdown from './MultiSelectDropdown.vue';
 import EmailAutocomplete from './EmailAutocomplete.vue';
+import { locationOptionsAlphabetized } from '../store/boeingLocations';
+import {
+  PROGRAM_PHASES,
+  EFFORT_TYPES,
+  SAFETY_LEVELS,
+  SECURITY_CLEARANCES,
+  ENVIRONMENT_OPTIONS,
+  SOURCE_CONTROL_OPTIONS,
+  ISSUE_TRACKING_OPTIONS,
+  LANGUAGE_OPTIONS,
+  OS_OPTIONS,
+  SBOM_OPTIONS
+} from '../store/programConstants';
 import {
  mdiFileSign,
  mdiAccountGroupOutline,
@@ -393,36 +406,7 @@ const handleCancel = () => {
 };
 
 // --- Constants ---
-const PROGRAM_PHASES = ['Design', 'Legacy', 'Production', 'Development', 'N/A'];
-const EFFORT_TYPES = ['System', 'Service', 'Component', 'Application', 'Library', 'Team', 'Other'];
-const SAFETY_LEVELS = ['None', 'DAL A / LOR 1', 'DAL B / LOR 2', 'DAL C / LOR 3', 'DAL D / LOR 4', 'DAL E / LOR 5'];
-const SECURITY_CLEARANCES = ['None', 'Other', 'CUI', 'Secret', 'Top Secret'];
-
-// Developer Setup Options
-const ENVIRONMENT_OPTIONS = ["BSF-Global", "BSF-US", "BSF-Restricted", "BSF-Disconnected", "Boeing Enterprise Network", "On-Premises/Non-BSF", "Customer Environment", "Other"];
-const SOURCE_CONTROL_OPTIONS = ["GitLab", "Bitbucket", "ClearCase", "SVN", "Azure DevOps", "Other"];
-const ISSUE_TRACKING_OPTIONS = ["GitLab", "ClearCase", "Bitbucket", "SVN", "Azure DevOps", "Version One", "Other"];
-const LANGUAGE_OPTIONS = ["Python", "C++", "Java", "Ada", "JavaScript", "C", "Rust", "Other"];
-const OS_OPTIONS = ["Boeing Linux", "Other Linux", "Windows", "Android", "iOS", "VxWorks", "Integrity", "macOS", "Other"];
-const SBOM_OPTIONS = ["Artifactory", "GitLab", "Nexus", "SBOM Studio", "Other"];
-
-const WORK_LOCATION_OPTIONS = [
-  "USA, WA, Seattle",
-  "USA, WA, Everett",
-  "USA, WA, Renton",
-  "USA, MO, St. Louis",
-  "USA, SC, North Charleston",
-  "USA, CA, Long Beach",
-  "USA, TX, Plano",
-  "USA, VA, Arlington",
-  "USA, AL, Huntsville",
-  "USA, AZ, Mesa",
-  "Canada, BC, Vancouver",
-  "Canada, ON, Ottawa",
-  "UK, London, London",
-  "Australia, QLD, Brisbane",
-  "India, KA, Bengaluru"
-];
+const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
 
 </script>
 

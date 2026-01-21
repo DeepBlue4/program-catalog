@@ -2,7 +2,7 @@
 import { watch, ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import OrgChart from '../components/OrgChart.vue';
-import Legend from '../components/Legend.vue';
+import OrgLegend from '../components/OrgLegend.vue';
 import BaseIcon from '../components/BaseIcon.vue';
 import { mdiRefresh } from '@mdi/js';
 import { useProgramData } from '../composables/useProgramData.js';
@@ -133,7 +133,7 @@ const handleReset = () => {
       No program data available.
     </div>
     <div class="legend-wrapper">
-      <Legend />
+      <OrgLegend />
     </div>
   </div>
  </div>
