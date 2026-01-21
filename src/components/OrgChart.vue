@@ -18,22 +18,12 @@ const emit = defineEmits(['node-click']);
 
 const chartRef = ref(null);
 let chartInstance = null;
-const treeData = ref(null);
-
-const cloneData = (data) => {
-    try {
-        return JSON.parse(JSON.stringify(data));
-    } catch (e) {
-        console.error("Failed to clone data", e);
-        return null;
-    }
-};
 
 const initChart = () => {
   if (!chartRef.value) return;
   
   chartInstance = echarts.init(chartRef.value, null, {
-    renderer: 'svg',
+    renderer: 'canvas',
     useDirtyRect: false
   });
 
@@ -54,16 +44,12 @@ const initChart = () => {
   });
 
   // Initial Sync
-  if (props.data) {
-      treeData.value = cloneData(props.data);
-      syncState(treeData.value);
-      
-      // Ensure we expand to the selection if one exists on mount
-      if (props.selectedId) {
-          expandPathToNode(props.selectedId);
-      }
-      updateChart();
+  syncState(props.data);
+  // Ensure we expand to the selection if one exists on mount
+  if (props.selectedId) {
+      expandPathToNode(props.selectedId);
   }
+  updateChart();
 };
 
 const collapsedState = ref(new Map());
@@ -83,7 +69,10 @@ const syncState = (node, depth = 0) => {
 };
 
 const updateChart = () => {
-  if (!chartInstance || !treeData.value) return;
+  if (!chartInstance) return;
+
+  // Sync state ensures we have entries for all nodes
+  syncState(props.data);
 
   // We need to resolve CSS variables to hex for Canvas if necessary, 
   // but ECharts works best with explicit hex for performance or complex strokes.
@@ -199,7 +188,9 @@ const updateChart = () => {
           }
         },
         
-        initialTreeDepth: -1,
+        // Critical Fix: Animation Threshold to prevent artifacts
+        animationThreshold: 3000, 
+        
         // Disable internal expansion management to prevent conflicts
         expandAndCollapse: false,
         animationDuration: 550,
@@ -221,78 +212,69 @@ const updateChart = () => {
     ]
   };
 
-  // Update visual properties on the persistent treeData object
-  updateNodeVisuals(treeData.value);
+  // Pre-process data to inject styles
+  const recursiveStyle = (node) => {
+      const newNode = { ...node };
+      
+      // M3 Style Mapping
+      if (newNode.softwareEfforts && newNode.softwareEfforts.length > 0) {
+           // 1. Active Efforts
+           const s = STATUS_COLORS.active;
+           newNode.itemStyle = {
+              color: s.fill,
+              borderColor: s.border,
+              borderWidth: 0
+           };
+      } else if (newNode.expecting_software_efforts) {
+           // 2. Expected & No Efforts
+           const s = STATUS_COLORS.gap;
+           newNode.itemStyle = {
+              color: s.fill,
+              borderColor: s.border,
+              borderWidth: 1
+           };
+      } else if (newNode.has_descendant_expecting_software_effort) {
+          // 3. Parent of Effort
+          const s = STATUS_COLORS.parent;
+          newNode.itemStyle = {
+              color: s.fill,
+              borderColor: s.border,
+              borderWidth: 1
+           };
+      } else {
+          // 4. Neutral
+          const s = STATUS_COLORS.neutral;
+           newNode.itemStyle = {
+              color: s.fill, 
+              borderColor: s.border,
+              borderWidth: 1
+          };
+      }
 
-  option.series[0].data = [treeData.value];
+      // Apply Selection Highlight
+      if (props.selectedId && newNode.program_id == props.selectedId) {
+          newNode.itemStyle.shadowBlur = 10;
+          newNode.itemStyle.shadowColor = '#2E7D32'; // Distinct highlight (Green)
+          newNode.itemStyle.borderColor = '#2E7D32';
+          newNode.itemStyle.borderWidth = 3;
+          // Ensure it pops visual (scale if possible, but symbolSize is global in this config usually)
+          newNode.symbolSize = 18; 
+      }
+      
+      // Apply Managed Collapsed State
+      if (collapsedState.value.has(newNode.program_id)) {
+          newNode.collapsed = collapsedState.value.get(newNode.program_id);
+      }
+
+      if (newNode.children) {
+          newNode.children = newNode.children.map(child => recursiveStyle(child));
+      }
+      return newNode;
+  };
+
+  option.series[0].data = [recursiveStyle(props.data)];
 
   chartInstance.setOption(option);
-};
-
-const updateNodeVisuals = (node) => {
-    if (!node) return;
-
-    // M3 Style Mapping
-    if (node.softwareEfforts && node.softwareEfforts.length > 0) {
-         // 1. Active Efforts
-         const s = STATUS_COLORS.active;
-         node.itemStyle = {
-            color: s.fill,
-            borderColor: s.border,
-            borderWidth: 0
-         };
-    } else if (node.expecting_software_efforts) {
-         // 2. Expected & No Efforts
-         const s = STATUS_COLORS.gap;
-         node.itemStyle = {
-            color: s.fill,
-            borderColor: s.border,
-            borderWidth: 1
-         };
-    } else if (node.has_descendant_expecting_software_effort) {
-        // 3. Parent of Effort
-        const s = STATUS_COLORS.parent;
-        node.itemStyle = {
-            color: s.fill,
-            borderColor: s.border,
-            borderWidth: 1
-         };
-    } else {
-        // 4. Neutral
-        const s = STATUS_COLORS.neutral;
-         node.itemStyle = {
-            color: s.fill, 
-            borderColor: s.border,
-            borderWidth: 1
-        };
-    }
-
-    // Apply Selection Highlight
-    if (props.selectedId && node.program_id == props.selectedId) {
-        node.itemStyle.shadowBlur = 10;
-        node.itemStyle.shadowColor = '#2E7D32'; // Distinct highlight (Green)
-        node.itemStyle.borderColor = '#2E7D32';
-        node.itemStyle.borderWidth = 3;
-        // Ensure it pops visual (scale if possible, but symbolSize is global in this config usually)
-        node.symbolSize = 18; 
-    } else {
-        // Reset defaults if not selected (important for persistent objects)
-        node.symbolSize = 12;
-        if (node.itemStyle.shadowBlur) delete node.itemStyle.shadowBlur;
-        if (node.itemStyle.shadowColor) delete node.itemStyle.shadowColor;
-    }
-    
-    // Explicit ID for ECharts identity tracking
-    node.id = String(node.program_id);
-
-    // Apply Managed Collapsed State
-    if (collapsedState.value.has(node.program_id)) {
-        node.collapsed = collapsedState.value.get(node.program_id);
-    }
-
-    if (node.children) {
-        node.children.forEach(child => updateNodeVisuals(child));
-    }
 };
 
 const handleResize = () => {
@@ -301,7 +283,6 @@ const handleResize = () => {
 
 const expandPathToNode = (targetId) => {
     if (!targetId && targetId !== 0) return;
-    if (!treeData.value) return;
 
     // Helper to find path
     const findPath = (node, path = []) => {
@@ -316,7 +297,7 @@ const expandPathToNode = (targetId) => {
         return null;
     };
 
-    const pathToCheck = findPath(treeData.value);
+    const pathToCheck = findPath(props.data);
     if (pathToCheck) {
         pathToCheck.forEach(id => {
             collapsedState.value.set(id, false); // Expand parent
@@ -324,10 +305,9 @@ const expandPathToNode = (targetId) => {
     }
 };
 
-watch(() => props.data, (newData) => {
-  // Reset state if data structure changes
-  treeData.value = cloneData(newData);
-  syncState(treeData.value);
+watch(() => props.data, () => {
+  // Sync state
+  syncState(props.data);
   // Ensure selection is visible if present
   if (props.selectedId) expandPathToNode(props.selectedId);
   updateChart();
@@ -342,10 +322,7 @@ const resetView = () => {
     // Clear manual expansion state to revert to data defaults
     collapsedState.value.clear();
     // Re-sync with initial data props
-    if (props.data) {
-        treeData.value = cloneData(props.data);
-        syncState(treeData.value);
-    }
+    syncState(props.data);
     // Force chart update
     updateChart();
     // Reset zoom/pan if possible (ECharts instance method)

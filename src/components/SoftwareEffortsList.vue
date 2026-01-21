@@ -296,7 +296,7 @@ const confirmDelete = async () => {
             const deletedItem = props.efforts[index];
             
             // Call Store's Delete Method (which handles both API and cache update)
-            const res = await store.deleteSoftwareEffort(props.programId, deletedItem.id);
+            const res = await store.deleteSoftwareEffort(props.programId, deletedItem.uuid);
             
             if (res.success) {
                 // Emit event to parent for any additional UI updates
