@@ -27,7 +27,8 @@ const programId = computed(() => route.params.programId);
 const currentProgram = computed(() => {
   // Force reactivity on store updates by depending on hydrationVersion
   // This counter is incremented whenever softwareEfforts are mutated
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+  // eslint-disable-next-line
   const _tick = store.hydrationVersion.value;
 
   // If we have a selected node and it matches, use it (updates from store)
@@ -44,7 +45,7 @@ const currentEfforts = computed(() => {
   if (!program) return [];
 
   // Depend on hydrationVersion to trigger re-computation
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const _tick = store.hydrationVersion.value;
 
   // Return a fresh reference to ensure Vue detects changes

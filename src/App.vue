@@ -4,7 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import SearchBox from './components/SearchBox.vue';
 import UserMenu from './components/UserMenu.vue';
 import { useProgramData } from './composables/useProgramData.js';
-import { useProgramCatalogStore } from './store/programCatalogStore';
+
 import BaseIcon from './components/BaseIcon.vue';
 import { mdiChevronDown, mdiSitemap, mdiChevronRight } from '@mdi/js';
 import { STATUS_COLORS } from './styles/statusConstants'; // Import Colors
