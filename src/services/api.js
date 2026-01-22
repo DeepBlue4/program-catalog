@@ -1,7 +1,7 @@
-import { MockApiData } from './mockApiData.js';
+import { MockApiData } from "./mockApiData.js";
 
 export class CompassAPIService {
-  static pathPrefix = '/ui/swe-program-catalog/';
+  static pathPrefix = "/ui/swe-program-catalog/";
   static useTestData = true;
 
   /**
@@ -22,21 +22,21 @@ export class CompassAPIService {
    */
   static getCSRFToken() {
     // Try to get it from the DOM first (standard Django template way)
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]");
     if (csrfToken !== null) {
       return csrfToken.value;
     }
 
     // If we're running locally (not served by Django), we might need to check the cookies.
     // This is mostly a dev-environment workaround.
-    console.warn('CSRF via cookie should be in local development only');
+    console.warn("CSRF via cookie should be in local development only");
     let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
       for (const rawCookie of cookies) {
         const cookie = rawCookie.trim();
         // Simple string match to find the token
-        if (cookie.substring(0, 10) === 'csrftoken' + '=') {
+        if (cookie.substring(0, 10) === "csrftoken" + "=") {
           cookieValue = decodeURIComponent(cookie.substring(10));
           break;
         }
@@ -60,22 +60,22 @@ export class CompassAPIService {
 
     const csrfToken = CompassAPIService.getCSRFToken();
     const response = await fetch(`${CompassAPIService.pathPrefix}${path}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-      body: JSON.stringify(payload)
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+      body: JSON.stringify(payload),
     });
     const data = await response.json();
     if (!response.ok) {
-      console.error('PUT request failed:', response);
+      console.error("PUT request failed:", response);
       return {
         success: false,
-        data
+        data,
       };
     }
 
     return {
       success: true,
-      data
+      data,
     };
   }
 
@@ -91,19 +91,19 @@ export class CompassAPIService {
     try {
       const res = await fetch(endpointPath);
       if (!res.ok) {
-        console.warn('Could not perform GET on path:', endpointPath);
+        console.warn("Could not perform GET on path:", endpointPath);
         return defaultValue;
       }
       const data = await res.json();
       return {
         success: true,
-        data
+        data,
       };
     } catch (err) {
-      console.warn('Error while calling', endpointPath, err);
+      console.warn("Error while calling", endpointPath, err);
       return {
         success: false,
-        data: defaultValue
+        data: defaultValue,
       };
     }
   }
@@ -117,7 +117,7 @@ export class CompassAPIService {
       await MockApiData.simulateLatency(CompassAPIService.useTestData);
       return {
         success: true,
-        data: MockApiData.getMockSoftwareEfforts(hierarchyNodeUUID)
+        data: MockApiData.getMockSoftwareEfforts(hierarchyNodeUUID),
       };
     }
 
@@ -139,14 +139,14 @@ export class CompassAPIService {
       await MockApiData.simulateLatency(CompassAPIService.useTestData);
       console.log(
         `[Mock SAVE] Saving effort for ${hierarchyNodeUUID}:`,
-        effort
+        effort,
       );
 
       // In a real mock scenario with state persistence, we would update the list locally.
       // For now, we return success with the data passed back (mimicking backend echo).
       return {
         success: true,
-        data: effort
+        data: effort,
       };
     }
 
@@ -161,7 +161,7 @@ export class CompassAPIService {
     if (CompassAPIService.useTestData) {
       await MockApiData.simulateLatency(CompassAPIService.useTestData);
       console.log(
-        `[Mock DELETE] Deleting effort ${effortId} from ${hierarchyNodeUUID}`
+        `[Mock DELETE] Deleting effort ${effortId} from ${hierarchyNodeUUID}`,
       );
       return { success: true };
     }
@@ -174,19 +174,19 @@ export class CompassAPIService {
     const csrfToken = CompassAPIService.getCSRFToken();
     try {
       const response = await fetch(`${CompassAPIService.pathPrefix}${path}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken
-        }
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
       });
       if (!response.ok) {
-        console.error('DELETE request failed:', response);
+        console.error("DELETE request failed:", response);
         return { success: false };
       }
       return { success: true };
     } catch (e) {
-      console.error('DELETE request exception:', e);
+      console.error("DELETE request exception:", e);
       return { success: false };
     }
   }
@@ -198,13 +198,13 @@ export class CompassAPIService {
     if (CompassAPIService.useTestData) {
       return {
         success: true,
-        data: MockApiData.getMockProgram(hierarchyNodeUUID)
+        data: MockApiData.getMockProgram(hierarchyNodeUUID),
       };
     }
 
     const data = await CompassAPIService.performGet(
       `enterprise-hierarchy/${hierarchyNodeUUID}`,
-      []
+      [],
     );
     return data;
   }
@@ -217,10 +217,10 @@ export class CompassAPIService {
       await MockApiData.simulateLatency(CompassAPIService.useTestData);
       return {
         success: true,
-        data: MockApiData.generateMockHierarchy()
+        data: MockApiData.generateMockHierarchy(),
       };
     }
-    const data = await CompassAPIService.performGet('enterprise-hierarchy', {});
+    const data = await CompassAPIService.performGet("enterprise-hierarchy", {});
     return data;
   }
 
@@ -231,10 +231,10 @@ export class CompassAPIService {
     if (CompassAPIService.useTestData) {
       return {
         success: true,
-        data: MockApiData.getMockUser()
+        data: MockApiData.getMockUser(),
       };
     }
-    const data = await CompassAPIService.performGet('current-user', {});
+    const data = await CompassAPIService.performGet("current-user", {});
     return data;
   }
 
@@ -245,10 +245,10 @@ export class CompassAPIService {
     if (CompassAPIService.useTestData) {
       return {
         success: true,
-        data: MockApiData.getMockEmails()
+        data: MockApiData.getMockEmails(),
       };
     }
-    const data = await CompassAPIService.performGet('emails', {});
+    const data = await CompassAPIService.performGet("emails", {});
     return data;
   }
 }

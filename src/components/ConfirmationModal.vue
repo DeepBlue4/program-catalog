@@ -2,27 +2,27 @@
 defineProps({
   title: {
     type: String,
-    default: 'Confirm Action'
+    default: "Confirm Action",
   },
   message: {
     type: String,
-    required: true
+    required: true,
   },
   confirmLabel: {
     type: String,
-    default: 'Confirm'
+    default: "Confirm",
   },
   cancelLabel: {
     type: String,
-    default: 'Cancel'
+    default: "Cancel",
   },
   isDanger: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
-defineEmits(['confirm', 'cancel']);
+defineEmits(["confirm", "cancel"]);
 </script>
 
 <template>

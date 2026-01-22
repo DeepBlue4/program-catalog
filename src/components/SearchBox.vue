@@ -1,26 +1,26 @@
 <script setup>
-import { ref, computed } from 'vue';
-import BaseIcon from '../components/BaseIcon.vue';
-import { mdiMagnify } from '@mdi/js';
-import { STATUS_COLORS } from '../styles/statusConstants';
+import { ref, computed } from "vue";
+import BaseIcon from "../components/BaseIcon.vue";
+import { mdiMagnify } from "@mdi/js";
+import { STATUS_COLORS } from "../styles/statusConstants";
 
 const props = defineProps({
   items: {
     type: Array, // Array of node objects { name, value, ... }
-    required: true
-  }
+    required: true,
+  },
 });
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(["select"]);
 
-const query = ref('');
+const query = ref("");
 const isOpen = ref(false);
-const activeFilter = ref('all');
+const activeFilter = ref("all");
 
 const filters = [
-  { label: 'All', value: 'all' },
-  { label: 'Programs', value: 'program' },
-  { label: 'Efforts', value: 'effort' }
+  { label: "All", value: "all" },
+  { label: "Programs", value: "program" },
+  { label: "Efforts", value: "effort" },
 ];
 
 const filteredItems = computed(() => {
@@ -30,9 +30,9 @@ const filteredItems = computed(() => {
   return props.items
     .filter((item) => {
       // 1. Check Filter
-      if (activeFilter.value === 'program' && item.isSoftwareEffort)
+      if (activeFilter.value === "program" && item.isSoftwareEffort)
         return false;
-      if (activeFilter.value === 'effort' && !item.isSoftwareEffort)
+      if (activeFilter.value === "effort" && !item.isSoftwareEffort)
         return false;
 
       // 2. Check Query
@@ -51,7 +51,7 @@ const handleInput = () => {
 const selectItem = (item) => {
   query.value = item.name;
   isOpen.value = false;
-  emit('select', item);
+  emit("select", item);
 };
 
 const handleBlur = () => {
@@ -87,24 +87,24 @@ const getProgramStatusStyle = (item) => {
   return {
     backgroundColor: colors.bg,
     color: colors.text,
-    borderColor: colors.border
+    borderColor: colors.border,
   };
 };
 
 // Helper to get program status label
 const getProgramStatusLabel = (item) => {
-  if (item.isSoftwareEffort) return '';
+  if (item.isSoftwareEffort) return "";
 
   if (item.softwareEfforts && item.softwareEfforts.length > 0) {
-    return 'Software Active';
+    return "Software Active";
   }
   if (item.expecting_software_efforts) {
-    return 'Expected (Missing)';
+    return "Expected (Missing)";
   }
   if (item.has_descendant_expecting_software_effort) {
-    return 'Parent of Effort';
+    return "Parent of Effort";
   }
-  return 'Neutral Program';
+  return "Neutral Program";
 };
 </script>
 
@@ -154,7 +154,7 @@ const getProgramStatusLabel = (item) => {
                 class="item-type-badge"
                 :class="{ program: !item.isSoftwareEffort }"
               >
-                {{ item.isSoftwareEffort ? 'Effort' : 'Program' }}
+                {{ item.isSoftwareEffort ? "Effort" : "Program" }}
               </span>
             </div>
 
@@ -183,11 +183,11 @@ const getProgramStatusLabel = (item) => {
       <div v-else class="no-results">
         No results found for "{{ query }}" in
         {{
-          activeFilter === 'all'
-            ? 'All'
-            : activeFilter === 'program'
-              ? 'Programs'
-              : 'Efforts'
+          activeFilter === "all"
+            ? "All"
+            : activeFilter === "program"
+              ? "Programs"
+              : "Efforts"
         }}.
       </div>
     </div>
@@ -341,7 +341,7 @@ const getProgramStatusLabel = (item) => {
 }
 
 .item-context::before {
-  content: '•';
+  content: "•";
   margin-right: 8px;
   opacity: 0.5;
 }

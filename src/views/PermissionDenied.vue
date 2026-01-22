@@ -1,12 +1,12 @@
 <script setup>
-import { useRouter } from 'vue-router';
-import BaseIcon from '../components/BaseIcon.vue';
-import { mdiShield, mdiLock, mdiHelpCircle, mdiSitemap } from '@mdi/js';
+import { useRouter } from "vue-router";
+import BaseIcon from "../components/BaseIcon.vue";
+import { mdiShield, mdiLock, mdiHelpCircle, mdiSitemap } from "@mdi/js";
 
 const router = useRouter();
 
 const goHome = () => {
-  router.push('/');
+  router.push("/");
 };
 </script>
 

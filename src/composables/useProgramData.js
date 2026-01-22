@@ -1,5 +1,5 @@
-import { ref, computed } from 'vue';
-import { useProgramCatalogStore } from '../store/programCatalogStore';
+import { ref, computed } from "vue";
+import { useProgramCatalogStore } from "../store/programCatalogStore";
 
 // Shared state - store only the selected ID, not the node object
 // This allows the computed to always fetch fresh data from the tree
@@ -10,13 +10,13 @@ export function useProgramData() {
 
   // Trigger fetch if needed
   if (!store.state.items && !store.state.loading) {
-    console.log('[useProgramData] Triggering fetchItems');
+    console.log("[useProgramData] Triggering fetchItems");
     store.fetchItems();
   } else {
     console.log(
-      '[useProgramData] Items available or loading:',
+      "[useProgramData] Items available or loading:",
       !!store.state.items,
-      store.state.loading
+      store.state.loading,
     );
   }
 
@@ -46,7 +46,7 @@ export function useProgramData() {
 
   const chartData = computed(() => {
     // Access hydrationVersion to establish dependency - triggers recompute when hydration completes
-    // eslint-disable-next-line
+    // eslint-disable-next-line no-unused-vars
     const _version = store.hydrationVersion.value;
     return normalizeTree(store.state.items);
   });
@@ -68,7 +68,7 @@ export function useProgramData() {
       ...nodes,
       value: idValue, // Robust ID mapping
       program_id: idValue, // Ensure consistent ID access for App.vue navigation
-      name: nodes.name // Ensure name is present
+      name: nodes.name, // Ensure name is present
     });
 
     if (nodes.children) {
@@ -78,22 +78,22 @@ export function useProgramData() {
     // Include Software Efforts for Search
     if (nodes.softwareEfforts && nodes.softwareEfforts.length > 0) {
       console.log(
-        `[useProgramData] Processing ${nodes.softwareEfforts.length} efforts for ${nodes.name}`
+        `[useProgramData] Processing ${nodes.softwareEfforts.length} efforts for ${nodes.name}`,
       );
       nodes.softwareEfforts.forEach((effort) => {
         const effortValue = effort.id || effort.uuid; // Fallback if ID invalid
         if (!effortValue)
-          console.warn('[useProgramData] Effort missing ID/UUID:', effort);
+          console.warn("[useProgramData] Effort missing ID/UUID:", effort);
 
         acc.push({
           name: effort.name,
           value: effortValue,
           program_id: effortValue, // Ensure App.vue can read this for navigation
           id: effortValue,
-          type: 'Software Effort',
+          type: "Software Effort",
           isSoftwareEffort: true,
           parentId: nodes.program_id || nodes.value || nodes.id,
-          programName: nodes.name
+          programName: nodes.name,
         });
       });
     }
@@ -103,7 +103,7 @@ export function useProgramData() {
 
   const allNodes = computed(() => {
     // Depend on hydrationVersion to trigger recompute when efforts are loaded
-    // eslint-disable-next-line
+    // eslint-disable-next-line no-unused-vars
     const _version = store.hydrationVersion.value;
     return flattenNodes(store.state.items);
   });
@@ -118,7 +118,7 @@ export function useProgramData() {
     if (!selectedNodeId.value) return null;
     // Access hydrationVersion to establish reactivity dependency
     // This triggers when softwareEfforts are loaded or CRUD operations occur
-    // eslint-disable-next-line
+    // eslint-disable-next-line no-unused-vars
     const _version = store.hydrationVersion.value;
     return store.findByOrgId(selectedNodeId.value);
   });
@@ -141,6 +141,6 @@ export function useProgramData() {
     selectedNode,
     loading: computed(() => store.state.loading),
     selectNode,
-    findNodeById
+    findNodeById,
   };
 }

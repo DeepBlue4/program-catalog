@@ -1,20 +1,20 @@
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import * as echarts from 'echarts';
-import { STATUS_COLORS, RAW_COLORS } from '../styles/statusConstants';
+import { ref, onMounted, onUnmounted, watch } from "vue";
+import * as echarts from "echarts";
+import { STATUS_COLORS, RAW_COLORS } from "../styles/statusConstants";
 
 const props = defineProps({
   data: {
     type: Object,
-    required: true
+    required: true,
   },
   selectedId: {
     type: Number,
-    default: null
-  }
+    default: null,
+  },
 });
 
-const emit = defineEmits(['node-click']);
+const emit = defineEmits(["node-click"]);
 
 const chartRef = ref(null);
 let chartInstance = null;
@@ -23,12 +23,12 @@ const initChart = () => {
   if (!chartRef.value) return;
 
   chartInstance = echarts.init(chartRef.value, null, {
-    renderer: 'canvas',
-    useDirtyRect: false
+    renderer: "canvas",
+    useDirtyRect: false,
   });
 
-  chartInstance.on('click', (params) => {
-    if (params.componentType === 'series') {
+  chartInstance.on("click", (params) => {
+    if (params.componentType === "series") {
       const nodeId = params.data.program_id;
       const currentCollapsed = collapsedState.value.get(nodeId);
 
@@ -39,7 +39,7 @@ const initChart = () => {
       updateChart();
 
       // Emit selection (so parent knows to select it)
-      emit('node-click', params.data);
+      emit("node-click", params.data);
     }
   });
 
@@ -63,7 +63,7 @@ const syncState = (node, depth = 0) => {
     const defaultCollapsed = depth >= 1;
     collapsedState.value.set(
       node.program_id,
-      node.collapsed !== undefined ? node.collapsed : defaultCollapsed
+      node.collapsed !== undefined ? node.collapsed : defaultCollapsed,
     );
   }
   if (node.children) {
@@ -85,20 +85,20 @@ const updateChart = () => {
   const colors = RAW_COLORS;
 
   const option = {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     tooltip: {
-      trigger: 'item',
-      triggerOn: 'mousemove',
+      trigger: "item",
+      triggerOn: "mousemove",
       backgroundColor: colors.surface,
-      borderColor: '#C4C7C5',
+      borderColor: "#C4C7C5",
       textStyle: {
-        color: '#1D1B20'
+        color: "#1D1B20",
       },
       extraCssText:
-        'box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15); border-radius: 8px;',
+        "box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15); border-radius: 8px;",
       formatter: (params) => {
         const d = params.data;
-        let status = 'Neutral Program';
+        let status = "Neutral Program";
         let color = colors.neutral;
 
         if (d.softwareEfforts && d.softwareEfforts.length > 0) {
@@ -139,56 +139,56 @@ const updateChart = () => {
          </span>
        </div>
  
-       ${childrenCount > 0 ? createRow('Sub-programs', childrenCount) : ''}
-       ${effortsCount > 0 ? createRow('Software Efforts', effortsCount) : ''}
-       ${childrenCount === 0 && effortsCount === 0 ? '<div style="font-size:12px; color:#999; font-style:italic;">No direct children</div>' : ''}
+       ${childrenCount > 0 ? createRow("Sub-programs", childrenCount) : ""}
+       ${effortsCount > 0 ? createRow("Software Efforts", effortsCount) : ""}
+       ${childrenCount === 0 && effortsCount === 0 ? '<div style="font-size:12px; color:#999; font-style:italic;">No direct children</div>' : ""}
         
        <div style="margin-top: 12px; text-align: right; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 6px;">
          ID: ${d.program_id}
        </div>
       </div>
      `;
-      }
+      },
     },
     series: [
       {
-        type: 'tree',
+        type: "tree",
         data: [], // Will be set below
-        top: '10%',
-        left: '10%',
-        bottom: '10%',
-        right: '20%',
+        top: "10%",
+        left: "10%",
+        bottom: "10%",
+        right: "20%",
         symbolSize: 12,
-        symbol: 'circle',
-        orient: 'horizontal',
+        symbol: "circle",
+        orient: "horizontal",
 
         label: {
-          position: 'left',
-          verticalAlign: 'middle',
-          align: 'right',
+          position: "left",
+          verticalAlign: "middle",
+          align: "right",
           fontSize: 13,
-          fontFamily: 'Roboto, sans-serif',
+          fontFamily: "Roboto, sans-serif",
           color: colors.neutral,
-          offset: [-8, 0]
+          offset: [-8, 0],
         },
 
         leaves: {
           label: {
-            position: 'right',
-            verticalAlign: 'middle',
-            align: 'left',
-            offset: [8, 0]
-          }
+            position: "right",
+            verticalAlign: "middle",
+            align: "left",
+            offset: [8, 0],
+          },
         },
 
         roam: true, // Enable dragging/panning
 
         emphasis: {
-          focus: 'none', // Disable fading of other nodes
+          focus: "none", // Disable fading of other nodes
           itemStyle: {
             shadowBlur: 10,
-            shadowColor: 'rgba(0, 0, 0, 0.2)'
-          }
+            shadowColor: "rgba(0, 0, 0, 0.2)",
+          },
         },
 
         // Critical Fix: Animation Threshold to prevent artifacts
@@ -203,16 +203,16 @@ const updateChart = () => {
         itemStyle: {
           color: colors.primary,
           borderColor: colors.primary,
-          borderWidth: 0
+          borderWidth: 0,
         },
 
         lineStyle: {
-          color: '#C4C7C5', // Outline Variant
+          color: "#C4C7C5", // Outline Variant
           width: 1.5,
-          curveness: 0.5
-        }
-      }
-    ]
+          curveness: 0.5,
+        },
+      },
+    ],
   };
 
   // Pre-process data to inject styles
@@ -226,7 +226,7 @@ const updateChart = () => {
       newNode.itemStyle = {
         color: s.fill,
         borderColor: s.border,
-        borderWidth: 0
+        borderWidth: 0,
       };
     } else if (newNode.expecting_software_efforts) {
       // 2. Expected & No Efforts
@@ -234,7 +234,7 @@ const updateChart = () => {
       newNode.itemStyle = {
         color: s.fill,
         borderColor: s.border,
-        borderWidth: 1
+        borderWidth: 1,
       };
     } else if (newNode.has_descendant_expecting_software_effort) {
       // 3. Parent of Effort
@@ -242,7 +242,7 @@ const updateChart = () => {
       newNode.itemStyle = {
         color: s.fill,
         borderColor: s.border,
-        borderWidth: 1
+        borderWidth: 1,
       };
     } else {
       // 4. Neutral
@@ -250,15 +250,15 @@ const updateChart = () => {
       newNode.itemStyle = {
         color: s.fill,
         borderColor: s.border,
-        borderWidth: 1
+        borderWidth: 1,
       };
     }
 
     // Apply Selection Highlight
     if (props.selectedId && newNode.program_id == props.selectedId) {
       newNode.itemStyle.shadowBlur = 10;
-      newNode.itemStyle.shadowColor = '#2E7D32'; // Distinct highlight (Green)
-      newNode.itemStyle.borderColor = '#2E7D32';
+      newNode.itemStyle.shadowColor = "#2E7D32"; // Distinct highlight (Green)
+      newNode.itemStyle.borderColor = "#2E7D32";
       newNode.itemStyle.borderWidth = 3;
       // Ensure it pops visual (scale if possible, but symbolSize is global in this config usually)
       newNode.symbolSize = 18;
@@ -317,7 +317,7 @@ watch(
     if (props.selectedId) expandPathToNode(props.selectedId);
     updateChart();
   },
-  { deep: true }
+  { deep: true },
 );
 
 watch(
@@ -325,7 +325,7 @@ watch(
   (newId) => {
     if (newId) expandPathToNode(newId);
     updateChart();
-  }
+  },
 );
 
 const resetView = () => {
@@ -337,21 +337,21 @@ const resetView = () => {
   updateChart();
   // Reset zoom/pan if possible (ECharts instance method)
   chartInstance?.dispatchAction({
-    type: 'restore'
+    type: "restore",
   });
 };
 
 defineExpose({
-  resetView
+  resetView,
 });
 
 onMounted(() => {
   initChart();
-  window.addEventListener('resize', handleResize);
+  window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize);
+  window.removeEventListener("resize", handleResize);
   chartInstance?.dispose();
 });
 </script>

@@ -1,9 +1,9 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { useProgramData } from '../composables/useProgramData';
-import BaseIcon from './BaseIcon.vue';
-import { mdiInformation } from '@mdi/js';
-import { STATUS_COLORS } from '../styles/statusConstants';
+import { ref, computed } from "vue";
+import { useProgramData } from "../composables/useProgramData";
+import BaseIcon from "./BaseIcon.vue";
+import { mdiInformation } from "@mdi/js";
+import { STATUS_COLORS } from "../styles/statusConstants";
 
 const { allNodes } = useProgramData();
 
@@ -18,23 +18,23 @@ const counts = computed(() => {
       (n) =>
         n.expecting_software_efforts &&
         n.softwareEfforts &&
-        n.softwareEfforts.length > 0
+        n.softwareEfforts.length > 0,
     ).length,
     gap: nodes.filter(
       (n) =>
         n.expecting_software_efforts &&
-        (!n.softwareEfforts || n.softwareEfforts.length === 0)
+        (!n.softwareEfforts || n.softwareEfforts.length === 0),
     ).length,
     parent: nodes.filter(
       (n) =>
         !n.expecting_software_efforts &&
-        n.has_descendant_expecting_software_effort
+        n.has_descendant_expecting_software_effort,
     ).length,
     neutral: nodes.filter(
       (n) =>
         !n.expecting_software_efforts &&
-        !n.has_descendant_expecting_software_effort
-    ).length
+        !n.has_descendant_expecting_software_effort,
+    ).length,
   };
 });
 
@@ -43,27 +43,27 @@ const activeHelp = ref(null);
 
 const helpContent = {
   active: {
-    title: 'Software Effort Active',
-    desc: 'A program that is expecting software efforts and currently has one or more assigned.',
-    context: 'These programs are actively tracking software work.'
+    title: "Software Effort Active",
+    desc: "A program that is expecting software efforts and currently has one or more assigned.",
+    context: "These programs are actively tracking software work.",
   },
   gap: {
-    title: 'Software Effort Expected (Missing)',
-    desc: 'A program flagged to expect software efforts but currently has none assigned.',
+    title: "Software Effort Expected (Missing)",
+    desc: "A program flagged to expect software efforts but currently has none assigned.",
     context:
-      'Action Required: These programs represent a gap in data or assignment.'
+      "Action Required: These programs represent a gap in data or assignment.",
   },
   parent: {
-    title: 'Parent of Effort',
-    desc: 'A program with no direct software efforts of its own, but contains sub-programs that do.',
+    title: "Parent of Effort",
+    desc: "A program with no direct software efforts of its own, but contains sub-programs that do.",
     context:
-      'These function as organizational containers or oversight for software efforts below.'
+      "These function as organizational containers or oversight for software efforts below.",
   },
   neutral: {
-    title: 'Neutral Program',
-    desc: 'A program not expecting software efforts and has no descendants expecting them.',
-    context: 'Included primarily for organizational hierarchy and structure.'
-  }
+    title: "Neutral Program",
+    desc: "A program not expecting software efforts and has no descendants expecting them.",
+    context: "Included primarily for organizational hierarchy and structure.",
+  },
 };
 
 const openHelp = (type) => {
@@ -230,28 +230,28 @@ const openHelp = (type) => {
 /* Match OrgChart M3 Styles */
 .dot.effort {
   /* Active Effort */
-  background-color: v-bind('STATUS_COLORS.active.fill');
-  border-color: v-bind('STATUS_COLORS.active.border');
+  background-color: v-bind("STATUS_COLORS.active.fill");
+  border-color: v-bind("STATUS_COLORS.active.border");
 }
 
 .dot.gap {
   /* Expected but Missing */
-  background-color: v-bind('STATUS_COLORS.gap.fill');
-  border-color: v-bind('STATUS_COLORS.gap.border');
+  background-color: v-bind("STATUS_COLORS.gap.fill");
+  border-color: v-bind("STATUS_COLORS.gap.border");
   border-width: 1px;
 }
 
 .dot.parent {
   /* Parent */
-  background-color: v-bind('STATUS_COLORS.parent.fill');
-  border-color: v-bind('STATUS_COLORS.parent.border');
+  background-color: v-bind("STATUS_COLORS.parent.fill");
+  border-color: v-bind("STATUS_COLORS.parent.border");
   border-width: 1px;
 }
 
 .dot.neutral {
   /* Neutral */
-  background-color: v-bind('STATUS_COLORS.neutral.fill');
-  border-color: v-bind('STATUS_COLORS.neutral.border');
+  background-color: v-bind("STATUS_COLORS.neutral.fill");
+  border-color: v-bind("STATUS_COLORS.neutral.border");
   border-width: 1px;
 }
 

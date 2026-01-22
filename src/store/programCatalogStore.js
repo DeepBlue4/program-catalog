@@ -1,6 +1,6 @@
-import { reactive, shallowRef, triggerRef, ref } from 'vue';
-import { CompassAPIService } from '../services/api.js';
-import { MockApiData } from '../services/mockApiData.js';
+import { reactive, shallowRef, triggerRef, ref } from "vue";
+import { CompassAPIService } from "../services/api.js";
+import { MockApiData } from "../services/mockApiData.js";
 
 // ==============================================================================
 // CONFIGURATION FLAGS
@@ -32,7 +32,7 @@ const state = reactive({
   items: shallowRef(null),
   currentUser: ref(null),
   loading: false,
-  error: null
+  error: null,
 });
 
 // Simple counter we bump whenever we load new efforts.
@@ -60,11 +60,11 @@ async function fetchItems() {
       const response = await CompassAPIService.getEnterpriseHierarchy();
 
       if (!response.success) {
-        state.error = 'Could not connect to the backend';
-        console.error('[Store] API Connection Failed');
+        state.error = "Could not connect to the backend";
+        console.error("[Store] API Connection Failed");
       } else {
         console.log(
-          `[Store] Items fetched. Mode: ${CompassAPIService.useTestData ? 'MOCK' : 'PROD'}.`
+          `[Store] Items fetched. Mode: ${CompassAPIService.useTestData ? "MOCK" : "PROD"}.`,
         );
 
         state.items = response.data;
@@ -77,12 +77,12 @@ async function fetchItems() {
         // In prod, the main tree endpoint is lightweight and doesn't include the actual efforts.
         // So we have to go back and fetch them for the relevant nodes.
         if (!CompassAPIService.useTestData) {
-          console.log('[Store] Triggering populateSoftwareEfforts...');
+          console.log("[Store] Triggering populateSoftwareEfforts...");
           await populateSoftwareEfforts(state.items);
         }
       }
     } catch (err) {
-      state.error = err.message || 'Failed to fetch items';
+      state.error = err.message || "Failed to fetch items";
     } finally {
       state.loading = false;
       fetchPromise = null; // Clear the promise so we can try again if needed.
@@ -99,19 +99,19 @@ async function fetchItems() {
  */
 async function fetchCurrentUser() {
   if (CompassAPIService.useTestData) {
-    console.log('[Store] Loading Mock User Data...');
+    console.log("[Store] Loading Mock User Data...");
     state.currentUser = MockApiData.getMockUser();
   } else {
-    console.log('[Store] Fetching Production User Data...');
+    console.log("[Store] Fetching Production User Data...");
     try {
       const response = await CompassAPIService.getCurrentUser();
       if (response.success) {
         state.currentUser = response.data;
       } else {
-        console.warn('[Store] Failed to fetch user data', response);
+        console.warn("[Store] Failed to fetch user data", response);
       }
     } catch (err) {
-      console.error('[Store] Exception fetching user:', err);
+      console.error("[Store] Exception fetching user:", err);
     }
   }
 }
@@ -121,9 +121,9 @@ async function fetchCurrentUser() {
  * falling back to program_id if nothing else is present.
  */
 function extractNameFromNode(node) {
-  if (!node || typeof node !== 'object') return null;
+  if (!node || typeof node !== "object") return null;
 
-  const candidates = ['name', 'program_name', 'org_name', 'label', 'title'];
+  const candidates = ["name", "program_name", "org_name", "label", "title"];
   for (const key of candidates) {
     if (node[key] != null) {
       return String(node[key]);
@@ -396,7 +396,7 @@ async function getAllSoftwareEfforts() {
           ...eff,
           _programName: node.name,
           _programId: node.value || node.program_id,
-          _fullLabel: `${node.name} > ${eff.name} (${eff.type})`
+          _fullLabel: `${node.name} > ${eff.name} (${eff.type})`,
         });
       });
     }
@@ -441,7 +441,7 @@ async function populateSoftwareEfforts(root) {
         if (resp.success && Array.isArray(resp.data)) {
           if (resp.data.length > 0) {
             console.log(
-              `[Store] Hydrated node ${targetId} (${node.name}): ${resp.data.length} efforts`
+              `[Store] Hydrated node ${targetId} (${node.name}): ${resp.data.length} efforts`,
             );
           }
           node.softwareEfforts = resp.data;
@@ -463,17 +463,17 @@ async function populateSoftwareEfforts(root) {
 
   // Wait for all fetches to complete with performance timing
   if (promises.length > 0) {
-    const mode = FETCH_ALL_EFFORTS ? 'ALL_PROGRAMS' : 'EXPECTING_ONLY';
+    const mode = FETCH_ALL_EFFORTS ? "ALL_PROGRAMS" : "EXPECTING_ONLY";
     console.log(`\n[Store] ========== HYDRATION PERFORMANCE ==========`);
     console.log(`[Store] Mode: ${mode}`);
     console.log(`[Store] Fetching efforts for ${promises.length} nodes...`);
-    console.time('[Store] Hydration Duration');
+    console.time("[Store] Hydration Duration");
 
     await Promise.all(promises);
 
-    console.timeEnd('[Store] Hydration Duration');
+    console.timeEnd("[Store] Hydration Duration");
     console.log(
-      `[Store] Hydration complete. ${promises.length} API calls made.`
+      `[Store] Hydration complete. ${promises.length} API calls made.`,
     );
     console.log(`[Store] ==============================================\n`);
 
@@ -483,11 +483,11 @@ async function populateSoftwareEfforts(root) {
     // Increment hydration version to trigger computed re-evaluation
     hydrationVersion.value++;
     console.log(
-      '[Store] hydrationVersion incremented to:',
-      hydrationVersion.value
+      "[Store] hydrationVersion incremented to:",
+      hydrationVersion.value,
     );
   } else {
-    console.log('[Store] No nodes to hydrate.');
+    console.log("[Store] No nodes to hydrate.");
   }
 }
 
@@ -500,7 +500,7 @@ async function populateSoftwareEfforts(root) {
 async function saveSoftwareEffort(programId, effortData) {
   const res = await CompassAPIService.saveSoftwareEffort(programId, effortData);
 
-  console.log('[Store] saveSoftwareEffort response:', res);
+  console.log("[Store] saveSoftwareEffort response:", res);
 
   if (res.success) {
     // Find the program node to update local state
@@ -510,7 +510,7 @@ async function saveSoftwareEffort(programId, effortData) {
       // Instead of trying to parse the potentially malformed PUT response,
       // just re-fetch using the GET endpoint that returns correct data
       console.log(
-        '[Store] Re-fetching efforts after save to get fresh data...'
+        "[Store] Re-fetching efforts after save to get fresh data...",
       );
       const freshData = await CompassAPIService.getSoftwareEfforts(programId);
 
@@ -518,24 +518,24 @@ async function saveSoftwareEffort(programId, effortData) {
         programNode.softwareEfforts = freshData.data;
         programNode.hasSoftwareEffort = freshData.data.length > 0;
         console.log(
-          '[Store] Refreshed with',
+          "[Store] Refreshed with",
           freshData.data.length,
-          'efforts from GET endpoint'
+          "efforts from GET endpoint",
         );
       } else {
-        console.warn('[Store] Failed to re-fetch efforts, cache may be stale');
+        console.warn("[Store] Failed to re-fetch efforts, cache may be stale");
       }
 
       // Force UI update
       triggerRef(state.items);
       hydrationVersion.value++;
       console.log(
-        '[Store] saveSoftwareEffort - hydrationVersion incremented to:',
-        hydrationVersion.value
+        "[Store] saveSoftwareEffort - hydrationVersion incremented to:",
+        hydrationVersion.value,
       );
     } else {
       console.warn(
-        `[Store] Could not find program node ${programId} to update state.`
+        `[Store] Could not find program node ${programId} to update state.`,
       );
     }
   }
@@ -558,7 +558,7 @@ async function deleteSoftwareEffort(programId, effortId) {
     if (programNode) {
       // Like save, re-fetch to get fresh data instead of manually mutating
       console.log(
-        '[Store] Re-fetching efforts after delete to ensure cache consistency...'
+        "[Store] Re-fetching efforts after delete to ensure cache consistency...",
       );
       const freshData = await CompassAPIService.getSoftwareEfforts(programId);
 
@@ -566,13 +566,13 @@ async function deleteSoftwareEffort(programId, effortId) {
         programNode.softwareEfforts = freshData.data;
         programNode.hasSoftwareEffort = freshData.data.length > 0;
         console.log(
-          '[Store] Refreshed with',
+          "[Store] Refreshed with",
           freshData.data.length,
-          'efforts from GET endpoint'
+          "efforts from GET endpoint",
         );
       } else {
         console.warn(
-          '[Store] Failed to re-fetch efforts after delete, cache may be stale'
+          "[Store] Failed to re-fetch efforts after delete, cache may be stale",
         );
       }
 
@@ -580,12 +580,12 @@ async function deleteSoftwareEffort(programId, effortId) {
       triggerRef(state.items);
       hydrationVersion.value++;
       console.log(
-        '[Store] deleteSoftwareEffort - hydrationVersion incremented to:',
-        hydrationVersion.value
+        "[Store] deleteSoftwareEffort - hydrationVersion incremented to:",
+        hydrationVersion.value,
       );
     } else {
       console.warn(
-        `[Store] Could not find program node ${programId} to update state.`
+        `[Store] Could not find program node ${programId} to update state.`,
       );
     }
   }
@@ -607,6 +607,6 @@ export function useProgramCatalogStore() {
     getOrgPathByID,
     getAllSoftwareEfforts,
     saveSoftwareEffort,
-    deleteSoftwareEffort
+    deleteSoftwareEffort,
   };
 }

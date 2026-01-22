@@ -1,34 +1,34 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed, inject } from 'vue';
-import BaseIcon from '../components/BaseIcon.vue';
+import { ref, onMounted, onUnmounted, computed, inject } from "vue";
+import BaseIcon from "../components/BaseIcon.vue";
 import {
   mdiAccountCircle,
   mdiBookOpenVariant,
   mdiChartPie,
   mdiLock,
   mdiOpenInNew,
-  mdiCompass
-} from '@mdi/js';
-import { evaluateWriteAccess } from '../router';
+  mdiCompass,
+} from "@mdi/js";
+import { evaluateWriteAccess } from "../router";
 
 const isOpen = ref(false);
 const menuRef = ref(null);
 
 // Grab the user we hooked up in main.js
-const currentUser = inject('currentUser');
+const currentUser = inject("currentUser");
 
 // Handle what we show in the menu before the user loads, or if they're missing info.
 const user = computed(() => {
   if (!currentUser.value) {
     return {
-      name: 'Loading...',
-      email: '',
-      bemsid: '',
-      businessUnit: '',
+      name: "Loading...",
+      email: "",
+      bemsid: "",
+      businessUnit: "",
       // defaulting these to false so we don't accidentally show admin stuff
       isAdmin: false,
       isManager: false,
-      is6J: false
+      is6J: false,
     };
   }
 
@@ -40,44 +40,44 @@ const user = computed(() => {
   return {
     name:
       u.display_name ||
-      `${daf.first_name || ''} ${daf.last_name || ''}`.trim() ||
-      'User',
-    email: daf.email || cached.email || '',
-    bemsid: daf.bemsid || daf.username || '',
-    businessUnit: cached.business_unit || 'N/A',
+      `${daf.first_name || ""} ${daf.last_name || ""}`.trim() ||
+      "User",
+    email: daf.email || cached.email || "",
+    bemsid: daf.bemsid || daf.username || "",
+    businessUnit: cached.business_unit || "N/A",
     isAdmin: daf.is_superuser,
     isManager: cached.manager_status,
-    is6J: false
+    is6J: false,
   };
 });
 
 // Calculate the Compass link based on where we are running (local, dev, stage, prod).
 const compassUrl = computed(() => {
-  if (typeof window === 'undefined') return '/403';
+  if (typeof window === "undefined") return "/403";
 
-  const host = window.location.hostname || '';
+  const host = window.location.hostname || "";
 
-  if (host.includes('localhost')) {
-    return 'http://localhost:8000/ui/accounts/overview';
+  if (host.includes("localhost")) {
+    return "http://localhost:8000/ui/accounts/overview";
   }
 
   // Figure out which environment we're in
-  let prefix = 'daf-compass';
-  if (host.includes('daf-compass-dev') || host.includes('-dev')) {
-    prefix = 'daf-compass-dev';
-  } else if (host.includes('daf-compass-stage') || host.includes('-stage')) {
-    prefix = 'daf-compass-stage';
+  let prefix = "daf-compass";
+  if (host.includes("daf-compass-dev") || host.includes("-dev")) {
+    prefix = "daf-compass-dev";
+  } else if (host.includes("daf-compass-stage") || host.includes("-stage")) {
+    prefix = "daf-compass-stage";
   }
 
   // And which region
-  if (host.includes('global')) {
+  if (host.includes("global")) {
     return `https://${prefix}.common.global.bsf.tools/`;
-  } else if (host.includes('us')) {
+  } else if (host.includes("us")) {
     return `https://${prefix}.common.us.bsf.tools/`;
   }
 
   // If we can't figure it out, send them to the 403 page so they don't get lost.
-  return '/403';
+  return "/403";
 });
 
 // Re-use the router logic so the "You have write access" badge is honest.
@@ -96,11 +96,11 @@ const closeMenu = (e) => {
 };
 
 onMounted(() => {
-  document.addEventListener('click', closeMenu);
+  document.addEventListener("click", closeMenu);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', closeMenu);
+  document.removeEventListener("click", closeMenu);
 });
 </script>
 
@@ -143,11 +143,11 @@ onUnmounted(() => {
 
       <!-- Write Access Card -->
       <div class="write-access-card" :class="{ 'has-access': hasWriteAccess }">
-        <div class="wa-badge">{{ hasWriteAccess ? 'Editor' : 'Viewer' }}</div>
+        <div class="wa-badge">{{ hasWriteAccess ? "Editor" : "Viewer" }}</div>
         <div class="wa-text">
           <div class="wa-title">Program Catalog Access</div>
           <div class="wa-hint">
-            {{ hasWriteAccess ? 'You have write access' : 'Read-only access' }}
+            {{ hasWriteAccess ? "You have write access" : "Read-only access" }}
           </div>
         </div>
       </div>

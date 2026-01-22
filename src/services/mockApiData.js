@@ -14,11 +14,11 @@ export class MockApiData {
     };
 
     const effortTypes = [
-      'System',
-      'Service',
-      'Component',
-      'Application',
-      'Library'
+      "System",
+      "Service",
+      "Component",
+      "Application",
+      "Library",
     ];
 
     // Helper to pick a random item from an array
@@ -32,8 +32,8 @@ export class MockApiData {
     const createNode = (
       depth,
       parentName,
-      parentPath = '',
-      forceName = null
+      parentPath = "",
+      forceName = null,
     ) => {
       // Generate a consistent ID based on our seed
       const id = Math.floor(random() * 10000000);
@@ -41,36 +41,36 @@ export class MockApiData {
 
       if (forceName) {
         name = forceName;
-      } else if (depth === 0) name = 'Company PGC';
+      } else if (depth === 0) name = "Company PGC";
       else if (depth === 1)
-        name = `${pick(['Space', 'Defense', 'Commercial', 'Global'])} Division ${id.toString().slice(-2)}`;
+        name = `${pick(["Space", "Defense", "Commercial", "Global"])} Division ${id.toString().slice(-2)}`;
       else if (depth === 2)
-        name = `${pick(['X', 'Y', 'Z', 'Alpha', 'Beta', 'Gamma', 'Delta'])} Program ${id.toString().slice(-3)}`;
+        name = `${pick(["X", "Y", "Z", "Alpha", "Beta", "Gamma", "Delta"])} Program ${id.toString().slice(-3)}`;
       else if (depth === 3)
-        name = `${pick(['Avionics', 'Propulsion', 'Software', 'Logistics', 'Mission', 'Ground'])} Team ${id.toString().slice(-3)}`;
+        name = `${pick(["Avionics", "Propulsion", "Software", "Logistics", "Mission", "Ground"])} Team ${id.toString().slice(-3)}`;
       else name = `Unit ${Math.floor(random() * 1000)}`;
 
-      const isTargetNeutral = name === 'Commercial Division 37';
+      const isTargetNeutral = name === "Commercial Division 37";
 
       // Program Properties
-      const organization_leader_name = `Leader ${pick(['Smith', 'Johnson', 'Williams', 'Brown'])}`;
-      const chief_engineer_name = `Eng. ${pick(['Davis', 'Miller', 'Wilson', 'Moore'])}`;
+      const organization_leader_name = `Leader ${pick(["Smith", "Johnson", "Williams", "Brown"])}`;
+      const chief_engineer_name = `Eng. ${pick(["Davis", "Miller", "Wilson", "Moore"])}`;
       const primary_location = pick([
-        'Seattle, WA',
-        'St. Louis, MO',
-        'Huntsville, AL',
-        'Arlington, VA'
+        "Seattle, WA",
+        "St. Louis, MO",
+        "Huntsville, AL",
+        "Arlington, VA",
       ]);
       const program_type = pick([
-        'Production',
-        'Development',
-        'Sustainment',
-        'R&D'
+        "Production",
+        "Development",
+        "Sustainment",
+        "R&D",
       ]);
       const program_value = `$${(random() * 100 + 10).toFixed(1)}M`;
       const description = `This is a mock description for ${name}. It contains generic information.`;
       const aliases = random() > 0.7 ? `Alias-${id}` : null;
-      const status = 'Green';
+      const status = "Green";
 
       const currentPath = parentPath ? `${parentPath}.${id}` : `${id}`;
 
@@ -86,7 +86,7 @@ export class MockApiData {
           // Use closure-safe pick
           const effType = pick(effortTypes);
           // Differentiate names slightly
-          const baseName = name.split(' ')[0] || 'Project';
+          const baseName = name.split(" ")[0] || "Project";
           const effName =
             j === 0
               ? `${baseName} Platform`
@@ -111,35 +111,35 @@ export class MockApiData {
               program_manager_email: `manager.${j}@example.com`,
               allow_non_us: random() > 0.5,
               mission_critical: random() > 0.8,
-              program_phase: pick(['Design', 'Development', 'Production']),
-              security_clearance: [pick(['None', 'Secret'])],
-              safety_criticality: [pick(['None', 'DAL D / LOR 4'])]
+              program_phase: pick(["Design", "Development", "Production"]),
+              security_clearance: [pick(["None", "Secret"])],
+              safety_criticality: [pick(["None", "DAL D / LOR 4"])],
             },
 
             inherit_technical_points_of_contact: false,
             technical_points_of_contact: {
               software_lead: `lead.${j}@example.com`,
-              security_focal: `sec.${j}@example.com`
+              security_focal: `sec.${j}@example.com`,
             },
 
             inherit_developer_setup: false,
             developer_setup: {
-              programming_languages: [pick(['Python', 'C++', 'Java'])],
-              operating_systems: [pick(['Linux', 'Windows'])],
-              development_environments: [pick(['BSF-Global', 'BSF-US'])],
-              source_control_tools: [pick(['GitLab', 'Bitbucket'])],
-              issue_tracking_tools: [pick(['Jira', 'GitLab'])],
+              programming_languages: [pick(["Python", "C++", "Java"])],
+              operating_systems: [pick(["Linux", "Windows"])],
+              development_environments: [pick(["BSF-Global", "BSF-US"])],
+              source_control_tools: [pick(["GitLab", "Bitbucket"])],
+              issue_tracking_tools: [pick(["Jira", "GitLab"])],
               dp_assessment_name: `DP-Assess-${j}`,
-              sbom_location: [pick(['Artifactory', 'Nexus'])]
+              sbom_location: [pick(["Artifactory", "Nexus"])],
             },
 
             inherit_work_location: false,
             work_location: {
-              locations: [primary_location, 'Remote']
+              locations: [primary_location, "Remote"],
             },
 
             children: [],
-            linked_software_efforts: []
+            linked_software_efforts: [],
           });
         }
       }
@@ -161,7 +161,7 @@ export class MockApiData {
               depth + 1,
               name,
               currentPath,
-              'Commercial Division 37'
+              "Commercial Division 37",
             );
           } else {
             childNode = createNode(depth + 1, name, currentPath);
@@ -188,7 +188,7 @@ export class MockApiData {
         critical: random() > 0.9,
 
         // Metadata
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split("T")[0],
         name: name,
         program_path: currentPath,
         expect_software_effort: expectsEffort,
@@ -208,11 +208,11 @@ export class MockApiData {
         softwareEfforts: softwareEfforts,
         hasSoftwareEffort: softwareEfforts.length > 0,
         expecting_software_efforts: expectsEffort,
-        has_descendant_expecting_software_effort: hasDescendantExpecting
+        has_descendant_expecting_software_effort: hasDescendantExpecting,
       };
     };
 
-    const root = createNode(0, 'Root');
+    const root = createNode(0, "Root");
 
     // --- Post-Process: Add Linked Efforts ---
     // 1. Flatten all efforts to a list so we can pick from them
@@ -254,7 +254,7 @@ export class MockApiData {
                 _programId: target._programId,
                 // Fallback standard fields
                 program_name: target._programName,
-                program_id: target._programId
+                program_id: target._programId,
               });
             }
           }
@@ -283,35 +283,35 @@ export class MockApiData {
           program_manager_email: `manager.${i}@example.com`,
           allow_non_us: i % 2 === 0,
           mission_critical: i % 4 === 0,
-          program_phase: 'Development',
-          security_clearance: ['None'],
-          safety_criticality: ['None']
+          program_phase: "Development",
+          security_clearance: ["None"],
+          safety_criticality: ["None"],
         },
 
         inherit_technical_points_of_contact: false,
         technical_points_of_contact: {
           software_lead: `lead.${i}@example.com`,
-          security_focal: `sec.${i}@example.com`
+          security_focal: `sec.${i}@example.com`,
         },
 
         inherit_developer_setup: false,
         developer_setup: {
-          programming_languages: ['Python', 'Java'],
-          operating_systems: ['Linux'],
-          development_environments: ['BSF-Global'],
-          source_control_tools: ['GitLab'],
-          issue_tracking_tools: ['Jira'],
+          programming_languages: ["Python", "Java"],
+          operating_systems: ["Linux"],
+          development_environments: ["BSF-Global"],
+          source_control_tools: ["GitLab"],
+          issue_tracking_tools: ["Jira"],
           dp_assessment_name: `DP-Assess-${i}`,
-          sbom_location: ['Artifactory']
+          sbom_location: ["Artifactory"],
         },
 
         inherit_work_location: false,
         work_location: {
-          locations: ['Seattle, WA', 'Remote']
+          locations: ["Seattle, WA", "Remote"],
         },
 
         children: [],
-        linked_software_efforts: []
+        linked_software_efforts: [],
       });
     }
     return efforts;
@@ -320,9 +320,9 @@ export class MockApiData {
   static getMockProgram(hierarchyNodeUUID) {
     return {
       program_id: hierarchyNodeUUID,
-      program_name: 'Mock Program',
-      program_manager: 'Jane Doe',
-      description: 'This is a mock program description.'
+      program_name: "Mock Program",
+      program_manager: "Jane Doe",
+      description: "This is a mock program description.",
     };
   }
 
@@ -330,79 +330,79 @@ export class MockApiData {
     return {
       id: 1,
       daf_user: {
-        username: '1234567',
-        bemsid: '1234567',
-        first_name: 'Mock',
-        last_name: 'User',
-        email: 'mock.user@company.com',
+        username: "1234567",
+        bemsid: "1234567",
+        first_name: "Mock",
+        last_name: "User",
+        email: "mock.user@company.com",
         boeing_contractor: false,
         is_active: true,
         is_staff: true,
-        is_superuser: true
+        is_superuser: true,
       },
       cached: {
-        bemsid: '1234567',
-        name: 'Mock User',
-        business_unit: 'Digital Platform',
+        bemsid: "1234567",
+        name: "Mock User",
+        business_unit: "Digital Platform",
         manager_status: true,
         swe_status: null,
-        email: 'mock.user@company.com'
+        email: "mock.user@company.com",
       },
-      display_name: 'Mock User'
+      display_name: "Mock User",
     };
   }
 
   static getMockEmails() {
     const firstNames = [
-      'James',
-      'Mary',
-      'John',
-      'Patricia',
-      'Robert',
-      'Jennifer',
-      'Michael',
-      'Linda',
-      'William',
-      'Elizabeth',
-      'David',
-      'Barbara',
-      'Richard',
-      'Susan',
-      'Joseph',
-      'Jessica',
-      'Thomas',
-      'Sarah',
-      'Charles',
-      'Karen'
+      "James",
+      "Mary",
+      "John",
+      "Patricia",
+      "Robert",
+      "Jennifer",
+      "Michael",
+      "Linda",
+      "William",
+      "Elizabeth",
+      "David",
+      "Barbara",
+      "Richard",
+      "Susan",
+      "Joseph",
+      "Jessica",
+      "Thomas",
+      "Sarah",
+      "Charles",
+      "Karen",
     ];
     const lastNames = [
-      'Smith',
-      'Johnson',
-      'Williams',
-      'Brown',
-      'Jones',
-      'Garcia',
-      'Miller',
-      'Davis',
-      'Rodriguez',
-      'Martinez',
-      'Hernandez',
-      'Lopez',
-      'Gonzalez',
-      'Wilson',
-      'Anderson',
-      'Thomas',
-      'Taylor',
-      'Moore',
-      'Jackson',
-      'Martin'
+      "Smith",
+      "Johnson",
+      "Williams",
+      "Brown",
+      "Jones",
+      "Garcia",
+      "Miller",
+      "Davis",
+      "Rodriguez",
+      "Martinez",
+      "Hernandez",
+      "Lopez",
+      "Gonzalez",
+      "Wilson",
+      "Anderson",
+      "Thomas",
+      "Taylor",
+      "Moore",
+      "Jackson",
+      "Martin",
     ];
 
     const emails = [
-      'jane.doe@company.com',
-      'john.smith@company.com',
-      'admin@company.com',
-      'developer@company.com'
+      "jane.doe@company.com",
+      "john.smith@company.com",
+      "admin@company.com",
+      "developer@company.com",
     ];
 
     // Generate more realistic emails
@@ -420,13 +420,13 @@ export class MockApiData {
   static injectMissingEffortsNode(data) {
     const dummyNode = {
       program_id: 9991234,
-      name: 'Test Program (Missing Efforts)',
+      name: "Test Program (Missing Efforts)",
       value: 9991234,
       expecting_software_efforts: true,
       hasSoftwareEffort: false,
       softwareEfforts: [], // Explicitly empty
-      details: { organization_leader_name: 'TEST ADMIN' },
-      children: []
+      details: { organization_leader_name: "TEST ADMIN" },
+      children: [],
     };
 
     if (Array.isArray(data)) {

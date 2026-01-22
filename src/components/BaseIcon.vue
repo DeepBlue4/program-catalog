@@ -2,16 +2,16 @@
 defineProps({
   path: {
     type: String,
-    required: true
+    required: true,
   },
   size: {
     type: [Number, String],
-    default: 24
+    default: 24,
   },
   color: {
     type: String,
-    default: 'currentColor'
-  }
+    default: "currentColor",
+  },
 });
 </script>
 

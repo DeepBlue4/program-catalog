@@ -1,17 +1,17 @@
 <script setup>
-import { onMounted, computed, watch, ref } from 'vue';
+import { onMounted, computed, watch, ref } from "vue";
 import {
   useRoute,
   useRouter,
   onBeforeRouteLeave,
-  onBeforeRouteUpdate
-} from 'vue-router';
-import SoftwareEffortsList from '../components/SoftwareEffortsList.vue';
-import BaseIcon from '../components/BaseIcon.vue';
-import { mdiMagnify, mdiArrowLeft, mdiRefresh } from '@mdi/js';
-import { useProgramData } from '../composables/useProgramData.js';
+  onBeforeRouteUpdate,
+} from "vue-router";
+import SoftwareEffortsList from "../components/SoftwareEffortsList.vue";
+import BaseIcon from "../components/BaseIcon.vue";
+import { mdiMagnify, mdiArrowLeft, mdiRefresh } from "@mdi/js";
+import { useProgramData } from "../composables/useProgramData.js";
 
-import { useProgramCatalogStore } from '../store/programCatalogStore';
+import { useProgramCatalogStore } from "../store/programCatalogStore";
 
 const route = useRoute();
 const router = useRouter();
@@ -28,7 +28,7 @@ const currentProgram = computed(() => {
   // Force reactivity on store updates by depending on hydrationVersion
   // This counter is incremented whenever softwareEfforts are mutated
 
-  // eslint-disable-next-line
+  // eslint-disable-next-line no-unused-vars
   const _tick = store.hydrationVersion.value;
 
   // If we have a selected node and it matches, use it (updates from store)
@@ -45,29 +45,29 @@ const currentEfforts = computed(() => {
   if (!program) return [];
 
   // Depend on hydrationVersion to trigger re-computation
-   
+
   const _tick = store.hydrationVersion.value;
 
   // Return a fresh reference to ensure Vue detects changes
   const efforts = program.softwareEfforts ? [...program.softwareEfforts] : [];
   console.log(
-    '[PEV] currentEfforts computed - hydrationVersion:',
+    "[PEV] currentEfforts computed - hydrationVersion:",
     _tick,
-    'efforts count:',
-    efforts.length
+    "efforts count:",
+    efforts.length,
   );
   return efforts;
 });
 
 // Sync store selection if accessing directly via URL
 onMounted(() => {
-  console.log('[PEV] Mounted. ID:', programId.value);
+  console.log("[PEV] Mounted. ID:", programId.value);
   if (
     programId.value &&
     (!selectedNode.value || selectedNode.value.value != programId.value)
   ) {
     const node = findNodeById(programId.value);
-    console.log('[PEV] Initial findNodeById result:', !!node);
+    console.log("[PEV] Initial findNodeById result:", !!node);
     if (node) {
       selectNode(node);
     }
@@ -75,7 +75,7 @@ onMounted(() => {
 });
 
 watch(programId, (newId) => {
-  console.log('[PEV] programId changed:', newId);
+  console.log("[PEV] programId changed:", newId);
   if (newId) {
     const node = findNodeById(newId);
     if (node) selectNode(node);
@@ -83,11 +83,11 @@ watch(programId, (newId) => {
 });
 
 watch(currentProgram, (val) => {
-  console.log('[PEV] currentProgram computed:', val ? val.name : 'null');
+  console.log("[PEV] currentProgram computed:", val ? val.name : "null");
 });
 
 watch(loading, (val) => {
-  console.log('[PEV] Loading state:', val);
+  console.log("[PEV] Loading state:", val);
 });
 
 // Sync Data Load -> Selection (Race Condition Fix)
@@ -103,7 +103,7 @@ watch(
       selectNode(node);
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const retryFetch = () => {
@@ -121,9 +121,9 @@ const goBack = () => {
   const targetId = programId.value;
 
   if (targetId) {
-    router.push({ path: '/', query: { program_id: targetId } });
+    router.push({ path: "/", query: { program_id: targetId } });
   } else {
-    router.push('/');
+    router.push("/");
   }
 };
 
@@ -132,7 +132,7 @@ const handleNavigation = (to, from, next) => {
   if (effortsList.value && effortsList.value.isFormDirty) {
     effortsList.value.confirmNavigation(
       () => next(),
-      () => next(false)
+      () => next(false),
     );
   } else {
     next();
@@ -162,7 +162,7 @@ const handleEffortDeletion = (id) => {
   // `currentProgram` matches `selectedNode` from `useProgramData`.
   if (currentProgram.value && currentProgram.value.softwareEfforts) {
     const idx = currentProgram.value.softwareEfforts.findIndex(
-      (e) => e.id === id
+      (e) => e.id === id,
     );
     if (idx !== -1) {
       currentProgram.value.softwareEfforts.splice(idx, 1);
@@ -220,7 +220,7 @@ onBeforeRouteUpdate(handleNavigation);
 
         <!-- Collapsible Debug Info -->
         <div class="debug-toggle" @click="showDebug = !showDebug">
-          {{ showDebug ? 'Hide Debug Info' : 'Show Debug Info' }}
+          {{ showDebug ? "Hide Debug Info" : "Show Debug Info" }}
         </div>
         <div v-if="showDebug" class="debug-info m3-card outlined">
           <p><strong>Program ID:</strong> {{ programId }}</p>
@@ -232,7 +232,7 @@ onBeforeRouteUpdate(handleNavigation);
                 ? Array.isArray(chartData)
                   ? chartData.length
                   : 1
-                : 'null'
+                : "null"
             }}
           </p>
         </div>

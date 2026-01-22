@@ -1,36 +1,36 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import BaseIcon from './BaseIcon.vue';
-import { mdiMenuDown, mdiClose, mdiMagnify, mdiCheck } from '@mdi/js';
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import BaseIcon from "./BaseIcon.vue";
+import { mdiMenuDown, mdiClose, mdiMagnify, mdiCheck } from "@mdi/js";
 
 const props = defineProps({
   modelValue: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   options: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   label: {
     type: String,
-    default: ''
+    default: "",
   },
   placeholder: {
     type: String,
-    default: 'Select options...'
+    default: "Select options...",
   },
   disabled: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(["update:modelValue"]);
 
 const isOpen = ref(false);
 const containerRef = ref(null);
-const searchQuery = ref('');
+const searchQuery = ref("");
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event) => {
@@ -39,15 +39,15 @@ const handleClickOutside = (event) => {
   }
 };
 
-onMounted(() => document.addEventListener('click', handleClickOutside));
-onUnmounted(() => document.removeEventListener('click', handleClickOutside));
+onMounted(() => document.addEventListener("click", handleClickOutside));
+onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 
 const toggleDropdown = () => {
   if (props.disabled) return;
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
     // dynamic positioning could go here, for now simpler relative
-    searchQuery.value = ''; // Reset search on open
+    searchQuery.value = ""; // Reset search on open
   }
 };
 
@@ -55,7 +55,7 @@ const filteredOptions = computed(() => {
   if (!searchQuery.value) return props.options;
   const query = searchQuery.value.toLowerCase();
   return props.options.filter((opt) =>
-    String(opt).toLowerCase().includes(query)
+    String(opt).toLowerCase().includes(query),
   );
 });
 
@@ -72,12 +72,12 @@ const toggleOption = (option) => {
   } else {
     newValue.splice(index, 1);
   }
-  emit('update:modelValue', newValue);
+  emit("update:modelValue", newValue);
 };
 
 const removeOption = (option) => {
   const newValue = props.modelValue.filter((v) => v !== option);
-  emit('update:modelValue', newValue);
+  emit("update:modelValue", newValue);
 };
 </script>
 

@@ -1,13 +1,13 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import SearchBox from './components/SearchBox.vue';
-import UserMenu from './components/UserMenu.vue';
-import { useProgramData } from './composables/useProgramData.js';
+import { computed, ref, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import SearchBox from "./components/SearchBox.vue";
+import UserMenu from "./components/UserMenu.vue";
+import { useProgramData } from "./composables/useProgramData.js";
 
-import BaseIcon from './components/BaseIcon.vue';
-import { mdiChevronDown, mdiSitemap, mdiChevronRight } from '@mdi/js';
-import { STATUS_COLORS } from './styles/statusConstants'; // Import Colors
+import BaseIcon from "./components/BaseIcon.vue";
+import { mdiChevronDown, mdiSitemap, mdiChevronRight } from "@mdi/js";
+import { STATUS_COLORS } from "./styles/statusConstants"; // Import Colors
 
 const router = useRouter();
 const route = useRoute();
@@ -17,16 +17,16 @@ const { allNodes, selectedNode, chartData } = useProgramData();
 // We let the router decide what to show in the main area.
 // But we still need to know if we're on the main dashboard to show the sidebar.
 const isDashboard = computed(
-  () => route.name === 'ProgramTree' || route.path === '/'
+  () => route.name === "ProgramTree" || route.path === "/",
 );
 
 const handleNodeSelect = (node) => {
   if (node.isSoftwareEffort) {
     // Navigate to ProgramEfforts with selection
     router.push({
-      name: 'ProgramEfforts',
+      name: "ProgramEfforts",
       params: { programId: node.parentId },
-      query: { effort_id: node.program_id }
+      query: { effort_id: node.program_id },
     });
   } else {
     // If it's a program node, we don't just "select" it instantly.
@@ -35,8 +35,8 @@ const handleNodeSelect = (node) => {
 
     // Using the search box also just navigates you straight to the details page.
     router.push({
-      name: 'ProgramEfforts',
-      params: { programId: node.program_id }
+      name: "ProgramEfforts",
+      params: { programId: node.program_id },
     });
   }
 };
@@ -45,8 +45,8 @@ const handleNodeSelect = (node) => {
 const handleViewEfforts = () => {
   if (selectedNode.value) {
     router.push({
-      name: 'ProgramEfforts',
-      params: { programId: selectedNode.value.program_id }
+      name: "ProgramEfforts",
+      params: { programId: selectedNode.value.program_id },
     });
   }
 };
@@ -54,9 +54,9 @@ const handleViewEfforts = () => {
 const handleEffortClick = (effort) => {
   if (!selectedNode.value) return;
   router.push({
-    name: 'ProgramEfforts',
+    name: "ProgramEfforts",
     params: { programId: selectedNode.value.program_id },
-    query: { effort_id: effort.id || effort.uuid }
+    query: { effort_id: effort.id || effort.uuid },
   });
 };
 
@@ -64,11 +64,11 @@ const handleEffortClick = (effort) => {
 const breadcrumbs = computed(() => {
   // Start with the 'Home' icon or text
   const crumbs = [
-    { icon: mdiSitemap, name: 'Program Tree', id: null, path: '/' }
+    { icon: mdiSitemap, name: "Program Tree", id: null, path: "/" },
   ];
 
   // If we're just on the dashboard or an error page, that's all we need.
-  if (['Dashboard', 'PermissionDenied'].includes(route.name)) {
+  if (["Dashboard", "PermissionDenied"].includes(route.name)) {
     return crumbs;
   }
 
@@ -96,15 +96,15 @@ const breadcrumbs = computed(() => {
         crumbs.push({
           name: n.name,
           id: n.program_id,
-          children: n.children // We keep children so the dropdown works
-        })
+          children: n.children, // We keep children so the dropdown works
+        }),
       );
     } else {
       // Fallback if we can't find the path (shouldn't really happen)
       crumbs.push({
         name: selectedNode.value.name,
         id: selectedNode.value.program_id,
-        children: selectedNode.value.children
+        children: selectedNode.value.children,
       });
     }
   }
@@ -118,9 +118,9 @@ const displayedBreadcrumbs = computed(() => {
 
   return [
     all[0],
-    { name: '...', id: 'ellipsis', isEllipsis: true },
+    { name: "...", id: "ellipsis", isEllipsis: true },
     all[all.length - 2],
-    all[all.length - 1]
+    all[all.length - 1],
   ];
 });
 
@@ -128,8 +128,8 @@ const handleBreadcrumbClick = (crumb) => {
   if (!crumb) return;
   if (crumb.isEllipsis) return;
 
-  if (crumb.path === '/') {
-    router.push('/');
+  if (crumb.path === "/") {
+    router.push("/");
     return;
   }
 
@@ -170,7 +170,7 @@ const closeDropdown = (e) => {
   }
 };
 
-window.addEventListener('click', closeDropdown);
+window.addEventListener("click", closeDropdown);
 
 // Close on navigation
 watch(route, () => {
@@ -180,12 +180,12 @@ watch(route, () => {
 // --- Environment Logic ---
 const currentEnvironment = computed(() => {
   const host = window.location.hostname;
-  if (host.includes('localhost'))
-    return { label: 'Local', class: 'badge-local' };
-  if (host.includes('daf-compass-dev'))
-    return { label: 'Dev', class: 'badge-dev' };
-  if (host.includes('daf-compass-stage'))
-    return { label: 'Stage', class: 'badge-stage' };
+  if (host.includes("localhost"))
+    return { label: "Local", class: "badge-local" };
+  if (host.includes("daf-compass-dev"))
+    return { label: "Dev", class: "badge-dev" };
+  if (host.includes("daf-compass-stage"))
+    return { label: "Stage", class: "badge-stage" };
   return null;
 });
 </script>
@@ -216,7 +216,7 @@ const currentEnvironment = computed(() => {
                   index === displayedBreadcrumbs.length - 1 &&
                   !crumb.isEllipsis,
                 ellipsis: crumb.isEllipsis,
-                'icon-crumb': crumb.icon
+                'icon-crumb': crumb.icon,
               }"
               @click="handleBreadcrumbClick(crumb)"
               :title="crumb.icon ? crumb.name : ''"
@@ -317,23 +317,23 @@ const currentEnvironment = computed(() => {
             <!-- New Data Fields -->
             <div class="info-group">
               <label>Program Leader</label>
-              <span>{{ selectedNode.organization_leader_name || 'N/A' }}</span>
+              <span>{{ selectedNode.organization_leader_name || "N/A" }}</span>
             </div>
             <div class="info-group">
               <label>Chief Engineer</label>
-              <span>{{ selectedNode.chief_engineer_name || 'N/A' }}</span>
+              <span>{{ selectedNode.chief_engineer_name || "N/A" }}</span>
             </div>
             <div class="info-group">
               <label>Primary Location</label>
-              <span>{{ selectedNode.primary_location || 'N/A' }}</span>
+              <span>{{ selectedNode.primary_location || "N/A" }}</span>
             </div>
             <div class="info-group">
               <label>Type</label>
-              <span>{{ selectedNode.program_type || 'N/A' }}</span>
+              <span>{{ selectedNode.program_type || "N/A" }}</span>
             </div>
             <div class="info-group">
               <label>Program Value</label>
-              <span>{{ selectedNode.program_value || 'N/A' }}</span>
+              <span>{{ selectedNode.program_value || "N/A" }}</span>
             </div>
 
             <div class="divider"></div>
@@ -702,23 +702,23 @@ const currentEnvironment = computed(() => {
 }
 
 .tag.active {
-  background: v-bind('STATUS_COLORS.active.bg');
-  color: v-bind('STATUS_COLORS.active.text');
+  background: v-bind("STATUS_COLORS.active.bg");
+  color: v-bind("STATUS_COLORS.active.text");
 }
 
 .tag.gap {
-  background: v-bind('STATUS_COLORS.gap.bg');
-  color: v-bind('STATUS_COLORS.gap.text');
+  background: v-bind("STATUS_COLORS.gap.bg");
+  color: v-bind("STATUS_COLORS.gap.text");
 }
 
 .tag.neutral {
-  background: v-bind('STATUS_COLORS.neutral.bg');
-  color: v-bind('STATUS_COLORS.neutral.text');
+  background: v-bind("STATUS_COLORS.neutral.bg");
+  color: v-bind("STATUS_COLORS.neutral.text");
 }
 
 .tag.parent {
-  background: v-bind('STATUS_COLORS.parent.bg');
-  color: v-bind('STATUS_COLORS.parent.text');
+  background: v-bind("STATUS_COLORS.parent.bg");
+  color: v-bind("STATUS_COLORS.parent.text");
 }
 
 .sidebar-body {
@@ -897,7 +897,7 @@ const currentEnvironment = computed(() => {
 .effort-id {
   font-size: 11px;
   color: #79747e;
-  font-family: 'Roboto Mono', monospace;
+  font-family: "Roboto Mono", monospace;
 }
 
 .id-label {

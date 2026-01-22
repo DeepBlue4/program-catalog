@@ -1,11 +1,11 @@
 <script setup>
-import { watch, ref, computed } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import OrgChart from '../components/OrgChart.vue';
-import OrgLegend from '../components/OrgLegend.vue';
-import BaseIcon from '../components/BaseIcon.vue';
-import { mdiRefresh } from '@mdi/js';
-import { useProgramData } from '../composables/useProgramData.js';
+import { watch, ref, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import OrgChart from "../components/OrgChart.vue";
+import OrgLegend from "../components/OrgLegend.vue";
+import BaseIcon from "../components/BaseIcon.vue";
+import { mdiRefresh } from "@mdi/js";
+import { useProgramData } from "../composables/useProgramData.js";
 
 const router = useRouter();
 const route = useRoute();
@@ -14,17 +14,17 @@ const {
   sweChartData,
   selectedNode,
   selectNode,
-  findNodeById
+  findNodeById,
 } = useProgramData();
 // We also need access to the store functions exposed via composable or import
 // To avoid breaking useProgramData, let's import store directly for advanced features
-import { useProgramCatalogStore } from '../store/programCatalogStore';
+import { useProgramCatalogStore } from "../store/programCatalogStore";
 const store = useProgramCatalogStore();
 
-const filterMode = ref('ALL'); // 'ALL' or 'SWE'
+const filterMode = ref("ALL"); // 'ALL' or 'SWE'
 
 const chartData = computed(() => {
-  if (filterMode.value === 'SWE') {
+  if (filterMode.value === "SWE") {
     // Use normalized SWE data from composable
     return sweChartData.value;
   }
@@ -70,7 +70,7 @@ watch(
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // Sync Data Load -> Selection (Race Condition Fix)
@@ -93,7 +93,7 @@ watch(
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const handleNodeClick = (nodeData) => {

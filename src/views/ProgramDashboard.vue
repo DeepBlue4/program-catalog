@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import * as echarts from 'echarts';
-import BaseIcon from '../components/BaseIcon.vue';
+import { ref, onMounted, computed, onUnmounted, watch } from "vue";
+import { useRouter } from "vue-router";
+import * as echarts from "echarts";
+import BaseIcon from "../components/BaseIcon.vue";
 import {
   mdiDomain,
   mdiCodeBraces,
@@ -18,10 +18,10 @@ import {
   mdiLightbulb,
   mdiAlert,
   mdiAlertCircle, // Keep
-  mdiTable // Keep
-} from '@mdi/js';
-import { useProgramData } from '../composables/useProgramData';
-import { STATUS_COLORS, RAW_COLORS } from '../styles/statusConstants'; // Import Colors
+  mdiTable, // Keep
+} from "@mdi/js";
+import { useProgramData } from "../composables/useProgramData";
+import { STATUS_COLORS, RAW_COLORS } from "../styles/statusConstants"; // Import Colors
 
 const router = useRouter();
 const { allNodes, selectNode } = useProgramData();
@@ -35,7 +35,7 @@ let chartInstanceValidity = null;
 const activeMetricModal = ref(null);
 
 // List View State
-const activeListTab = ref('missing'); // 'missing', 'anomaly', 'active'
+const activeListTab = ref("missing"); // 'missing', 'anomaly', 'active'
 
 // Chart Category Visibility State
 const chartVisibility = ref({
@@ -43,14 +43,14 @@ const chartVisibility = ref({
   missing: true,
   parent: true,
   neutral: true,
-  unexpected: true
+  unexpected: true,
 });
 
 // Toggle chart category visibility
 const toggleChartCategory = (category) => {
   // Prevent disabling all categories - at least one must remain visible
   const visibleCount = Object.values(chartVisibility.value).filter(
-    (v) => v
+    (v) => v,
   ).length;
   if (visibleCount === 1 && chartVisibility.value[category]) {
     return; // Can't disable the last visible category
@@ -73,7 +73,7 @@ const dashboardData = computed(() => {
   const missing = expecting.filter((n) => !n.hasSoftwareEffort);
   const anomaly = hasEffort.filter((n) => !n.expecting_software_efforts); // Unexpected but Active
   const parent = programs.filter(
-    (n) => n.has_descendant_expecting_software_effort && !n.hasSoftwareEffort
+    (n) => n.has_descendant_expecting_software_effort && !n.hasSoftwareEffort,
   );
 
   // Strict Neutral: No effort, no expectation, no descendant activity
@@ -81,13 +81,13 @@ const dashboardData = computed(() => {
     (n) =>
       !n.hasSoftwareEffort &&
       !n.expecting_software_efforts &&
-      !n.has_descendant_expecting_software_effort
+      !n.has_descendant_expecting_software_effort,
   );
 
   // New Metric: Total Individual Efforts
   const totalEffortsCount = hasEffort.reduce(
     (acc, n) => acc + (n.softwareEfforts ? n.softwareEfforts.length : 0),
-    0
+    0,
   );
 
   // Helpers for List Mapping
@@ -97,9 +97,9 @@ const dashboardData = computed(() => {
     leader:
       n.details?.organization_leader_name ||
       n.organization_leader_name ||
-      'N/A',
+      "N/A",
     count: n.softwareEfforts ? n.softwareEfforts.length : 0,
-    rawNode: n
+    rawNode: n,
   });
 
   const missingList = missing.map(mapNodeToList);
@@ -119,73 +119,74 @@ const dashboardData = computed(() => {
       anomaly: anomaly.length,
       parent: parent.length,
       neutral: neutral.length,
-      totalEfforts: totalEffortsCount // New
+      totalEfforts: totalEffortsCount, // New
     },
     complianceRate,
     lists: {
       missing: missingList,
       anomaly: anomalyList,
-      active: activeList
-    }
+      active: activeList,
+    },
   };
 });
 
 // Context Definitions
 const metricDefinitions = {
   total: {
-    title: 'Total Programs',
-    shortDesc: 'Total catalog hierarchy nodes',
-    desc: 'The total number of Program, Division, and Unit nodes currently tracked in the catalog.',
-    context: "This represents the entire scope of the organization's hierarchy."
+    title: "Total Programs",
+    shortDesc: "Total catalog hierarchy nodes",
+    desc: "The total number of Program, Division, and Unit nodes currently tracked in the catalog.",
+    context:
+      "This represents the entire scope of the organization's hierarchy.",
   },
   totalEfforts: {
-    title: 'Software Efforts',
-    shortDesc: 'Individual software efforts count',
-    desc: 'The total number of individual software efforts (projects, products, teams) tracked across all programs.',
+    title: "Software Efforts",
+    shortDesc: "Individual software efforts count",
+    desc: "The total number of individual software efforts (projects, products, teams) tracked across all programs.",
     context:
-      'A single program may manage multiple software efforts. This metric captures the total volume of software work.'
+      "A single program may manage multiple software efforts. This metric captures the total volume of software work.",
   },
   expecting: {
-    title: 'Expecting Software',
-    shortDesc: 'Programs flagged for software effort(s)',
-    desc: 'Programs that have been flagged as requiring software effort(s).',
+    title: "Expecting Software",
+    shortDesc: "Programs flagged for software effort(s)",
+    desc: "Programs that have been flagged as requiring software effort(s).",
     context:
-      'This is the baseline for our compliance tracking. Every program here should eventually have an active effort.'
+      "This is the baseline for our compliance tracking. Every program here should eventually have an active effort.",
   },
   active: {
-    title: 'Active (Has Effort)',
-    shortDesc: 'Currently assigned software effort(s)',
-    desc: 'Programs that currently have at least one assigned Software Effort.',
-    context: 'These programs are actively delivering software functionality.'
+    title: "Active (Has Effort)",
+    shortDesc: "Currently assigned software effort(s)",
+    desc: "Programs that currently have at least one assigned Software Effort.",
+    context: "These programs are actively delivering software functionality.",
   },
   missing: {
-    title: 'Missing Efforts (Gap)',
-    shortDesc: 'Non-compliant (Gap)',
-    desc: 'Programs that Expect Software but have Zero assigned efforts.',
+    title: "Missing Efforts (Gap)",
+    shortDesc: "Non-compliant (Gap)",
+    desc: "Programs that Expect Software but have Zero assigned efforts.",
     context:
-      'CRITICAL: These programs are non-compliant and require immediate attention to link or create software efforts.'
+      "CRITICAL: These programs are non-compliant and require immediate attention to link or create software efforts.",
   },
   anomaly: {
-    title: 'Unexpected Efforts',
-    shortDesc: 'Unexpected active efforts',
-    desc: 'Programs that have Active Software Efforts but were NOT flagged to expect them.',
+    title: "Unexpected Efforts",
+    shortDesc: "Unexpected active efforts",
+    desc: "Programs that have Active Software Efforts but were NOT flagged to expect them.",
     context:
-      'Configuration Alert: Validate if the "Expect Software" flag should be enabled or if the effort is misplaced.'
+      'Configuration Alert: Validate if the "Expect Software" flag should be enabled or if the effort is misplaced.',
   },
   parent: {
-    title: 'Parent Programs',
-    shortDesc: 'Containers for sub-programs',
-    desc: 'Programs that do not have their own efforts but contain sub-programs that do.',
+    title: "Parent Programs",
+    shortDesc: "Containers for sub-programs",
+    desc: "Programs that do not have their own efforts but contain sub-programs that do.",
     context:
-      'These act as organizational containers and aggregators for lower-level software work.'
+      "These act as organizational containers and aggregators for lower-level software work.",
   },
   neutral: {
-    title: 'Neutral Programs',
-    shortDesc: 'Structural/Empty nodes',
-    desc: 'Programs with no active efforts, no expectations, and no active descendants.',
+    title: "Neutral Programs",
+    shortDesc: "Structural/Empty nodes",
+    desc: "Programs with no active efforts, no expectations, and no active descendants.",
     context:
-      'These nodes exist primarily for organizational structure and have no direct software workload.'
-  }
+      "These nodes exist primarily for organizational structure and have no direct software workload.",
+  },
 };
 
 const openMetricModal = (key) => {
@@ -200,7 +201,7 @@ const initCharts = () => {
   // Theme Colors
   const primaryColor = RAW_COLORS.primary;
   const errorColor = RAW_COLORS.error;
-  const surfaceVariant = '#E7E0EC'; // Placeholder or add to constants if reused often
+  const surfaceVariant = "#E7E0EC"; // Placeholder or add to constants if reused often
 
   // Compliance Gauge
   if (chartRefCompliance.value) {
@@ -210,16 +211,16 @@ const initCharts = () => {
     chartInstanceCompliance.setOption({
       series: [
         {
-          type: 'gauge',
+          type: "gauge",
           startAngle: 180,
           endAngle: 0,
-          center: ['50%', '75%'],
-          radius: '100%',
+          center: ["50%", "75%"],
+          radius: "100%",
           min: 0,
           max: 100,
           splitNumber: 5,
           itemStyle: {
-            color: rate >= 90 ? primaryColor : errorColor
+            color: rate >= 90 ? primaryColor : errorColor,
           },
           axisLine: {
             lineStyle: {
@@ -227,9 +228,9 @@ const initCharts = () => {
               color: [
                 [0.7, errorColor],
                 [0.9, surfaceVariant],
-                [1, primaryColor]
-              ]
-            }
+                [1, primaryColor],
+              ],
+            },
           },
           pointer: { show: false },
           axisTick: { show: false },
@@ -237,14 +238,14 @@ const initCharts = () => {
           axisLabel: { show: false },
           detail: {
             fontSize: 36,
-            offsetCenter: [0, '-20%'],
+            offsetCenter: [0, "-20%"],
             valueAnimation: true,
-            formatter: '{value}%',
-            color: 'inherit'
+            formatter: "{value}%",
+            color: "inherit",
           },
-          data: [{ value: rate, name: 'Compliance Rate' }]
-        }
-      ]
+          data: [{ value: rate, name: "Compliance Rate" }],
+        },
+      ],
     });
   }
 
@@ -265,61 +266,61 @@ const updateValidityChart = () => {
     const allData = [
       {
         value: validPopulated,
-        name: 'Populated',
-        key: 'populated',
-        itemStyle: { color: RAW_COLORS.primary }
+        name: "Populated",
+        key: "populated",
+        itemStyle: { color: RAW_COLORS.primary },
       },
       {
         value: counts.parent,
-        name: 'Parent of Effort',
-        key: 'parent',
-        itemStyle: { color: '#B3D4FF' }
+        name: "Parent of Effort",
+        key: "parent",
+        itemStyle: { color: "#B3D4FF" },
       },
       {
         value: counts.neutral,
-        name: 'Neutral',
-        key: 'neutral',
-        itemStyle: { color: '#79747E' }
+        name: "Neutral",
+        key: "neutral",
+        itemStyle: { color: "#79747E" },
       },
       {
         value: counts.missing,
-        name: 'Missing',
-        key: 'missing',
-        itemStyle: { color: RAW_COLORS.error }
+        name: "Missing",
+        key: "missing",
+        itemStyle: { color: RAW_COLORS.error },
       },
       {
         value: counts.anomaly,
-        name: 'Unexpected',
-        key: 'unexpected',
-        itemStyle: { color: RAW_COLORS.errorContainer }
-      }
+        name: "Unexpected",
+        key: "unexpected",
+        itemStyle: { color: RAW_COLORS.errorContainer },
+      },
     ];
 
     // Filter based on visibility state
     const visibleData = allData.filter(
-      (item) => chartVisibility.value[item.key]
+      (item) => chartVisibility.value[item.key],
     );
 
     chartInstanceValidity.setOption({
-      tooltip: { trigger: 'item' },
+      tooltip: { trigger: "item" },
       legend: { show: false },
       series: [
         {
-          name: 'Program Status',
-          type: 'pie',
-          radius: ['40%', '70%'],
+          name: "Program Status",
+          type: "pie",
+          radius: ["40%", "70%"],
           avoidLabelOverlap: false,
-          itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+          itemStyle: { borderRadius: 10, borderColor: "#fff", borderWidth: 2 },
           label: {
             show: true,
-            formatter: '{c}',
-            fontWeight: 'bold',
-            fontSize: 14
+            formatter: "{c}",
+            fontWeight: "bold",
+            fontSize: 14,
           },
-          emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold' } },
-          data: visibleData
-        }
-      ]
+          emphasis: { label: { show: true, fontSize: 16, fontWeight: "bold" } },
+          data: visibleData,
+        },
+      ],
     });
   }
 };
@@ -331,7 +332,7 @@ const handleResize = () => {
 
 const navigateToProgram = (node) => {
   selectNode(node);
-  router.push({ name: 'ProgramEfforts', params: { programId: node.value } });
+  router.push({ name: "ProgramEfforts", params: { programId: node.value } });
 };
 
 // Re-init charts if theme changes or data loads
@@ -343,11 +344,11 @@ onMounted(() => {
   setTimeout(() => {
     initCharts();
   }, 100);
-  window.addEventListener('resize', handleResize);
+  window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('resize', handleResize);
+  window.removeEventListener("resize", handleResize);
   chartInstanceCompliance?.dispose();
   chartInstanceValidity?.dispose();
 });
@@ -900,7 +901,7 @@ onUnmounted(() => {
   color: #212529; /* Dark grey instead of pure black */
   margin: 0.25rem 0;
   font-family:
-    'Inter', sans-serif; /* Ensure clean font if available, or system default */
+    "Inter", sans-serif; /* Ensure clean font if available, or system default */
 }
 
 .card-desc {
@@ -982,8 +983,8 @@ onUnmounted(() => {
 }
 
 .badge.warning {
-  background: v-bind('STATUS_COLORS.gap.bg');
-  color: v-bind('STATUS_COLORS.gap.text');
+  background: v-bind("STATUS_COLORS.gap.bg");
+  color: v-bind("STATUS_COLORS.gap.text");
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 100px;
@@ -991,7 +992,7 @@ onUnmounted(() => {
 }
 
 .badge.error {
-  background: v-bind('STATUS_COLORS.gap.border'); /* Dark red */
+  background: v-bind("STATUS_COLORS.gap.border"); /* Dark red */
   color: #ffffff;
   font-size: 11px;
   padding: 2px 8px;
@@ -1000,8 +1001,8 @@ onUnmounted(() => {
 }
 
 .badge.neutral {
-  background: v-bind('STATUS_COLORS.neutral.bg');
-  color: v-bind('STATUS_COLORS.neutral.text');
+  background: v-bind("STATUS_COLORS.neutral.bg");
+  color: v-bind("STATUS_COLORS.neutral.text");
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 100px;

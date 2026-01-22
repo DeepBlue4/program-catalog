@@ -13,24 +13,24 @@
  */
 
 const locationOptions = [
-  'None',
-  'Other',
-  'Remote',
+  "None",
+  "Other",
+  "Remote",
 
   // Dummy Data
-  'New York, New York, USA',
-  'Los Angeles, California, USA',
-  'Chicago, Illinois, USA',
-  'Houston, Texas, USA',
-  'Phoenix, Arizona, USA',
-  'Philadelphia, Pennsylvania, USA',
-  'San Antonio, Texas, USA',
-  'San Diego, California, USA',
-  'Dallas, Texas, USA',
-  'San Jose, California, USA'
+  "New York, New York, USA",
+  "Los Angeles, California, USA",
+  "Chicago, Illinois, USA",
+  "Houston, Texas, USA",
+  "Phoenix, Arizona, USA",
+  "Philadelphia, Pennsylvania, USA",
+  "San Antonio, Texas, USA",
+  "San Diego, California, USA",
+  "Dallas, Texas, USA",
+  "San Jose, California, USA",
 ];
 
-function alphabetizeLocations(list, pinned = ['None', 'Other', 'Remote']) {
+function alphabetizeLocations(list, pinned = ["None", "Other", "Remote"]) {
   // Create a set for quick lookup of pinned items (case-sensitive match to preserve exact strings)
   const pinnedSet = new Set(pinned);
 
@@ -39,10 +39,10 @@ function alphabetizeLocations(list, pinned = ['None', 'Other', 'Remote']) {
   // Stable, case-insensitive sort for the rest
   const sortedRest = rest.slice().sort((a, b) =>
     a.localeCompare(b, undefined, {
-      sensitivity: 'accent',
+      sensitivity: "accent",
       numeric: true,
-      caseFirst: 'upper'
-    })
+      caseFirst: "upper",
+    }),
   );
 
   // Return pinned (only those present) followed by sorted rest

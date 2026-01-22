@@ -1,40 +1,40 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { useEmailsStore } from '../store/emailsStore';
-import BaseIcon from './BaseIcon.vue';
-import { mdiAccountSearch, mdiClose } from '@mdi/js';
+import { ref, computed, onMounted, watch } from "vue";
+import { useEmailsStore } from "../store/emailsStore";
+import BaseIcon from "./BaseIcon.vue";
+import { mdiAccountSearch, mdiClose } from "@mdi/js";
 
 const props = defineProps({
   modelValue: {
     type: String,
-    default: ''
+    default: "",
   },
   label: {
     type: String,
-    default: 'Email'
+    default: "Email",
   },
   placeholder: {
     type: String,
-    default: 'Enter email...'
+    default: "Enter email...",
   },
   disabled: {
     type: Boolean,
-    default: false
+    default: false,
   },
   error: {
     type: String,
-    default: ''
+    default: "",
   },
   required: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
-const emit = defineEmits(['update:modelValue', 'blur']);
+const emit = defineEmits(["update:modelValue", "blur"]);
 
 const store = useEmailsStore();
-const searchQuery = ref(props.modelValue || '');
+const searchQuery = ref(props.modelValue || "");
 const showDropdown = ref(false);
 const inputRef = ref(null);
 
@@ -43,9 +43,9 @@ watch(
   () => props.modelValue,
   (newVal) => {
     if (newVal !== searchQuery.value) {
-      searchQuery.value = newVal || '';
+      searchQuery.value = newVal || "";
     }
-  }
+  },
 );
 
 onMounted(() => {
@@ -65,21 +65,21 @@ const filteredEmails = computed(() => {
 
 const handleInput = (e) => {
   searchQuery.value = e.target.value;
-  emit('update:modelValue', searchQuery.value);
+  emit("update:modelValue", searchQuery.value);
   showDropdown.value = true;
 };
 
 const selectEmail = (email) => {
   searchQuery.value = email;
-  emit('update:modelValue', email);
+  emit("update:modelValue", email);
   showDropdown.value = false;
-  emit('blur'); // Treat selection as blur/completion
+  emit("blur"); // Treat selection as blur/completion
 };
 
 const clearInput = () => {
   if (props.disabled) return;
-  searchQuery.value = '';
-  emit('update:modelValue', '');
+  searchQuery.value = "";
+  emit("update:modelValue", "");
   showDropdown.value = false;
   inputRef.value?.focus();
 };
@@ -88,7 +88,7 @@ const handleBlur = () => {
   // Delay closing to allow click event on dropdown item
   setTimeout(() => {
     showDropdown.value = false;
-    emit('blur');
+    emit("blur");
   }, 200);
 };
 
@@ -169,7 +169,7 @@ const handleFocus = () => {
   gap: 4px;
   width: 100%;
   position: relative;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
 }
 
 .field-label {

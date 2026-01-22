@@ -1,8 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import { ref } from 'vue';
-import { CompassAPIService } from '../services/api.js';
-import ProgramTreeView from '../views/ProgramTreeView.vue';
-import ProgramEffortsView from '../views/ProgramEffortsView.vue';
+import { createRouter, createWebHistory } from "vue-router";
+import { ref } from "vue";
+import { CompassAPIService } from "../services/api.js";
+import ProgramTreeView from "../views/ProgramTreeView.vue";
+import ProgramEffortsView from "../views/ProgramEffortsView.vue";
 
 /* 
  We modify the currentUserRef here so the rest of the app (via main.js) 
@@ -18,23 +18,23 @@ const permissionCache = new Map();
  If it fails or returns bad data, we just leave the user as null.
 */
 async function fetchCurrentUser() {
-  console.log('[Router] fetchCurrentUser started...');
+  console.log("[Router] fetchCurrentUser started...");
   try {
     const resp = await CompassAPIService.getCurrentUser();
-    console.log('[Router] CompassAPIService.getCurrentUser response:', resp);
+    console.log("[Router] CompassAPIService.getCurrentUser response:", resp);
 
     if (resp && resp.success) {
       currentUserRef.value = resp.data;
-      console.log('[Router] currentUserRef set to:', currentUserRef.value);
+      console.log("[Router] currentUserRef set to:", currentUserRef.value);
     } else {
       currentUserRef.value = resp ? resp.data : null;
       console.warn(
-        '[Router] getCurrentUser returned success:false or no data',
-        resp
+        "[Router] getCurrentUser returned success:false or no data",
+        resp,
       );
     }
   } catch (err) {
-    console.error('[Router] Error fetching current user:', err);
+    console.error("[Router] Error fetching current user:", err);
     currentUserRef.value = null;
     throw err;
   }
@@ -78,7 +78,7 @@ export function evaluateDashboardAccess(user) {
  spam the login check on every route change.
 */
 async function checkPermission() {
-  const cacheKey = 'global_write_access';
+  const cacheKey = "global_write_access";
   if (permissionCache.has(cacheKey)) return permissionCache.get(cacheKey);
 
   if (currentUserRef.value === null) {
@@ -98,37 +98,37 @@ export function clearPermissionCache() {
 
 const routes = [
   {
-    path: '/',
-    name: 'ProgramTree',
-    component: ProgramTreeView
+    path: "/",
+    name: "ProgramTree",
+    component: ProgramTreeView,
   },
   {
-    path: '/efforts/:programId',
-    name: 'ProgramEfforts',
+    path: "/efforts/:programId",
+    name: "ProgramEfforts",
     component: ProgramEffortsView,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: () => import('../views/ProgramDashboard.vue'),
-    meta: { requiresDashboardAccess: true }
+    path: "/dashboard",
+    name: "Dashboard",
+    component: () => import("../views/ProgramDashboard.vue"),
+    meta: { requiresDashboardAccess: true },
   },
   {
-    path: '/403',
-    name: 'PermissionDenied',
-    component: () => import('../views/PermissionDenied.vue')
+    path: "/403",
+    name: "PermissionDenied",
+    component: () => import("../views/PermissionDenied.vue"),
   },
   // Catch-all: redirect unknown routes to ProgramTree
   {
-    path: '/:pathMatch(.*)*',
-    redirect: { name: 'ProgramTree' }
-  }
+    path: "/:pathMatch(.*)*",
+    redirect: { name: "ProgramTree" },
+  },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 });
 
 router.beforeEach(async (to, from, next) => {
@@ -152,20 +152,20 @@ router.beforeEach(async (to, from, next) => {
     if (requiresAuth) {
       // Using our cached check logic is fine here
       const allowed = await checkPermission();
-      if (!allowed) return next({ name: 'PermissionDenied' });
+      if (!allowed) return next({ name: "PermissionDenied" });
     }
 
     // 2. Check Dashboard Access (Strict: Admin/Staff only)
     if (requiresDashboard) {
       const hasDashboardAccess = evaluateDashboardAccess(user);
-      if (!hasDashboardAccess) return next({ name: 'PermissionDenied' });
+      if (!hasDashboardAccess) return next({ name: "PermissionDenied" });
     }
 
     return next();
   } catch (err) {
     // on fetch/network errors, block access for safety
-    console.error('Permission check failed:', err);
-    return next({ name: 'PermissionDenied' });
+    console.error("Permission check failed:", err);
+    return next({ name: "PermissionDenied" });
   }
 });
 

@@ -1,9 +1,9 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
-import SoftwareEffortForm from './SoftwareEffortForm.vue';
-import SoftwareEffortTreeItem from './SoftwareEffortTreeItem.vue';
-import ConfirmationModal from './ConfirmationModal.vue';
-import BaseIcon from './BaseIcon.vue';
+import { ref, computed, watch } from "vue";
+import SoftwareEffortForm from "./SoftwareEffortForm.vue";
+import SoftwareEffortTreeItem from "./SoftwareEffortTreeItem.vue";
+import ConfirmationModal from "./ConfirmationModal.vue";
+import BaseIcon from "./BaseIcon.vue";
 import {
   mdiArrowLeft,
   mdiInformation,
@@ -19,16 +19,16 @@ import {
   mdiClose,
   mdiAlert,
   mdiCheckCircleOutline,
-  mdiMinusCircleOutline
-} from '@mdi/js';
-import { STATUS_COLORS } from '../styles/statusConstants';
+  mdiMinusCircleOutline,
+} from "@mdi/js";
+import { STATUS_COLORS } from "../styles/statusConstants";
 
 const props = defineProps({
   programName: { type: String, required: true },
   programId: { type: [String, Number], required: true },
   program: { type: Object, default: () => ({}) }, // Full program details
   efforts: { type: Array, default: () => [] },
-  selectedId: { type: [String, Number], default: null }
+  selectedId: { type: [String, Number], default: null },
 });
 
 const statusConfig = computed(() => {
@@ -41,56 +41,56 @@ const statusConfig = computed(() => {
   // Ensure boolean
   const expecting = !!p.expecting_software_efforts;
 
-  console.log('[statusConfig 1] Debug for:', p.name, {
+  console.log("[statusConfig 1] Debug for:", p.name, {
     expecting,
     hasEfforts,
     propEffortsLen: propEfforts.length,
-    objEffortsLen: objEfforts.length
+    objEffortsLen: objEfforts.length,
   });
 
   if (expecting && !hasEfforts) {
-    console.log('[statusConfig 2] Debug for:', p.name, {
+    console.log("[statusConfig 2] Debug for:", p.name, {
       expecting,
       hasEfforts,
       propEffortsLen: propEfforts.length,
-      objEffortsLen: objEfforts.length
+      objEffortsLen: objEfforts.length,
     });
     return {
       ...STATUS_COLORS.gap,
-      label: 'Expected (Missing)',
+      label: "Expected (Missing)",
       icon: mdiAlert,
-      isWarning: true
+      isWarning: true,
     };
   } else if (hasEfforts && !expecting) {
-    console.log('[statusConfig 3] Debug for:', p.name, {
+    console.log("[statusConfig 3] Debug for:", p.name, {
       expecting,
       hasEfforts,
       propEffortsLen: propEfforts.length,
-      objEffortsLen: objEfforts.length
+      objEffortsLen: objEfforts.length,
     });
     // Anomaly / Unexpected
     return {
       ...STATUS_COLORS.gap,
-      label: 'Unexpected (Assigned)',
+      label: "Unexpected (Assigned)",
       icon: mdiAlertCircle,
-      isWarning: true
+      isWarning: true,
     };
   } else if (hasEfforts) {
     return {
       ...STATUS_COLORS.active,
-      label: 'Software Efforts Active',
-      icon: mdiCheckCircleOutline
+      label: "Software Efforts Active",
+      icon: mdiCheckCircleOutline,
     };
   } else {
     return {
       ...STATUS_COLORS.neutral,
-      label: 'Not Expecting Software Efforts',
-      icon: mdiMinusCircleOutline
+      label: "Not Expecting Software Efforts",
+      icon: mdiMinusCircleOutline,
     };
   }
 });
 
-const emit = defineEmits(['back', 'selection-change', 'effort-deleted']);
+const emit = defineEmits(["back", "selection-change", "effort-deleted"]);
 
 const showModal = ref(false);
 const showDeleteModal = ref(false);
@@ -143,11 +143,11 @@ watch(
   () => props.programId,
   () => {
     currentPage.value = 1;
-  }
+  },
 );
 
 const totalPages = computed(() =>
-  Math.ceil(props.efforts.length / itemsPerPage)
+  Math.ceil(props.efforts.length / itemsPerPage),
 );
 
 const displayedEfforts = computed(() => {
@@ -209,7 +209,7 @@ const selectedEffort = computed(() => {
   };
 
   const res = findInTree(props.efforts);
-  console.log('[SEL] Found effort?', !!res, 'for id:', id);
+  console.log("[SEL] Found effort?", !!res, "for id:", id);
   return res;
 });
 
@@ -232,7 +232,7 @@ const jumpToSelection = (id) => {
   if (rootIndex !== -1) {
     const page = Math.floor(rootIndex / itemsPerPage) + 1;
     if (currentPage.value !== page) {
-      console.log('[Pagination] Jumping to page:', page, 'for item:', id);
+      console.log("[Pagination] Jumping to page:", page, "for item:", id);
       currentPage.value = page;
     }
   }
@@ -244,7 +244,7 @@ watch(
   (newId) => {
     if (newId) jumpToSelection(newId);
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 watch(effortTree, () => {
@@ -256,9 +256,9 @@ const handleSelect = (effort) => {
   triggerActionWithCheck(() => {
     // Toggle logic: If already selected, deselect (emit null)
     if (String(props.selectedId) === String(effort.id)) {
-      emit('selection-change', null);
+      emit("selection-change", null);
     } else {
-      emit('selection-change', effort.id);
+      emit("selection-change", effort.id);
     }
   });
 };
@@ -278,10 +278,10 @@ const handleDelete = (effort) => {
   showDeleteModal.value = true;
 };
 
-const notification = ref({ show: false, message: '', type: 'success' }); // type: success, error
+const notification = ref({ show: false, message: "", type: "success" }); // type: success, error
 let notificationTimeout;
 
-const showNotification = (message, type = 'success') => {
+const showNotification = (message, type = "success") => {
   notification.value = { show: true, message, type };
   if (notificationTimeout) clearTimeout(notificationTimeout);
   notificationTimeout = setTimeout(() => {
@@ -290,13 +290,13 @@ const showNotification = (message, type = 'success') => {
 };
 
 // Import Store
-import { useProgramCatalogStore } from '../store/programCatalogStore';
+import { useProgramCatalogStore } from "../store/programCatalogStore";
 const store = useProgramCatalogStore();
 
 const confirmDelete = async () => {
   if (itemToDelete.value) {
     const index = props.efforts.findIndex(
-      (e) => e.id === itemToDelete.value.id
+      (e) => e.id === itemToDelete.value.id,
     );
     if (index !== -1) {
       const deletedItem = props.efforts[index];
@@ -304,20 +304,20 @@ const confirmDelete = async () => {
       // Call Store's Delete Method (which handles both API and cache update)
       const res = await store.deleteSoftwareEffort(
         props.programId,
-        deletedItem.uuid
+        deletedItem.uuid,
       );
 
       if (res.success) {
         // Emit event to parent for any additional UI updates
-        emit('effort-deleted', deletedItem.id);
+        emit("effort-deleted", deletedItem.id);
         showNotification(`Deleted '${deletedItem.name}' successfully.`);
         if (String(props.selectedId) === String(deletedItem.id)) {
           // Emit null to clear selection via parent
-          emit('selection-change', null);
+          emit("selection-change", null);
           isFormDirty.value = false;
         }
       } else {
-        showNotification('Failed to delete effort. Please try again.', 'error');
+        showNotification("Failed to delete effort. Please try again.", "error");
       }
     }
   }
@@ -337,11 +337,11 @@ const saveEffort = async (effortData) => {
     const savedEffort = res.data || effortData;
 
     if (isNew) {
-      emit('selection-change', savedEffort.id);
+      emit("selection-change", savedEffort.id);
     }
 
     showNotification(
-      isNew ? 'Effort created successfully.' : 'Changes saved successfully.'
+      isNew ? "Effort created successfully." : "Changes saved successfully.",
     );
 
     if (effortFormRef.value) {
@@ -352,15 +352,15 @@ const saveEffort = async (effortData) => {
     isFormDirty.value = false;
   } else {
     showNotification(
-      res.message || 'Failed to save changes. Please try again.',
-      'error'
+      res.message || "Failed to save changes. Please try again.",
+      "error",
     );
   }
 };
 
 const handleBack = () => {
   triggerActionWithCheck(() => {
-    emit('back');
+    emit("back");
   });
 };
 
@@ -371,7 +371,7 @@ const confirmNavigation = (onConfirm, onCancel) => {
 // Expose checks to parent view
 defineExpose({
   isFormDirty,
-  confirmNavigation
+  confirmNavigation,
 });
 
 const effortFormRef = ref(null);
@@ -382,7 +382,7 @@ const handleRevertRequest = () => {
     if (effortFormRef.value) {
       effortFormRef.value.resetForm();
       isFormDirty.value = false;
-      showNotification('Changes discarded.');
+      showNotification("Changes discarded.");
     }
   };
   showUnsavedChangesModal.value = true;
@@ -443,7 +443,7 @@ const showHelpModal = ref(false);
             class="sidebar-warning-badge"
             :style="{
               backgroundColor: statusConfig.bg,
-              color: statusConfig.text
+              color: statusConfig.text,
             }"
             :title="statusConfig.label"
           >
@@ -619,36 +619,36 @@ const showHelpModal = ref(false);
             <div class="info-item">
               <label>Program Leader</label>
               <div class="value">
-                {{ program.organization_leader_name || 'N/A' }}
+                {{ program.organization_leader_name || "N/A" }}
               </div>
             </div>
 
             <div class="info-item">
               <label>Chief Engineer</label>
               <div class="value">
-                {{ program.chief_engineer_name || 'N/A' }}
+                {{ program.chief_engineer_name || "N/A" }}
               </div>
             </div>
 
             <div class="info-item">
               <label>Program Value</label>
-              <div class="value">{{ program.program_value || 'N/A' }}</div>
+              <div class="value">{{ program.program_value || "N/A" }}</div>
             </div>
 
             <div class="info-item">
               <label>Primary Location</label>
-              <div class="value">{{ program.primary_location || 'N/A' }}</div>
+              <div class="value">{{ program.primary_location || "N/A" }}</div>
             </div>
 
             <div class="info-item">
               <label>Type</label>
-              <div class="value">{{ program.program_type || 'N/A' }}</div>
+              <div class="value">{{ program.program_type || "N/A" }}</div>
             </div>
 
             <div class="info-item">
               <label>Expects Software Efforts</label>
               <div class="value">
-                {{ program.expecting_software_efforts ? 'Yes' : 'No' }}
+                {{ program.expecting_software_efforts ? "Yes" : "No" }}
               </div>
             </div>
 
@@ -657,8 +657,8 @@ const showHelpModal = ref(false);
               <div class="value">
                 {{
                   program.has_descendant_expecting_software_effort
-                    ? 'Yes'
-                    : 'No'
+                    ? "Yes"
+                    : "No"
                 }}
               </div>
             </div>
@@ -1019,20 +1019,20 @@ const showHelpModal = ref(false);
 }
 
 .status-pill.gap {
-  background: v-bind('STATUS_COLORS.gap.bg');
-  color: v-bind('STATUS_COLORS.gap.text');
-  border-color: v-bind('STATUS_COLORS.gap.border');
+  background: v-bind("STATUS_COLORS.gap.bg");
+  color: v-bind("STATUS_COLORS.gap.text");
+  border-color: v-bind("STATUS_COLORS.gap.border");
 }
 
 .status-pill.active {
-  background: v-bind('STATUS_COLORS.active.bg');
+  background: v-bind("STATUS_COLORS.active.bg");
   color: white;
 }
 
 .status-pill.neutral {
-  background: v-bind('STATUS_COLORS.neutral.bg');
-  color: v-bind('STATUS_COLORS.neutral.text');
-  border-color: v-bind('STATUS_COLORS.neutral.border');
+  background: v-bind("STATUS_COLORS.neutral.bg");
+  color: v-bind("STATUS_COLORS.neutral.text");
+  border-color: v-bind("STATUS_COLORS.neutral.border");
 }
 
 /* Modal Overlay */

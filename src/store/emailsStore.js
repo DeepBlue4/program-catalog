@@ -1,10 +1,10 @@
-import { reactive } from 'vue';
-import { CompassAPIService } from '../services/api.js';
+import { reactive } from "vue";
+import { CompassAPIService } from "../services/api.js";
 
 const state = reactive({
   emails: [],
   loading: false,
-  error: null
+  error: null,
 });
 
 async function fetchEmails() {
@@ -18,12 +18,12 @@ async function fetchEmails() {
     const response = await CompassAPIService.getEmails();
 
     if (!response.success) {
-      state.error = 'Could not connect to the backend';
+      state.error = "Could not connect to the backend";
     } else {
       state.emails = response.data;
     }
   } catch (err) {
-    state.error = err.message || 'Failed to fetch emails';
+    state.error = err.message || "Failed to fetch emails";
   } finally {
     state.loading = false;
   }
@@ -32,6 +32,6 @@ async function fetchEmails() {
 export function useEmailsStore() {
   return {
     state,
-    fetchEmails
+    fetchEmails,
   };
 }

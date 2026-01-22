@@ -1,10 +1,10 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
-import { useProgramCatalogStore } from '../store/programCatalogStore'; // Import store
-import BaseIcon from '../components/BaseIcon.vue';
-import MultiSelectDropdown from './MultiSelectDropdown.vue';
-import EmailAutocomplete from './EmailAutocomplete.vue';
-import { locationOptionsAlphabetized } from '../store/boeingLocations';
+import { ref, computed, watch, onMounted } from "vue";
+import { useProgramCatalogStore } from "../store/programCatalogStore"; // Import store
+import BaseIcon from "../components/BaseIcon.vue";
+import MultiSelectDropdown from "./MultiSelectDropdown.vue";
+import EmailAutocomplete from "./EmailAutocomplete.vue";
+import { locationOptionsAlphabetized } from "../store/boeingLocations";
 import {
   PROGRAM_PHASES,
   EFFORT_TYPES,
@@ -15,8 +15,8 @@ import {
   ISSUE_TRACKING_OPTIONS,
   LANGUAGE_OPTIONS,
   OS_OPTIONS,
-  SBOM_OPTIONS
-} from '../store/programConstants';
+  SBOM_OPTIONS,
+} from "../store/programConstants";
 import {
   mdiFileSign,
   mdiAccountGroupOutline,
@@ -26,14 +26,14 @@ import {
   mdiInformationOutline,
   mdiMagnify,
   mdiSourceBranch,
-  mdiClose
-} from '@mdi/js';
+  mdiClose,
+} from "@mdi/js";
 
 const props = defineProps({
   effort: {
     type: Object,
     default: () => ({
-      name: '',
+      name: "",
       parent: null,
       parent_uuid: null,
       linked_software_efforts: [],
@@ -46,65 +46,65 @@ const props = defineProps({
         mission_critical: null,
         security_clearance: [],
         safety_criticality: [],
-        program_phase: '', // Default phases
-        program_manager_email: ''
+        program_phase: "", // Default phases
+        program_manager_email: "",
       },
       technical_points_of_contact: {
-        security_focal: '',
-        software_lead: '',
-        names: ''
+        security_focal: "",
+        software_lead: "",
+        names: "",
       },
       developer_setup: {
         development_environments: [],
         source_control_tools: [],
         issue_tracking_tools: [],
-        dp_assessment_name: '',
+        dp_assessment_name: "",
         sbom_location: [],
         programming_languages: [],
-        operating_systems: []
+        operating_systems: [],
       },
       work_location: {
-        locations: []
-      }
-    })
+        locations: [],
+      },
+    }),
   },
   availableParents: {
     type: Array, // List of other efforts in this program
-    default: () => []
+    default: () => [],
   },
   isEdit: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
 const emit = defineEmits([
-  'save',
-  'cancel',
-  'delete',
-  'dirty-change',
-  'revert',
-  'validation-error'
+  "save",
+  "cancel",
+  "delete",
+  "dirty-change",
+  "revert",
+  "validation-error",
 ]);
 
 // Tabs
-const activeTab = ref('sow');
+const activeTab = ref("sow");
 const tabs = [
-  { id: 'sow', label: 'Statement of Work', icon: mdiFileSign, required: true },
+  { id: "sow", label: "Statement of Work", icon: mdiFileSign, required: true },
   {
-    id: 'pocs',
-    label: 'Point of Contacts',
+    id: "pocs",
+    label: "Point of Contacts",
     icon: mdiAccountGroupOutline,
-    required: true
+    required: true,
   },
-  { id: 'dev', label: 'Developer Setup', icon: mdiCogs },
-  { id: 'location', label: 'Work Locations', icon: mdiMapMarkerOutline },
-  { id: 'general', label: 'General & Links', icon: mdiLinkVariant }
+  { id: "dev", label: "Developer Setup", icon: mdiCogs },
+  { id: "location", label: "Work Locations", icon: mdiMapMarkerOutline },
+  { id: "general", label: "General & Links", icon: mdiLinkVariant },
 ];
 
 const store = useProgramCatalogStore();
 const allEffortCandidates = ref([]); // Everyone we can link to
-const linkSearchQuery = ref('');
+const linkSearchQuery = ref("");
 
 // Helpful tooltips content
 const activeHelp = ref(null); // ID of currently open help section
@@ -114,29 +114,29 @@ const toggleHelp = (id) => {
 
 const helpContent = {
   overview: {
-    title: 'What is a Software Effort?',
-    text: "A Software Effort is a central hub for a distinct unit of software work. This could be a Software Team, a Product, a Component (CSCI), or a specific Project. You are editing this effort's profile, which tracks its key contacts, developer setup, work location, and relationships to other efforts."
+    title: "What is a Software Effort?",
+    text: "A Software Effort is a central hub for a distinct unit of software work. This could be a Software Team, a Product, a Component (CSCI), or a specific Project. You are editing this effort's profile, which tracks its key contacts, developer setup, work location, and relationships to other efforts.",
   },
   sow: {
-    title: 'About Statement of Work',
-    text: 'The statement-of-work (SOW) profile for an effort: captures high-level scope, mission-critical flags, personnel constraints, and applicable security or safety classifications.'
+    title: "About Statement of Work",
+    text: "The statement-of-work (SOW) profile for an effort: captures high-level scope, mission-critical flags, personnel constraints, and applicable security or safety classifications.",
   },
   pocs: {
-    title: 'Points of Contact',
-    text: 'A compact record listing primary technical contacts for the effort. Tell managers this stores the go-to technical points for questions, escalations, and clarifications about the work or architecture.'
+    title: "Points of Contact",
+    text: "A compact record listing primary technical contacts for the effort. Tell managers this stores the go-to technical points for questions, escalations, and clarifications about the work or architecture.",
   },
   dev: {
-    title: 'Developer Setup',
-    text: 'Developer tooling profile for an effort. Use these records environment details, source control, issue-tracking tools, SBOM locations, and supported languages/OS — critical for planning onboarding, resource allocation, and technical readiness.'
+    title: "Developer Setup",
+    text: "Developer tooling profile for an effort. Use these records environment details, source control, issue-tracking tools, SBOM locations, and supported languages/OS — critical for planning onboarding, resource allocation, and technical readiness.",
   },
   location: {
-    title: 'Work Locations',
-    text: 'The work-location profile describing where the effort is performed (on-site, remote, hybrid, or specific sites). Used as the place to record constraints and logistics that affect staffing, travel, and security.'
+    title: "Work Locations",
+    text: "The work-location profile describing where the effort is performed (on-site, remote, hybrid, or specific sites). Used as the place to record constraints and logistics that affect staffing, travel, and security.",
   },
   general: {
-    title: 'General & Links',
-    text: 'Use to record direct relationships between this effort and other efforts in the catalog — for example a dependency, an integration partner, or a contractually connected work package. Linking efforts makes it easy to navigate related work, understand impact when requirements or schedules change, and produce traceability reports across development and contract boundaries.'
-  }
+    title: "General & Links",
+    text: "Use to record direct relationships between this effort and other efforts in the catalog — for example a dependency, an integration partner, or a contractually connected work package. Linking efforts makes it easy to navigate related work, understand impact when requirements or schedules change, and produce traceability reports across development and contract boundaries.",
+  },
 };
 
 // Load all efforts from catalog for linking
@@ -153,7 +153,7 @@ const isDirty = computed(() => {
 });
 
 watch(isDirty, (newVal) => {
-  emit('dirty-change', newVal);
+  emit("dirty-change", newVal);
 });
 
 // Watch for prop changes to reset form (e.g. opening modal for different item)
@@ -176,7 +176,7 @@ watch(
     formData.value = safeVal;
     initialState.value = JSON.stringify(safeVal);
   },
-  { deep: true, immediate: true }
+  { deep: true, immediate: true },
 );
 
 // Valid parents: exclude self if checking against the list while editing.
@@ -219,15 +219,15 @@ const linkedEffortObjects = computed(() => {
   // We might have a mix of raw strings (legacy) or full objects.
   // We want to normalize everything into a nice object for the UI.
   return formData.value.linked_software_efforts.map((link) => {
-    if (typeof link === 'string') {
+    if (typeof link === "string") {
       // Try matching by UUID first, then ID
       return (
         allEffortCandidates.value.find(
-          (e) => e.uuid === link || e.id === link
+          (e) => e.uuid === link || e.id === link,
         ) || {
           id: link,
-          name: 'Unknown/External Effort',
-          _programName: 'Unknown'
+          name: "Unknown/External Effort",
+          _programName: "Unknown",
         }
       );
     }
@@ -240,17 +240,17 @@ const addLink = (effort) => {
     formData.value.linked_software_efforts = [];
   // Check duplication by UUID
   const exists = formData.value.linked_software_efforts.some(
-    (l) => l.uuid === effort.uuid
+    (l) => l.uuid === effort.uuid,
   );
   if (!exists) {
     // Push the structure expected by Pydantic: { uuid, name, program_id, program_name }
     formData.value.linked_software_efforts.push({
       uuid: effort.uuid,
       name: effort.name,
-      program_id: effort._programId || '',
-      program_name: effort._programName || ''
+      program_id: effort._programId || "",
+      program_name: effort._programName || "",
     });
-    linkSearchQuery.value = ''; // Reset search
+    linkSearchQuery.value = ""; // Reset search
   }
 };
 
@@ -335,7 +335,7 @@ const validateEmail = (email) => {
   return String(email)
     .toLowerCase()
     .match(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
     );
 };
 
@@ -345,7 +345,7 @@ const validateForm = () => {
 
   // Effort Name
   if (!formData.value.name?.trim()) {
-    errors.value.name = 'Effort Name is required.';
+    errors.value.name = "Effort Name is required.";
     isValid = false;
   }
 
@@ -354,23 +354,23 @@ const validateForm = () => {
     const email =
       formData.value.statement_of_work_profile?.program_manager_email;
     if (!email) {
-      errors.value.program_manager_email = 'Program Manager Email is required.';
+      errors.value.program_manager_email = "Program Manager Email is required.";
       isValid = false;
       // Auto switch tab if error found and not on tab
-      if (activeTab.value !== 'sow' && isValid === false)
-        activeTab.value = 'sow';
+      if (activeTab.value !== "sow" && isValid === false)
+        activeTab.value = "sow";
     } else if (!validateEmail(email)) {
-      errors.value.program_manager_email = 'Invalid email format.';
+      errors.value.program_manager_email = "Invalid email format.";
       isValid = false;
-      if (activeTab.value !== 'sow') activeTab.value = 'sow';
+      if (activeTab.value !== "sow") activeTab.value = "sow";
     }
 
     // Allow Non-US (Must be boolean explicitly)
     const nonUs = formData.value.statement_of_work_profile?.allow_non_us;
-    if (nonUs === null || nonUs === undefined || nonUs === '') {
-      errors.value.allow_non_us = 'Please select a value.';
+    if (nonUs === null || nonUs === undefined || nonUs === "") {
+      errors.value.allow_non_us = "Please select a value.";
       isValid = false;
-      if (activeTab.value !== 'sow') activeTab.value = 'sow';
+      if (activeTab.value !== "sow") activeTab.value = "sow";
     }
   }
 
@@ -378,15 +378,15 @@ const validateForm = () => {
   if (!formData.value.inherit_technical_points_of_contact) {
     const email = formData.value.technical_points_of_contact?.software_lead;
     if (!email) {
-      errors.value.software_lead = 'Software Technical Lead Email is required.';
+      errors.value.software_lead = "Software Technical Lead Email is required.";
       isValid = false;
-      if (activeTab.value !== 'pocs' && !errors.value.program_manager_email)
-        activeTab.value = 'pocs';
+      if (activeTab.value !== "pocs" && !errors.value.program_manager_email)
+        activeTab.value = "pocs";
     } else if (!validateEmail(email)) {
-      errors.value.software_lead = 'Invalid email format.';
+      errors.value.software_lead = "Invalid email format.";
       isValid = false;
-      if (activeTab.value !== 'pocs' && !errors.value.program_manager_email)
-        activeTab.value = 'pocs';
+      if (activeTab.value !== "pocs" && !errors.value.program_manager_email)
+        activeTab.value = "pocs";
     }
   }
 
@@ -396,10 +396,10 @@ const validateForm = () => {
 const handleSave = () => {
   if (!validateForm()) {
     const fieldLabels = {
-      name: 'Effort Name',
-      program_manager_email: 'Program Manager Email',
-      allow_non_us: 'Allow Non-US Personnel',
-      software_lead: 'Software Technical Lead'
+      name: "Effort Name",
+      program_manager_email: "Program Manager Email",
+      allow_non_us: "Allow Non-US Personnel",
+      software_lead: "Software Technical Lead",
     };
 
     const errorMessages = Object.entries(errors.value).map(([key, msg]) => {
@@ -409,17 +409,17 @@ const handleSave = () => {
       return `• ${label}: ${msg}`;
     });
 
-    const header = `Unable to save. Please fix the following validation error${errorMessages.length > 1 ? 's' : ''}:`;
-    emit('validation-error', `${header}\n\n${errorMessages.join('\n')}`);
+    const header = `Unable to save. Please fix the following validation error${errorMessages.length > 1 ? "s" : ""}:`;
+    emit("validation-error", `${header}\n\n${errorMessages.join("\n")}`);
     return;
   }
-  emit('save', formData.value);
+  emit("save", formData.value);
 };
 
 // Helper for Tri-State Booleans (Select inputs give us strings usually)
 const parseTriState = (val) => {
-  if (val === 'true') return true;
-  if (val === 'false') return false;
+  if (val === "true") return true;
+  if (val === "false") return false;
   return null;
 };
 
@@ -434,14 +434,14 @@ const setClean = () => {
 
 defineExpose({
   resetForm,
-  setClean
+  setClean,
 });
 
 const handleCancel = () => {
   if (props.isEdit) {
-    emit('revert');
+    emit("revert");
   } else {
-    emit('cancel');
+    emit("cancel");
   }
 };
 
@@ -502,7 +502,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
             @click="handleCancel"
             class="btn-outlined"
           >
-            {{ isEdit ? 'Discard Changes' : 'Cancel' }}
+            {{ isEdit ? "Discard Changes" : "Cancel" }}
           </button>
 
           <button
@@ -514,7 +514,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
             Delete
           </button>
           <button @click="handleSave" class="btn-filled">
-            {{ isEdit ? 'Save Changes' : 'Create Effort' }}
+            {{ isEdit ? "Save Changes" : "Create Effort" }}
           </button>
         </div>
       </div>
@@ -531,7 +531,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
         </div>
         <div class="meta-field">
           <label>ID:</label>
-          <span class="meta-value">{{ formData.id || 'New' }}</span>
+          <span class="meta-value">{{ formData.id || "New" }}</span>
         </div>
       </div>
     </header>
@@ -546,7 +546,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
           class="tab-btn"
           :class="{
             active: activeTab === tab.id,
-            'has-error': tabErrors[tab.id]
+            'has-error': tabErrors[tab.id],
           }"
           @click="activeTab = tab.id"
         >
@@ -669,13 +669,13 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                       <div class="meta-pair">
                         <span class="meta-label">Program:</span>
                         <span class="meta-val">{{
-                          link.program_name || link._programName || 'Unknown'
+                          link.program_name || link._programName || "Unknown"
                         }}</span>
                       </div>
                       <div class="meta-pair">
                         <span class="meta-label">Prog ID:</span>
                         <span class="meta-val code">{{
-                          link.program_id || link._programId || 'N/A'
+                          link.program_id || link._programId || "N/A"
                         }}</span>
                       </div>
                     </div>
@@ -762,7 +762,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
           <div
             class="form-fields-grid"
             :class="{
-              'is-inherited': formData.inherit_statement_of_work_profile
+              'is-inherited': formData.inherit_statement_of_work_profile,
             }"
           >
             <div class="field-group span-2">
@@ -775,7 +775,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'statement_of_work_profile',
                       'effort_type',
-                      e.target.value
+                      e.target.value,
                     )
                 "
                 :disabled="formData.inherit_statement_of_work_profile"
@@ -799,7 +799,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'statement_of_work_profile',
                       'program_phase',
-                      e.target.value
+                      e.target.value,
                     )
                 "
                 :disabled="formData.inherit_statement_of_work_profile"
@@ -829,7 +829,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'statement_of_work_profile',
                       'program_manager_email',
-                      val
+                      val,
                     )
                 "
                 :disabled="formData.inherit_statement_of_work_profile"
@@ -850,7 +850,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'statement_of_work_profile',
                       'security_clearance',
-                      val
+                      val,
                     )
                 "
                 :options="SECURITY_CLEARANCES"
@@ -869,7 +869,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'statement_of_work_profile',
                       'safety_criticality',
-                      val
+                      val,
                     )
                 "
                 :options="SAFETY_LEVELS"
@@ -895,7 +895,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'statement_of_work_profile',
                       'allow_non_us',
-                      parseTriState(e.target.value)
+                      parseTriState(e.target.value),
                     )
                 "
                 :disabled="formData.inherit_statement_of_work_profile"
@@ -919,7 +919,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'statement_of_work_profile',
                       'mission_critical',
-                      parseTriState(e.target.value)
+                      parseTriState(e.target.value),
                     )
                 "
                 :disabled="formData.inherit_statement_of_work_profile"
@@ -988,7 +988,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
           <div
             class="form-fields-grid"
             :class="{
-              'is-inherited': formData.inherit_technical_points_of_contact
+              'is-inherited': formData.inherit_technical_points_of_contact,
             }"
           >
             <div
@@ -1002,7 +1002,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'technical_points_of_contact',
                       'software_lead',
-                      val
+                      val,
                     )
                 "
                 :disabled="formData.inherit_technical_points_of_contact"
@@ -1022,7 +1022,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'technical_points_of_contact',
                       'security_focal',
-                      val
+                      val,
                     )
                 "
                 :disabled="formData.inherit_technical_points_of_contact"
@@ -1129,7 +1129,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'developer_setup',
                       'development_environments',
-                      val
+                      val,
                     )
                 "
                 :options="ENVIRONMENT_OPTIONS"
@@ -1190,7 +1190,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     updateLocal(
                       'developer_setup',
                       'dp_assessment_name',
-                      e.target.value
+                      e.target.value,
                     )
                 "
                 :disabled="formData.inherit_developer_setup"
@@ -1664,7 +1664,7 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
 }
 
 .toggle-track::after {
-  content: '';
+  content: "";
   position: absolute;
   height: 16px;
   width: 16px;

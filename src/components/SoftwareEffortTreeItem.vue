@@ -1,24 +1,24 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
-import BaseIcon from './BaseIcon.vue';
-import { mdiMenuDown, mdiMenuRight } from '@mdi/js';
+import { computed, ref, watch } from "vue";
+import BaseIcon from "./BaseIcon.vue";
+import { mdiMenuDown, mdiMenuRight } from "@mdi/js";
 
 const props = defineProps({
   effort: {
     type: Object,
-    required: true
+    required: true,
   },
   depth: {
     type: Number,
-    default: 0
+    default: 0,
   },
   selectedId: {
     type: [String, Number],
-    default: null
-  }
+    default: null,
+  },
 });
 
-const emit = defineEmits(['select', 'toggle']);
+const emit = defineEmits(["select", "toggle"]);
 
 const isExpanded = ref(true);
 
@@ -40,7 +40,7 @@ watch(
       isExpanded.value = true;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const toggleExpand = (e) => {
@@ -51,14 +51,14 @@ const toggleExpand = (e) => {
 };
 
 const handleSelect = () => {
-  emit('select', props.effort);
+  emit("select", props.effort);
 };
 
 const hasChildren = computed(
-  () => props.effort.children && props.effort.children.length > 0
+  () => props.effort.children && props.effort.children.length > 0,
 );
 const isSelected = computed(
-  () => String(props.effort.id) === String(props.selectedId)
+  () => String(props.effort.id) === String(props.selectedId),
 );
 </script>
 
