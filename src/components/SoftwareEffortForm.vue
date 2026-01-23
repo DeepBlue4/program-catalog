@@ -1,10 +1,10 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
-import { useProgramCatalogStore } from "../store/programCatalogStore"; // Import store
-import BaseIcon from "../components/BaseIcon.vue";
+import { useProgramCatalogStore } from "src/store/programCatalogStore"; // Import store
+import BaseIcon from "src/components/BaseIcon.vue";
 import MultiSelectDropdown from "./MultiSelectDropdown.vue";
 import EmailAutocomplete from "./EmailAutocomplete.vue";
-import { locationOptionsAlphabetized } from "../store/boeingLocations";
+import { locationOptionsAlphabetized } from "src/store/boeingLocations";
 import {
   PROGRAM_PHASES,
   EFFORT_TYPES,
@@ -16,7 +16,7 @@ import {
   LANGUAGE_OPTIONS,
   OS_OPTIONS,
   SBOM_OPTIONS,
-} from "../store/programConstants";
+} from "src/store/programConstants";
 import {
   mdiFileSign,
   mdiAccountGroupOutline,

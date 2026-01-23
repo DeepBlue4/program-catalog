@@ -1,9 +1,9 @@
 <script setup>
 import { ref, computed } from "vue";
-import { useProgramData } from "../composables/useProgramData";
+import { useProgramData } from "src/composables/useProgramData";
 import BaseIcon from "./BaseIcon.vue";
 import { mdiInformation } from "@mdi/js";
-import { STATUS_COLORS } from "../styles/statusConstants";
+import { STATUS_COLORS } from "src/styles/statusConstants";
 
 const { allNodes } = useProgramData();
 

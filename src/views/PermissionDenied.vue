@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from "vue-router";
-import BaseIcon from "../components/BaseIcon.vue";
+import BaseIcon from "src/components/BaseIcon.vue";
 import { mdiShield, mdiLock, mdiHelpCircle, mdiSitemap } from "@mdi/js";
 
 const router = useRouter();

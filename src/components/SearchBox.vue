@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed } from "vue";
-import BaseIcon from "../components/BaseIcon.vue";
+import BaseIcon from "src/components/BaseIcon.vue";
 import { mdiMagnify } from "@mdi/js";
-import { STATUS_COLORS } from "../styles/statusConstants";
+import { STATUS_COLORS } from "src/styles/statusConstants";
 
 const props = defineProps({
   items: {

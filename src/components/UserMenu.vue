@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, inject } from "vue";
-import BaseIcon from "../components/BaseIcon.vue";
+import BaseIcon from "src/components/BaseIcon.vue";
 import {
   mdiAccountCircle,
   mdiBookOpenVariant,
@@ -9,7 +9,7 @@ import {
   mdiOpenInNew,
   mdiCompass,
 } from "@mdi/js";
-import { evaluateWriteAccess } from "../router";
+import { evaluateWriteAccess } from "src/router";
 
 const isOpen = ref(false);
 const menuRef = ref(null);

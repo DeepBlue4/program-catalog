@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { ref } from "vue";
-import { CompassAPIService } from "../services/api.js";
-import ProgramTreeView from "../views/ProgramTreeView.vue";
-import ProgramEffortsView from "../views/ProgramEffortsView.vue";
+import { CompassAPIService } from "src/services/api.js";
+import ProgramTreeView from "src/views/ProgramTreeView.vue";
+import ProgramEffortsView from "src/views/ProgramEffortsView.vue";
+import ProgramDashboard from "src/views/ProgramDashboard.vue";
+import PermissionDenied from "src/views/PermissionDenied.vue";
 
 /* 
  We modify the currentUserRef here so the rest of the app (via main.js) 
@@ -101,6 +103,7 @@ const routes = [
     path: "/",
     name: "ProgramTree",
     component: ProgramTreeView,
+    meta: { requiresAuth: true },
   },
   {
     path: "/efforts/:programId",
@@ -111,13 +114,13 @@ const routes = [
   {
     path: "/dashboard",
     name: "Dashboard",
-    component: () => import("../views/ProgramDashboard.vue"),
+    component: ProgramDashboard,
     meta: { requiresDashboardAccess: true },
   },
   {
     path: "/403",
     name: "PermissionDenied",
-    component: () => import("../views/PermissionDenied.vue"),
+    component: PermissionDenied,
   },
   // Catch-all: redirect unknown routes to ProgramTree
   {

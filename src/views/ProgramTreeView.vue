@@ -1,11 +1,11 @@
 <script setup>
 import { watch, ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import OrgChart from "../components/OrgChart.vue";
-import OrgLegend from "../components/OrgLegend.vue";
-import BaseIcon from "../components/BaseIcon.vue";
+import OrgChart from "src/components/OrgChart.vue";
+import OrgLegend from "src/components/OrgLegend.vue";
+import BaseIcon from "src/components/BaseIcon.vue";
 import { mdiRefresh } from "@mdi/js";
-import { useProgramData } from "../composables/useProgramData.js";
+import { useProgramData } from "src/composables/useProgramData.js";
 
 const router = useRouter();
 const route = useRoute();
@@ -18,7 +18,7 @@ const {
 } = useProgramData();
 // We also need access to the store functions exposed via composable or import
 // To avoid breaking useProgramData, let's import store directly for advanced features
-import { useProgramCatalogStore } from "../store/programCatalogStore";
+import { useProgramCatalogStore } from "src/store/programCatalogStore";
 const store = useProgramCatalogStore();
 
 const filterMode = ref("ALL"); // 'ALL' or 'SWE'

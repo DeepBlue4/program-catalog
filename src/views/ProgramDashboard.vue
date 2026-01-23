@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import * as echarts from "echarts";
-import BaseIcon from "../components/BaseIcon.vue";
+import BaseIcon from "src/components/BaseIcon.vue";
 import {
   mdiDomain,
   mdiCodeBraces,
@@ -20,8 +20,8 @@ import {
   mdiAlertCircle, // Keep
   mdiTable, // Keep
 } from "@mdi/js";
-import { useProgramData } from "../composables/useProgramData";
-import { STATUS_COLORS, RAW_COLORS } from "../styles/statusConstants"; // Import Colors
+import { useProgramData } from "src/composables/useProgramData";
+import { STATUS_COLORS, RAW_COLORS } from "src/styles/statusConstants"; // Import Colors
 
 const router = useRouter();
 const { allNodes, selectNode } = useProgramData();

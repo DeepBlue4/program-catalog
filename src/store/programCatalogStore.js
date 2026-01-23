@@ -1,6 +1,6 @@
 import { reactive, shallowRef, triggerRef, ref } from "vue";
-import { CompassAPIService } from "../services/api.js";
-import { MockApiData } from "../services/mockApiData.js";
+import { CompassAPIService } from "src/services/api.js";
+import { MockApiData } from "src/services/mockApiData.js";
 
 // ==============================================================================
 // CONFIGURATION FLAGS

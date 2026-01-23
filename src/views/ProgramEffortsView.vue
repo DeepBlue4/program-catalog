@@ -6,12 +6,12 @@ import {
   onBeforeRouteLeave,
   onBeforeRouteUpdate,
 } from "vue-router";
-import SoftwareEffortsList from "../components/SoftwareEffortsList.vue";
-import BaseIcon from "../components/BaseIcon.vue";
+import SoftwareEffortsList from "src/components/SoftwareEffortsList.vue";
+import BaseIcon from "src/components/BaseIcon.vue";
 import { mdiMagnify, mdiArrowLeft, mdiRefresh } from "@mdi/js";
-import { useProgramData } from "../composables/useProgramData.js";
+import { useProgramData } from "src/composables/useProgramData.js";
 
-import { useProgramCatalogStore } from "../store/programCatalogStore";
+import { useProgramCatalogStore } from "src/store/programCatalogStore";
 
 const route = useRoute();
 const router = useRouter();

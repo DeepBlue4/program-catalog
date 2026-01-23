@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import { useEmailsStore } from "../store/emailsStore";
+import { useEmailsStore } from "src/store/emailsStore";
 import BaseIcon from "./BaseIcon.vue";
 import { mdiAccountSearch, mdiClose } from "@mdi/js";
 

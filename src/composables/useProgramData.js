@@ -1,5 +1,5 @@
 import { ref, computed } from "vue";
-import { useProgramCatalogStore } from "../store/programCatalogStore";
+import { useProgramCatalogStore } from "src/store/programCatalogStore";
 
 // Shared state - store only the selected ID, not the node object
 // This allows the computed to always fetch fresh data from the tree

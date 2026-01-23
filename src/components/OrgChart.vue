@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import * as echarts from "echarts";
-import { STATUS_COLORS, RAW_COLORS } from "../styles/statusConstants";
+import { STATUS_COLORS, RAW_COLORS } from "src/styles/statusConstants";
 
 const props = defineProps({
   data: {

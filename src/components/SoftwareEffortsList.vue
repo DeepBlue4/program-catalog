@@ -21,7 +21,7 @@ import {
   mdiCheckCircleOutline,
   mdiMinusCircleOutline,
 } from "@mdi/js";
-import { STATUS_COLORS } from "../styles/statusConstants";
+import { STATUS_COLORS } from "src/styles/statusConstants";
 
 const props = defineProps({
   programName: { type: String, required: true },
@@ -290,7 +290,7 @@ const showNotification = (message, type = "success") => {
 };
 
 // Import Store
-import { useProgramCatalogStore } from "../store/programCatalogStore";
+import { useProgramCatalogStore } from "src/store/programCatalogStore";
 const store = useProgramCatalogStore();
 
 const confirmDelete = async () => {
