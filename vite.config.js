@@ -1,18 +1,25 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import { fileURLToPath, URL } from 'node:url'
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
 
 // https://vite.dev/config/
-export default defineConfig({
-  base: '/ui/program-catalog/',
+export default defineConfig(({ mode }) => ({
+  base: mode === 'development' ? '/' : '/ui/program-catalog/',
   plugins: [vue()],
   resolve: {
     alias: {
-      'src': fileURLToPath(new URL('./src', import.meta.url))
-    }
+      src: "/src",
+    },
   },
-  test: {
-    environment: 'jsdom',
-    globals: true
-  }
-})
+  server: {
+    port: 8002,
+    host: true,
+
+    proxy: {
+      // Proxy all requests starting with /ui to http://localhost:8000
+      "/ui": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
+  },
+}));
