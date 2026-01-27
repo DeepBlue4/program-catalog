@@ -37,8 +37,8 @@ const filteredItems = computed(() => {
 
       // 2. Check Query
       return (
-        item.name.toLowerCase().includes(lowerQuery) ||
-        String(item.value).toLowerCase().includes(lowerQuery)
+        (item.name && item.name.toLowerCase().includes(lowerQuery)) ||
+        (item.value && String(item.value).toLowerCase().includes(lowerQuery))
       );
     })
     .slice(0, 10); // Limit to 10 suggestions

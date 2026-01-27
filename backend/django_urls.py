@@ -21,19 +21,10 @@ urlpatterns = [
         f"ui/{app_name}/",
         include(
             [
-                # Changed from "portal" to empty string (or keep as portal depending on preference, 
-                # but user wanted to load at ui/program-catalog/)
-                # Using "" allows accessing at /ui/program-catalog/ directly
                 path(
                     "", 
                     views.vue_app_view,
                     name="vue-app",
-                ),
-                 # Also keeping "portal" just in case they want both or a specific sub-path
-                path(
-                    "portal",
-                    views.vue_app_view,
-                    name="vue-app-portal",
                 ),
                 path(
                     "programs",
