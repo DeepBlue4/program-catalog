@@ -154,7 +154,7 @@ const metricDefinitions = {
       "This is the baseline for our compliance tracking. Every program here should eventually have an active effort.",
   },
   active: {
-    title: "Active (Has Effort)",
+    title: "Assigned (Has Effort)",
     shortDesc: "Currently assigned software effort(s)",
     desc: "Programs that currently have at least one assigned Software Effort.",
     context: "These programs are actively delivering software functionality.",
@@ -168,8 +168,8 @@ const metricDefinitions = {
   },
   anomaly: {
     title: "Unexpected Efforts",
-    shortDesc: "Unexpected active efforts",
-    desc: "Programs that have Active Software Efforts but were NOT flagged to expect them.",
+    shortDesc: "Unexpected assigned efforts",
+    desc: "Programs that have Assigned Software Efforts but were NOT flagged to expect them.",
     context:
       'Configuration Alert: Validate if the "Expect Software" flag should be enabled or if the effort is misplaced.',
   },
@@ -435,7 +435,7 @@ onUnmounted(() => {
           <div class="chart-header">
             <h3>Program Status</h3>
             <p>
-              Breakdown of all programs by their operational state (Active,
+              Breakdown of all programs by their operational state (Assigned,
               Missing, Neutral).
             </p>
           </div>
@@ -571,7 +571,7 @@ onUnmounted(() => {
           @click="openMetricModal('active')"
         >
           <div class="card-top">
-            <span class="label">Active Efforts</span>
+            <span class="label">Assigned Efforts</span>
             <div class="card-icon good small-icon">
               <BaseIcon :path="mdiRocketLaunch" />
             </div>

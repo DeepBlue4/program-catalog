@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import SoftwareEffortForm from "./SoftwareEffortForm.vue";
 import SoftwareEffortTreeItem from "./SoftwareEffortTreeItem.vue";
 import ConfirmationModal from "./ConfirmationModal.vue";
+import StatusHelpModal from "./StatusHelpModal.vue";
 import BaseIcon from "./BaseIcon.vue";
 import {
   mdiArrowLeft,
@@ -78,8 +79,14 @@ const statusConfig = computed(() => {
   } else if (hasEfforts) {
     return {
       ...STATUS_COLORS.active,
-      label: "Software Efforts Active",
+      label: "Software Efforts Assigned",
       icon: mdiCheckCircleOutline,
+    };
+  } else if (p.has_descendant_expecting_software_effort) {
+    return {
+      ...STATUS_COLORS.parent,
+      label: "Parent of Software Effort",
+      icon: mdiSitemap,
     };
   } else {
     return {
@@ -390,6 +397,11 @@ const handleRevertRequest = () => {
 
 const showInfoModal = ref(false);
 const showHelpModal = ref(false);
+const currentHelpStatus = ref(null);
+
+const openStatusHelp = (status) => {
+  currentHelpStatus.value = status;
+};
 
 // ... (previous code) ...
 </script>
@@ -439,13 +451,13 @@ const showHelpModal = ref(false);
         <div class="panel-header">
           <h3 class="panel-title">Hierarchy</h3>
           <div
-            v-if="statusConfig.isWarning"
-            class="sidebar-warning-badge"
+            class="sidebar-warning-badge clickable"
             :style="{
               backgroundColor: statusConfig.bg,
               color: statusConfig.text,
             }"
             :title="statusConfig.label"
+            @click="openStatusHelp(statusConfig.id)"
           >
             <BaseIcon :path="statusConfig.icon" :size="14" />
             <span>{{ statusConfig.label }}</span>
@@ -597,9 +609,10 @@ const showHelpModal = ref(false);
             <h2>{{ programName }}</h2>
             <!-- Status Pill (Moved here) -->
             <div
-              class="status-pill small"
+              class="status-pill small clickable"
               :class="statusConfig.id"
               style="margin-top: 8px; display: inline-flex"
+              @click="openStatusHelp(statusConfig.id)"
             >
               <BaseIcon :path="statusConfig.icon" :size="16" />
               <span>{{ statusConfig.label }}</span>
@@ -732,6 +745,12 @@ const showHelpModal = ref(false);
         <span>{{ notification.message }}</span>
       </div>
     </transition>
+
+    <StatusHelpModal
+      v-if="currentHelpStatus"
+      :status-type="currentHelpStatus"
+      @close="currentHelpStatus = null"
+    />
   </div>
 </template>
 
@@ -871,6 +890,15 @@ const showHelpModal = ref(false);
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 12px; /* Chip/Pill shape */
+}
+
+.sidebar-warning-badge.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.sidebar-warning-badge.clickable:hover {
+  opacity: 0.8;
 }
 
 .tree-content {
@@ -1016,6 +1044,15 @@ const showHelpModal = ref(false);
   font-size: 13px;
   font-weight: 600;
   border: 1px solid transparent;
+  transition: opacity 0.2s;
+}
+
+.status-pill.clickable {
+  cursor: pointer;
+}
+
+.status-pill.clickable:hover {
+  opacity: 0.8;
 }
 
 .status-pill.gap {

@@ -43,7 +43,7 @@ const activeHelp = ref(null);
 
 const helpContent = {
   active: {
-    title: "Software Effort Active",
+    title: "Software Effort Assigned",
     desc: "A program that is expecting software efforts and currently has one or more assigned.",
     context: "These programs are actively tracking software work.",
   },
@@ -80,7 +80,7 @@ const openHelp = (type) => {
         <span class="dot effort"></span>
       </div>
       <div class="text-content">
-        <span class="label">Software Active</span>
+        <span class="label">Software Assigned</span>
         <span class="count-badge">{{ counts.active }}</span>
       </div>
       <button class="icon-btn-tiny" @click.stop="openHelp('active')">

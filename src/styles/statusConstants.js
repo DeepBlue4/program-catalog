@@ -33,6 +33,31 @@ export const STATUS_COLORS = {
   },
 };
 
+export const STATUS_HELP = {
+  active: {
+    title: "Software Assigned",
+    desc: "A program that is expecting software efforts and currently has one or more assigned.",
+    context: "These programs are actively tracking software work.",
+  },
+  gap: {
+    title: "Expected (Missing)",
+    desc: "A program flagged to expect software efforts but currently has none assigned.",
+    context:
+      "Action Required: These programs represent a gap in data or assignment.",
+  },
+  parent: {
+    title: "Parent of Effort",
+    desc: "A program that contains sub-programs with assigned software efforts.",
+    context:
+      "These function as organizational containers or oversight for software efforts below.",
+  },
+  neutral: {
+    title: "Neutral Program",
+    desc: "A program not expecting software efforts and has no descendants expecting them.",
+    context: "Included primarily for organizational hierarchy and structure.",
+  },
+};
+
 export const RAW_COLORS = {
   primary: "#005AC1",
   secondary: "#625B71",

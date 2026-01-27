@@ -8,6 +8,8 @@ The **Program Catalog** is a modern Vue 3 application designed to visualize and 
 *   **Interactive Organization Chart**: A dynamic tree visualization representing the enterprise hierarchy from Divisions down to Teams.
 *   **Master-Detail Effort Management**: A comprehensive interface to create, edit, and link software efforts. Features vertical tabs for Statement of Work, POCs, and Developer Setup.
 *   **Contextual Help System**: Integrated "Info" buttons within forms that toggle detailed explanations for specific form sections (SOW, POCs, etc.), guiding users on data requirements.
+*   **Interactive Status System**: Clickable status badges (Active, Gap, Neutral, Parent) across the Sidebar, Legend, and Info Modals provide detailed, context-aware explanations.
+*   **Hierarchical Sidebar**: Collapsible tree navigation in the sidebar for exploring software efforts nested within programs.
 *   **Search & Deep Linking**: Global search with autocomplete that deep-links directly to specific programs or software efforts, preserving state via URL.
 *   **Consistent UX**: Material Design 3 (M3) styling, inclusive of a "clean" aesthetic and responsive layouts.
 
@@ -54,6 +56,7 @@ classDiagram
         +Breadcrumbs
         +GlobalSearch
         +UserMenu
+        +StatusHelpModal
     }
     class Dashboard {
         +MetricCards
@@ -73,11 +76,18 @@ classDiagram
     class SoftwareEffortsList {
         +TreeNavigation
         +Pagination
+        +StatusHelpModal
     }
     class SoftwareEffortForm {
         +EditForm
         +TabNavigation
         +ContextualHelp
+    }
+    class SoftwareEffortTreeItem {
+        +RecursiveTree
+    }
+    class StatusHelpModal {
+        +DynamicHelpViewer
     }
     class PermissionDenied {
         +ContactSupportInfo
@@ -94,9 +104,13 @@ classDiagram
     App --> ProgramTreeView : Route /
     App --> ProgramEffortsView : Route /efforts/:id
     App --> PermissionDenied : Route /permission-denied
+    App *-- SoftwareEffortTreeItem : Sidebar Tree
+    App *-- StatusHelpModal : Sidebar Help
     
     ProgramEffortsView *-- SoftwareEffortsList
     SoftwareEffortsList *-- SoftwareEffortForm
+    SoftwareEffortsList *-- SoftwareEffortTreeItem : Effort Tree
+    SoftwareEffortsList *-- StatusHelpModal : Info Help
     
     Dashboard ..> Store : Reads Data
     ProgramTreeView ..> Store : Reads Data
@@ -212,9 +226,10 @@ erDiagram
 src/
 ├── components/          # GUI Components
 │   ├── OrgChart.vue             # D3-like Tree Visualization
-│   ├── SoftwareEffortsList.vue  # Master list logic for efforts
+│   ├── SoftwareEffortsList.vue  # Master list logic & Info Modal
 │   ├── SoftwareEffortForm.vue   # Complex edit form with Help System
-│   ├── SoftwareEffortTreeItem.vue # Recursive tree item for effort lists
+│   ├── SoftwareEffortTreeItem.vue # Recursive tree item for sidebar & lists
+│   ├── StatusHelpModal.vue      # Reusable info modal for program statuses
 │   ├── MetricCard.vue           # (Concept) Dashboard stats
 │   ├── SearchBox.vue            # Global Search
 │   └── ...
@@ -224,6 +239,8 @@ src/
 │   └── api.js                   # Deterministic Mock Data Generator
 ├── store/               # State Management
 │   └── programCatalogStore.js   # Pinia-like Reactive Store
+├── styles/
+│   └── statusConstants.js       # Shared status definitions & help text
 ├── views/               # Page Views
 │   ├── Dashboard.vue            # Metrics & Charts
 │   ├── ProgramTreeView.vue      # Hierarchy Explorer

@@ -4,6 +4,7 @@ import { useRouter, useRoute } from "vue-router";
 import SearchBox from "./components/SearchBox.vue";
 import UserMenu from "./components/UserMenu.vue";
 import SoftwareEffortTreeItem from "./components/SoftwareEffortTreeItem.vue";
+import StatusHelpModal from "./components/StatusHelpModal.vue";
 import { useProgramData } from "./composables/useProgramData.js";
 
 import BaseIcon from "./components/BaseIcon.vue";
@@ -190,6 +191,12 @@ const currentEnvironment = computed(() => {
   return null;
 });
 
+// --- Status Help Logic ---
+const currentHelpStatus = ref(null);
+const openStatusHelp = (status) => {
+  currentHelpStatus.value = status;
+};
+
 // --- Sidebar Efforts Tree Building ---
 const sidebarEffortsTree = computed(() => {
   if (!selectedNode.value || !selectedNode.value.softwareEfforts) {
@@ -322,20 +329,30 @@ const sidebarEffortsTree = computed(() => {
             <h2>{{ selectedNode.name }}</h2>
             <div class="status-tags">
               <!-- Primary Status -->
-              <span class="tag active" v-if="selectedNode.hasSoftwareEffort"
-                >Software Active</span
+              <span
+                class="tag active clickable"
+                v-if="selectedNode.hasSoftwareEffort"
+                @click="openStatusHelp('active')"
+                >Software Assigned</span
               >
               <span
-                class="tag gap"
+                class="tag gap clickable"
                 v-else-if="selectedNode.expecting_software_efforts"
+                @click="openStatusHelp('gap')"
                 >Expected (Missing)</span
               >
-              <span class="tag neutral" v-else>Neutral</span>
+              <span
+                class="tag neutral clickable"
+                v-else-if="!selectedNode.has_descendant_expecting_software_effort"
+                @click="openStatusHelp('neutral')"
+                >Neutral</span
+              >
 
               <!-- Secondary Context -->
               <span
-                class="tag parent"
+                class="tag parent clickable"
                 v-if="selectedNode.has_descendant_expecting_software_effort"
+                @click="openStatusHelp('parent')"
                 >Parent of Effort</span
               >
             </div>
@@ -428,6 +445,11 @@ const sidebarEffortsTree = computed(() => {
         </div>
       </aside>
     </main>
+    <StatusHelpModal
+      v-if="currentHelpStatus"
+      :status-type="currentHelpStatus"
+      @close="currentHelpStatus = null"
+    />
   </div>
 </template>
 
@@ -720,6 +742,15 @@ const sidebarEffortsTree = computed(() => {
   padding: 4px 12px;
   border-radius: 16px;
   font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.tag.clickable {
+  cursor: pointer;
+}
+
+.tag.clickable:hover {
+  opacity: 0.8;
 }
 
 .tag.active {

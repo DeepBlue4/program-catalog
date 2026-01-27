@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useProgramCatalogStore } from "src/store/programCatalogStore"; // Import store
 import BaseIcon from "src/components/BaseIcon.vue";
 import MultiSelectDropdown from "./MultiSelectDropdown.vue";
@@ -103,6 +104,36 @@ const tabs = [
   { id: "location", label: "Work Locations", icon: mdiMapMarkerOutline },
   { id: "general", label: "General & Links", icon: mdiLinkVariant },
 ];
+
+const router = useRouter();
+const route = useRoute();
+
+const navigateToLink = (link) => {
+  // If we have a computed href, parse it or just use the IDs
+  // link.href format: /efforts/<program_id>?effort_id=<id>
+  
+  if (link.href && link.href !== "#") {
+     const effortId = link.id || link.uuid;
+     const programId = link.program_id || link._programId;
+     
+     if (programId && effortId) {
+       router.push({ 
+         name: 'ProgramEfforts', 
+         params: { programId }, 
+         query: { effort_id: effortId } 
+       });
+       return;
+     }
+  }
+  // Fallback if href construction failed but we have data
+  if ((link.program_id || link._programId) && (link.id || link.uuid)) {
+      router.push({ 
+         name: 'ProgramEfforts', 
+         params: { programId: link.program_id || link._programId }, 
+         query: { effort_id: link.id || link.uuid } 
+       });
+  }
+};
 
 const store = useProgramCatalogStore();
 const allEffortCandidates = ref([]); // Everyone we can link to
@@ -219,22 +250,35 @@ const filteredLinkCandidates = computed(() => {
 const linkedEffortObjects = computed(() => {
   if (!formData.value.linked_software_efforts) return [];
 
-  // We might have a mix of raw strings (legacy) or full objects.
-  // We want to normalize everything into a nice object for the UI.
   return formData.value.linked_software_efforts.map((link) => {
+    let obj;
     if (typeof link === "string") {
-      // Try matching by UUID first, then ID
-      return (
+      obj = allEffortCandidates.value.find(
+        (e) =>
+          (e.uuid === link || e.id === link) && e.uuid !== formData.value.uuid, // exclude current effort
+      ) || {
+        id: link,
+        name: "Unknown/External Effort",
+        _programName: "Unknown",
+      };
+    } else {
+      // If link is an object, try resolving program_id/id if missing
+      obj =
         allEffortCandidates.value.find(
-          (e) => e.id === link || e.uuid === link,
-        ) || {
-          id: link,
-          name: "Unknown/External Effort",
-          _programName: "Unknown",
-        }
-      );
+          (e) =>
+            (e.uuid === link.uuid || e.id === link.id) &&
+            e.uuid !== formData.value.uuid,
+        ) || link;
     }
-    return link;
+
+    // Prefer resolved program_id/id if present
+    const effortId = obj.id;
+    const program_id = obj.program_id || obj._programId || "";
+
+    // Build href: /efforts/<program_id>?effort_id=<id>
+    obj.href = effortId ? `/efforts/${program_id}?effort_id=${effortId}` : "#";
+
+    return obj;
   });
 });
 
@@ -620,7 +664,8 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
             <div class="section-header-modern">
               <label class="section-label-lg">Linked Software Efforts</label>
               <p class="section-desc">
-                View and manage relationships between this effort and other efforts.
+                View and manage relationships between this effort and other
+                efforts.
               </p>
             </div>
 
@@ -633,7 +678,9 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
               >
                 <BaseIcon :path="mdiArrowRight" :size="16" class="tab-icon" />
                 <span class="tab-label">Primary Links</span>
-                <span class="link-badge-small primary">{{ linkedEffortObjects.length }}</span>
+                <span class="link-badge-small primary">{{
+                  linkedEffortObjects.length
+                }}</span>
               </button>
               <button
                 class="link-tab"
@@ -642,17 +689,25 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
               >
                 <BaseIcon :path="mdiArrowLeft" :size="16" class="tab-icon" />
                 <span class="tab-label">Linked From</span>
-                <span class="link-badge-small incoming">{{ linkedFromEffortObjects.length }}</span>
+                <span class="link-badge-small incoming">{{
+                  linkedFromEffortObjects.length
+                }}</span>
               </button>
             </div>
 
             <!-- Primary Links (Outgoing) -->
             <div v-show="activeLinkTab === 'primary'" class="link-tab-content">
               <div class="tab-content-header">
-                <BaseIcon :path="mdiArrowRight" :size="18" class="subsection-icon primary" />
+                <BaseIcon
+                  :path="mdiArrowRight"
+                  :size="18"
+                  class="subsection-icon primary"
+                />
                 <div class="tab-content-info">
                   <h4>Primary Links</h4>
-                  <span class="subsection-desc">Efforts this one depends on or links to</span>
+                  <span class="subsection-desc"
+                    >Efforts this one depends on or links to</span
+                  >
                 </div>
                 <span class="link-badge primary">Outgoing</span>
               </div>
@@ -695,7 +750,9 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                           </div>
                           <div class="sub-field">
                             <span class="label">Prog ID:</span>
-                            <span class="value code">{{ cand._programId }}</span>
+                            <span class="value code">{{
+                              cand._programId
+                            }}</span>
                           </div>
                         </div>
                       </div>
@@ -715,9 +772,17 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     </div>
                     <div class="row-content">
                       <div class="row-top">
-                        <span class="row-name">{{ link.name }}</span>
+                        <span
+                          class="row-name modern-link"
+                          @click.stop="navigateToLink(link)"
+                          title="Navigate to Effort"
+                        >
+                          {{ link.name }}
+                          <BaseIcon :path="mdiArrowRight" :size="14" class="link-arrow" />
+                        </span>
+
                         <span class="row-id-badge"
-                          >ID: {{ link.uuid || link.id }}</span
+                          >ID: {{ link.id || link.uuid }}</span
                         >
                       </div>
                       <div class="row-meta-grid">
@@ -763,10 +828,16 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
             <!-- Incoming Links (Read-only) -->
             <div v-show="activeLinkTab === 'incoming'" class="link-tab-content">
               <div class="tab-content-header">
-                <BaseIcon :path="mdiArrowLeft" :size="18" class="subsection-icon incoming" />
+                <BaseIcon
+                  :path="mdiArrowLeft"
+                  :size="18"
+                  class="subsection-icon incoming"
+                />
                 <div class="tab-content-info">
                   <h4>Linked From</h4>
-                  <span class="subsection-desc">Efforts that depend on this one (read-only)</span>
+                  <span class="subsection-desc"
+                    >Efforts that depend on this one (read-only)</span
+                  >
                 </div>
                 <span class="link-badge incoming">Incoming</span>
               </div>
@@ -783,9 +854,17 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                     </div>
                     <div class="row-content">
                       <div class="row-top">
-                        <span class="row-name">{{ link.name }}</span>
+                        <span
+                          class="row-name modern-link"
+                          @click.stop="navigateToLink(link)"
+                          title="Navigate to Effort"
+                        >
+                          {{ link.name }}
+                          <BaseIcon :path="mdiArrowRight" :size="14" class="link-arrow" />
+                        </span>
+
                         <span class="row-id-badge"
-                          >ID: {{ link.uuid || link.id }}</span
+                          >ID: {{ link.id || link.uuid }}</span
                         >
                       </div>
                       <div class="row-meta-grid">
@@ -813,7 +892,8 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                       <BaseIcon :path="mdiArrowLeft" :size="24" />
                     </div>
                     <span class="empty-text"
-                      >No incoming links. Other efforts will appear here when they link to this one.</span
+                      >No incoming links. Other efforts will appear here when
+                      they link to this one.</span
                     >
                   </div>
                 </div>
@@ -2377,14 +2457,22 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: linear-gradient(135deg, rgba(0, 90, 193, 0.05) 0%, rgba(0, 90, 193, 0.02) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(0, 90, 193, 0.05) 0%,
+    rgba(0, 90, 193, 0.02) 100%
+  );
   border-radius: 12px;
   border-left: 4px solid #005ac1;
 }
 
 .link-tab-content[v-show] .tab-content-header {
   border-left-color: #6750a4;
-  background: linear-gradient(135deg, rgba(103, 80, 164, 0.05) 0%, rgba(103, 80, 164, 0.02) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(103, 80, 164, 0.05) 0%,
+    rgba(103, 80, 164, 0.02) 100%
+  );
 }
 
 .tab-content-info {
@@ -2453,5 +2541,34 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
 
 .row-icon.incoming {
   color: #6750a4;
+}
+
+.modern-link {
+  color: #005ac1;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.modern-link:hover {
+  color: #004a9f;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+}
+
+.link-arrow {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.2s ease;
+}
+
+.modern-link:hover .link-arrow {
+  opacity: 1;
+  transform: translateX(0);
 }
 </style>

@@ -75,7 +75,7 @@ const getProgramStatusStyle = (item) => {
 
   let colors;
 
-  // Check for Software Active (has software efforts)
+  // Check for Software Assigned (has software efforts)
   if (item.softwareEfforts && item.softwareEfforts.length > 0) {
     colors = STATUS_COLORS.active;
   }
@@ -104,7 +104,7 @@ const getProgramStatusLabel = (item) => {
   if (item.isSoftwareEffort) return "";
 
   if (item.softwareEfforts && item.softwareEfforts.length > 0) {
-    return "Software Active";
+    return "Software Assigned";
   }
   if (item.expecting_software_efforts) {
     return "Expected (Missing)";
