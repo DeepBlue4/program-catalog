@@ -99,7 +99,7 @@ export class MockApiData {
             parentId = `${id}-${parentIndex}`;
           }
 
-          softwareEfforts.push({
+          const effort = {
             id: effId,
             uuid: effId,
             name: effName,
@@ -123,10 +123,33 @@ export class MockApiData {
             },
 
             inherit_developer_setup: false,
+
             developer_setup: {
               programming_languages: [pick(["Python", "C++", "Java"])],
               operating_systems: [pick(["Linux", "Windows"])],
-              development_environments: [pick(["BSF-Global", "BSF-US"])],
+              development_environments: (() => {
+                const envOptions = [
+                  "BSF-Global",
+                  "BSF-US",
+                  "BSF-Restricted",
+                  "BSF-Disconnected",
+                  "Boeing Enterprise Network",
+                  "On-Premises/Non-BSF",
+                  "Customer Environment",
+                  "Other"
+                ];
+                // Use a deterministic pick based on the effort index 'j' to guarantee coverage
+                // This ensures that as we generate multiple efforts, we cycle through all environments
+                const seedIndex = (j + Math.floor(random() * 3)) % envOptions.length;
+                const chosenEnvs = [envOptions[seedIndex]];
+
+                // Occasionally add a second one
+                if (random() > 0.8) {
+                  const secondIndex = (seedIndex + 1) % envOptions.length;
+                  chosenEnvs.push(envOptions[secondIndex]);
+                }
+                return chosenEnvs;
+              })(),
               source_control_tools: [pick(["GitLab", "Bitbucket"])],
               issue_tracking_tools: [pick(["Jira", "GitLab"])],
               dp_assessment_name: `DP-Assess-${j}`,
@@ -140,7 +163,8 @@ export class MockApiData {
 
             children: [],
             linked_software_efforts: [],
-          });
+          };
+          softwareEfforts.push(effort);
         }
       }
 

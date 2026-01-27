@@ -343,7 +343,7 @@ const sidebarEffortsTree = computed(() => {
               >
               <span
                 class="tag neutral clickable"
-                v-else-if="!selectedNode.has_descendant_expecting_software_effort"
+                v-else-if="!(selectedNode.has_descendant_expecting_software_effort && selectedNode.children && selectedNode.children.length > 0)"
                 @click="openStatusHelp('neutral')"
                 >Neutral</span
               >
@@ -351,7 +351,7 @@ const sidebarEffortsTree = computed(() => {
               <!-- Secondary Context -->
               <span
                 class="tag parent clickable"
-                v-if="selectedNode.has_descendant_expecting_software_effort"
+                v-if="selectedNode.has_descendant_expecting_software_effort && selectedNode.children && selectedNode.children.length > 0"
                 @click="openStatusHelp('parent')"
                 >Parent of Effort</span
               >

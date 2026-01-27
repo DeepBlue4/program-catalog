@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import BaseIcon from "./BaseIcon.vue";
-import { mdiClose, mdiInformation } from "@mdi/js";
+import { mdiClose, mdiInformation, mdiHelpCircle } from "@mdi/js";
 import { STATUS_HELP } from "src/styles/statusConstants";
 
 const props = defineProps({
@@ -37,6 +37,20 @@ const content = computed(() => {
         <div class="context-box">
           <BaseIcon :path="mdiInformation" :size="20" class="context-icon" />
           <p>{{ content.context }}</p>
+        </div>
+
+        <div class="support-box">
+          <BaseIcon :path="mdiHelpCircle" :size="20" class="support-icon" />
+          <p>
+            Need to update this status? Please reach out to the
+            <a
+              href="https://mattermost.web.boeing.com/devhub/channels/data-analytics-force"
+              target="_blank"
+              class="support-link"
+              >DAF: Metrics</a
+            >
+            Mattermost channel.
+          </p>
         </div>
       </div>
       <div v-else class="info-body">
@@ -196,5 +210,39 @@ const content = computed(() => {
   background: #6750a4; /* primary */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   opacity: 0.9;
+}
+
+.support-box {
+  margin-top: 16px;
+  background: #fdfbff; /* surface-container-lowest */
+  border: 1px solid #e0e0e0;
+  padding: 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: #625b71; /* secondary */
+}
+
+.support-icon {
+  color: #625b71;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.support-box p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.support-link {
+  color: #005ac1;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.support-link:hover {
+  text-decoration: underline;
 }
 </style>

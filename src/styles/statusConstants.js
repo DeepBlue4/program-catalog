@@ -1,7 +1,7 @@
 export const STATUS_COLORS = {
   active: {
     id: "active",
-    label: "Software Program Active",
+    label: "Software Program Assigned",
     fill: "#005AC1", // primary
     border: "#005AC1", // primary
     text: "#FFFFFF", // onPrimary (for tags)

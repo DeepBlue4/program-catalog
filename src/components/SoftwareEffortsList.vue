@@ -82,7 +82,7 @@ const statusConfig = computed(() => {
       label: "Software Efforts Assigned",
       icon: mdiCheckCircleOutline,
     };
-  } else if (p.has_descendant_expecting_software_effort) {
+  } else if (p.has_descendant_expecting_software_effort && p.children && p.children.length > 0) {
     return {
       ...STATUS_COLORS.parent,
       label: "Parent of Software Effort",

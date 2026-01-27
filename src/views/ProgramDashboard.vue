@@ -28,14 +28,46 @@ const { allNodes, selectNode } = useProgramData();
 
 const chartRefCompliance = ref(null);
 const chartRefValidity = ref(null);
+const chartRefEnvironments = ref(null);
+const chartRefEnvironmentsByEffort = ref(null);
 let chartInstanceCompliance = null;
 let chartInstanceValidity = null;
+let chartInstanceEnvironments = null;
+let chartInstanceEnvironmentsByEffort = null;
 
 // Modal State
 const activeMetricModal = ref(null);
 
-// List View State
+
+
+// Standardized Environment Definitions
+const ENV_DEFINITIONS = [
+  { key: "BSF-Global", label: "BSF-G", color: "#2E7D32" }, // Forest Green
+  { key: "BSF-US", label: "BSF-US", color: "#1565C0" }, // Deep Blue
+  { key: "BSF-Restricted", label: "BSF-R", color: "#D84315" }, // Burnt Orange
+  { key: "BSF-Disconnected", label: "BSF-D", color: "#C62828" }, // Muted Red
+  { key: "Boeing Enterprise Network", label: "BEN", color: "#0277BD" }, // Ocean Blue
+  { key: "On-Premises/Non-BSF", label: "On-Prem", color: "#455A64" }, // Slate Gray
+  { key: "Customer Environment", label: "Customer", color: "#00838F" }, // Teal
+  { key: "Other", label: "Other", color: "#795548" }, // Brown
+];
+const ENV_COLOR_MAP = ENV_DEFINITIONS.reduce((acc, def) => {
+  acc[def.key] = def.color;
+  return acc;
+}, {});
+
 const activeListTab = ref("missing"); // 'missing', 'anomaly', 'active'
+const activeEnvTab = ref(null); // Will default to first available env
+
+// Pagination & Search State - Status Table
+const statusSearchQuery = ref("");
+const statusPage = ref(1);
+const statusRowsPerPage = ref(10);
+
+// Pagination & Search State - Environment Table
+const envSearchQuery = ref("");
+const envPage = ref(1);
+const envRowsPerPage = ref(10);
 
 // Chart Category Visibility State
 const chartVisibility = ref({
@@ -57,6 +89,22 @@ const toggleChartCategory = (category) => {
   }
   chartVisibility.value[category] = !chartVisibility.value[category];
   updateValidityChart();
+};
+
+// Environment Visibility State
+const envVisibility = ref({});
+// Initialize all to true
+ENV_DEFINITIONS.forEach((def) => {
+  envVisibility.value[def.key] = true;
+});
+
+const toggleEnvVisibility = (key) => {
+  // Prevent disabling all
+  const visibleCount = Object.values(envVisibility.value).filter((v) => v).length;
+  if (visibleCount === 1 && envVisibility.value[key]) return;
+  
+  envVisibility.value[key] = !envVisibility.value[key];
+  initCharts(); // Re-render charts with filtered data
 };
 
 // Metrics & Lists
@@ -90,6 +138,77 @@ const dashboardData = computed(() => {
     0,
   );
 
+  // Environment Distribution (Count of Programs using each Env)
+  // Initialize maps with 0 for all standard envs
+  const envMap = {}; 
+  const envEffortMap = {};
+  
+  ENV_DEFINITIONS.forEach(def => {
+    envMap[def.key] = new Set(); // Stores program IDs
+    envEffortMap[def.key] = 0; // Counts efforts
+  });
+
+  hasEffort.forEach((prog) => {
+    if (prog.softwareEfforts) {
+      prog.softwareEfforts.forEach((eff) => {
+        if (
+          eff.developer_setup &&
+          eff.developer_setup.development_environments
+        ) {
+          eff.developer_setup.development_environments.forEach((envName) => {
+            // Normalize or match exact string
+            // Check if this envName matches one of our standard keys
+            // If strict match:
+            if (envMap[envName]) {
+               envMap[envName].add(prog.program_id);
+               envEffortMap[envName]++;
+            } else {
+               // Fallback for unexpected values into "Other" if needed, 
+               // or just track them ad-hoc. 
+               // For now, let's dump unexpected into "Other"
+               envMap["Other"].add(prog.program_id);
+               envEffortMap["Other"]++;
+            }
+          });
+        }
+      });
+    }
+  });
+
+  // Convert to arrays for Charts/Tables
+  // Map from ENV_DEFINITIONS to ensure Order and Colors are preserved
+  const envCounts = ENV_DEFINITIONS.map(def => ({
+    name: def.key,
+    label: def.label,
+    value: envMap[def.key] ? envMap[def.key].size : 0,
+    color: def.color
+  }));
+
+  const envCountsByEffort = ENV_DEFINITIONS.map(def => ({
+     name: def.key,
+     label: def.label,
+     value: envEffortMap[def.key] || 0,
+     color: def.color
+  }));
+
+  // Lists for the Tabs (Programs by Env)
+  const envLists = {};
+  // Iterate over all keys in envMap (which matches ENV_DEFINITIONS + potential others if modified)
+  Object.keys(envMap).forEach(key => {
+      envLists[key] = hasEffort
+        .filter(p => envMap[key].has(p.program_id))
+        .map(node => ({
+            id: node.program_id,
+            name: node.name,
+            leader:
+            node.details?.organization_leader_name ||
+            node.organization_leader_name ||
+            "N/A",
+            count: node.softwareEfforts ? node.softwareEfforts.length : 0,
+            rawNode: node
+        }));
+  });
+
   // Helpers for List Mapping
   const mapNodeToList = (n) => ({
     id: n.program_id,
@@ -120,6 +239,9 @@ const dashboardData = computed(() => {
       parent: parent.length,
       neutral: neutral.length,
       totalEfforts: totalEffortsCount, // New
+      envCounts, // New
+      envCountsByEffort, // New
+      envLists, // New
     },
     complianceRate,
     lists: {
@@ -197,6 +319,64 @@ const closeMetricModal = () => {
   activeMetricModal.value = null;
 };
 
+// --- Status Table Pagination & Search Logic ---
+const filteredStatusList = computed(() => {
+  const list = dashboardData.value.lists[activeListTab.value] || [];
+  if (!statusSearchQuery.value) return list;
+
+  const query = statusSearchQuery.value.toLowerCase();
+  return list.filter(
+    (item) =>
+      item.name.toLowerCase().includes(query) ||
+      String(item.id).toLowerCase().includes(query)
+  );
+});
+
+const paginatedStatusList = computed(() => {
+  const start = (statusPage.value - 1) * statusRowsPerPage.value;
+  const end = start + statusRowsPerPage.value;
+  return filteredStatusList.value.slice(start, end);
+});
+
+const statusTotalPages = computed(() =>
+  Math.ceil(filteredStatusList.value.length / statusRowsPerPage.value)
+);
+
+// Reset page on filter change
+watch([activeListTab, statusSearchQuery], () => {
+  statusPage.value = 1;
+});
+
+// --- Environment Table Pagination & Search Logic ---
+const filteredEnvList = computed(() => {
+  if (!activeEnvTab.value) return [];
+  const list = dashboardData.value.counts.envLists[activeEnvTab.value] || [];
+  
+  if (!envSearchQuery.value) return list;
+
+  const query = envSearchQuery.value.toLowerCase();
+  return list.filter(
+    (item) =>
+      item.name.toLowerCase().includes(query) ||
+      String(item.id).toLowerCase().includes(query)
+  );
+});
+
+const paginatedEnvList = computed(() => {
+  const start = (envPage.value - 1) * envRowsPerPage.value;
+  const end = start + envRowsPerPage.value;
+  return filteredEnvList.value.slice(start, end);
+});
+
+const envTotalPages = computed(() =>
+  Math.ceil(filteredEnvList.value.length / envRowsPerPage.value)
+);
+
+// Reset page on filter change
+watch([activeEnvTab, envSearchQuery], () => {
+  envPage.value = 1;
+});
+
 const initCharts = () => {
   // Theme Colors
   const primaryColor = RAW_COLORS.primary;
@@ -251,7 +431,83 @@ const initCharts = () => {
 
   // Program Status Chart (Status Distribution)
   updateValidityChart();
+
+  // Environment Distribution Chart (Programs)
+  if (chartRefEnvironments.value) {
+    if (chartInstanceEnvironments) chartInstanceEnvironments.dispose();
+    chartInstanceEnvironments = echarts.init(chartRefEnvironments.value);
+
+    const envData = dashboardData.value.counts.envCounts.map(item => ({
+       value: item.value,
+       name: item.name,
+       itemStyle: { color: item.color }
+    })).filter(item => item.value > 0 && envVisibility.value[item.name]); 
+
+    chartInstanceEnvironments.setOption({
+      tooltip: { trigger: "item" },
+      legend: { show: false }, // Using Custom Legend
+      series: [
+        {
+          name: "Environment",
+          type: "pie",
+          radius: ["40%", "70%"],
+          avoidLabelOverlap: true, // Allow ECharts to move labels to avoid overlap
+          itemStyle: { borderRadius: 10, borderColor: "#fff", borderWidth: 2 },
+          label: { 
+            show: true, 
+            position: 'outside',
+            formatter: "{b}: {c}", 
+            fontWeight: "bold",
+            fontSize: 14 
+          },
+          labelLine: { show: true },
+          emphasis: { label: { show: true, fontSize: 16, fontWeight: "bold" } },
+          data: envData,
+        },
+      ],
+    });
+  }
+
+  // Environment Distribution Chart (By Effort)
+  if (chartRefEnvironmentsByEffort.value) {
+    if (chartInstanceEnvironmentsByEffort)
+      chartInstanceEnvironmentsByEffort.dispose();
+    chartInstanceEnvironmentsByEffort = echarts.init(
+      chartRefEnvironmentsByEffort.value,
+    );
+
+    const envDataEffort = dashboardData.value.counts.envCountsByEffort.map(item => ({
+       value: item.value,
+       name: item.name,
+       itemStyle: { color: item.color }
+    })).filter(item => item.value > 0 && envVisibility.value[item.name]);
+
+    chartInstanceEnvironmentsByEffort.setOption({
+      tooltip: { trigger: "item" },
+      legend: { show: false }, // Using Custom Legend
+      series: [
+        {
+          name: "Environment (Efforts)",
+          type: "pie",
+          radius: ["40%", "70%"],
+          avoidLabelOverlap: true, // Allow ECharts to move labels to avoid overlap
+          itemStyle: { borderRadius: 10, borderColor: "#fff", borderWidth: 2 },
+          label: { 
+            show: true, 
+            position: 'outside',
+            formatter: "{b}: {c}", 
+            fontWeight: "bold",
+            fontSize: 14 
+          },
+          labelLine: { show: true },
+          emphasis: { label: { show: true, fontSize: 16, fontWeight: "bold" } },
+          data: envDataEffort,
+        },
+      ],
+    });
+  }
 };
+
 
 // Separate function to update validity chart (called on toggle)
 const updateValidityChart = () => {
@@ -328,6 +584,8 @@ const updateValidityChart = () => {
 const handleResize = () => {
   chartInstanceCompliance?.resize();
   chartInstanceValidity?.resize();
+  chartInstanceEnvironments?.resize();
+  chartInstanceEnvironmentsByEffort?.resize();
 };
 
 const navigateToProgram = (node) => {
@@ -338,11 +596,25 @@ const navigateToProgram = (node) => {
 // Re-init charts if theme changes or data loads
 watch(allNodes, () => {
   initCharts();
+  // Set default env tab if not set
+  if (
+    !activeEnvTab.value &&
+    dashboardData.value.counts.envCounts.length > 0
+  ) {
+    activeEnvTab.value = dashboardData.value.counts.envCounts[0].name;
+  }
 });
 
 onMounted(() => {
   setTimeout(() => {
     initCharts();
+    // Set default env tab if not set
+    if (
+        !activeEnvTab.value &&
+        dashboardData.value.counts.envCounts.length > 0
+    ) {
+        activeEnvTab.value = dashboardData.value.counts.envCounts[0].name;
+    }
   }, 100);
   window.addEventListener("resize", handleResize);
 });
@@ -351,6 +623,8 @@ onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
   chartInstanceCompliance?.dispose();
   chartInstanceValidity?.dispose();
+  chartInstanceEnvironments?.dispose();
+  chartInstanceEnvironmentsByEffort?.dispose();
 });
 </script>
 
@@ -359,7 +633,7 @@ onUnmounted(() => {
     <div class="header-section">
       <h1>Analytics Dashboard</h1>
       <p>
-        Enterprise insights, software delivery tracking, and compliance metrics
+        Enterprise insights, software effort tracking, and compliance metrics
       </p>
     </div>
 
@@ -507,6 +781,166 @@ onUnmounted(() => {
                 >Unexpected ({{ dashboardData.counts.anomaly }})</span
               >
             </div>
+          </div>
+        </div>
+
+        <!-- 3. Environment Distribution (Programs) -->
+        <div class="chart-card m3-card outlined">
+          <div class="chart-header">
+            <h3>Dev Envs (Programs)</h3>
+            <p>Count of Programs by assigned Environment.</p>
+          </div>
+          <div class="chart-wrapper" ref="chartRefEnvironments"></div>
+          <!-- Custom Detailed Legend -->
+          <div class="legend-mini wrap-legend interactive-legend">
+            <div
+              v-for="env in dashboardData.counts.envCounts"
+              :key="env.name"
+              class="legend-item toggle"
+              :class="{ disabled: !envVisibility[env.name] }"
+              @click="toggleEnvVisibility(env.name)"
+            >
+              <span
+                class="dot"
+                :style="{ backgroundColor: env.color }"
+              ></span>
+              <span class="legend-text"
+                >{{ env.name }}: {{ env.value }}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Environment Distribution (Efforts) -->
+        <div class="chart-card m3-card outlined">
+          <div class="chart-header">
+            <h3>Dev Envs (Efforts)</h3>
+            <p>Count of Software Efforts by assigned Environment.</p>
+          </div>
+          <div class="chart-wrapper" ref="chartRefEnvironmentsByEffort"></div>
+           <!-- Custom Detailed Legend -->
+          <div class="legend-mini wrap-legend interactive-legend">
+            <div
+              v-for="env in dashboardData.counts.envCountsByEffort"
+              :key="env.name"
+              class="legend-item toggle"
+              :class="{ disabled: !envVisibility[env.name] }"
+              @click="toggleEnvVisibility(env.name)"
+            >
+              <span
+                class="dot"
+                :style="{ backgroundColor: env.color }"
+              ></span>
+              <span class="legend-text"
+                >{{ env.name }}: {{ env.value }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Environment Details -->
+    <section
+      class="dashboard-section"
+      v-if="dashboardData.counts.envCounts.length > 0"
+    >
+      <h2 class="section-title">Programs by Environment</h2>
+      <div class="list-card m3-card outlined">
+        <div class="card-header tabs-header scrollable-tabs">
+          <button
+            v-for="env in dashboardData.counts.envCounts"
+            :key="env.name"
+            class="tab-btn"
+            :class="{ active: activeEnvTab === env.name }"
+            @click="activeEnvTab = env.name"
+          >
+            {{ env.name }}
+            <span class="badge neutral">{{ env.value }}</span>
+          </button>
+        </div>
+        
+        <div class="table-controls">
+          <div class="search-wrapper">
+             <BaseIcon :path="mdiCodeBraces" class="search-icon" />
+             <input 
+               v-model="envSearchQuery" 
+               type="text" 
+               placeholder="Search via Name or ID..." 
+               class="search-input"
+             />
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Program Name</th>
+                <th>ID</th>
+                <th>Leader</th>
+                <th>Efforts in Env</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="item in paginatedEnvList"
+                :key="item.id"
+              >
+                <td class="name-cell">
+                  {{ item.name }}
+                </td>
+                <td class="id-cell">{{ item.id }}</td>
+                <td>{{ item.leader }}</td>
+                <td>
+                  <span class="count-tag">{{ item.count }} Assigned</span>
+                </td>
+                <td>
+                  <button
+                    class="btn-text"
+                    @click="navigateToProgram(item.rawNode)"
+                  >
+                    Review <BaseIcon :path="mdiArrowRight" />
+                  </button>
+                </td>
+              </tr>
+               <tr v-if="filteredEnvList.length === 0">
+                <td colspan="5" class="empty-state">
+                  <div class="empty-content">
+                    <BaseIcon :path="mdiCheckCircle" />
+                    <span>No programs found in this environment matching your search.</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination Footer -->
+        <div class="pagination-footer" v-if="filteredEnvList.length > 0">
+          <div class="rows-per-page">
+            <span>Rows per page:</span>
+            <select v-model="envRowsPerPage">
+              <option :value="10">10</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+          </div>
+          <div class="page-nav">
+             <span>{{ envPage }} of {{ envTotalPages }}</span>
+             <div class="nav-buttons">
+               <button 
+                 :disabled="envPage === 1"
+                 @click="envPage--"
+                 class="nav-btn"
+               >Prev</button>
+               <button 
+                 :disabled="envPage >= envTotalPages"
+                 @click="envPage++"
+                 class="nav-btn"
+               >Next</button>
+             </div>
           </div>
         </div>
       </div>
@@ -684,6 +1118,18 @@ onUnmounted(() => {
           </button>
         </div>
 
+        <div class="table-controls">
+          <div class="search-wrapper">
+             <BaseIcon :path="mdiCodeBraces" class="search-icon" /> <!-- Reusing icon, maybe import mdiMagnify -->
+             <input 
+               v-model="statusSearchQuery" 
+               type="text" 
+               placeholder="Search programs..." 
+               class="search-input"
+             />
+          </div>
+        </div>
+
         <div class="table-container">
           <table class="data-table">
             <thead>
@@ -697,7 +1143,7 @@ onUnmounted(() => {
             </thead>
             <tbody>
               <tr
-                v-for="item in dashboardData.lists[activeListTab]"
+                v-for="item in paginatedStatusList"
                 :key="item.id"
               >
                 <td class="name-cell">
@@ -720,20 +1166,43 @@ onUnmounted(() => {
                   </button>
                 </td>
               </tr>
-              <tr v-if="dashboardData.lists[activeListTab].length === 0">
+              <tr v-if="filteredStatusList.length === 0">
                 <td colspan="5" class="empty-state">
-                  <BaseIcon :path="mdiCheckCircle" />
-                  <span v-if="activeListTab === 'missing'"
-                    >No missing efforts! Compliance is 100%.</span
-                  >
-                  <span v-else-if="activeListTab === 'anomaly'"
-                    >No configuration anomalies found.</span
-                  >
-                  <span v-else>No active programs found.</span>
+                  <div class="empty-content">
+                    <BaseIcon :path="mdiCheckCircle" />
+                    <span>No programs found matching your criteria.</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+        
+        <!-- Pagination Footer -->
+        <div class="pagination-footer" v-if="filteredStatusList.length > 0">
+          <div class="rows-per-page">
+            <span>Rows per page:</span>
+            <select v-model="statusRowsPerPage">
+              <option :value="10">10</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+          </div>
+          <div class="page-nav">
+             <span>{{ statusPage }} of {{ statusTotalPages }}</span>
+             <div class="nav-buttons">
+               <button 
+                 :disabled="statusPage === 1"
+                 @click="statusPage--"
+                 class="nav-btn"
+               >Prev</button>
+               <button 
+                 :disabled="statusPage >= statusTotalPages"
+                 @click="statusPage++"
+                 class="nav-btn"
+               >Next</button>
+             </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1461,4 +1930,113 @@ onUnmounted(() => {
 .threshold-label {
   color: #625b71;
 }
+
+.wrap-legend {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.scrollable-tabs {
+  overflow-x: auto;
+  padding-bottom: 4px; /* Space for scrollbar if needed */
+}
+
+/* Table Controls & Search */
+.table-controls {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e7e0ec;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 300px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #79747e;
+  pointer-events: none;
+  width: 18px;
+  height: 18px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border-radius: 8px;
+  border: 1px solid #79747e;
+  background: transparent;
+  font-size: 14px;
+  color: #1d1b20;
+}
+
+.search-input:focus {
+  outline: 2px solid #005ac1;
+  border-color: transparent;
+}
+
+/* Pagination Footer */
+.pagination-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-top: 1px solid #e7e0ec;
+  font-size: 12px;
+  color: #49454f;
+}
+
+.rows-per-page {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rows-per-page select {
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #e7e0ec;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.page-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-btn {
+  background: transparent;
+  border: 1px solid #e7e0ec;
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #1d1b20;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background: #f1f0f4;
+  border-color: #79747e;
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 </style>
