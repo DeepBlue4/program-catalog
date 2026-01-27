@@ -3,6 +3,7 @@ import { computed, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import SearchBox from "./components/SearchBox.vue";
 import UserMenu from "./components/UserMenu.vue";
+import SoftwareEffortTreeItem from "./components/SoftwareEffortTreeItem.vue";
 import { useProgramData } from "./composables/useProgramData.js";
 
 import BaseIcon from "./components/BaseIcon.vue";
@@ -187,6 +188,38 @@ const currentEnvironment = computed(() => {
   if (host.includes("daf-compass-stage"))
     return { label: "Stage", class: "badge-stage" };
   return null;
+});
+
+// --- Sidebar Efforts Tree Building ---
+const sidebarEffortsTree = computed(() => {
+  if (!selectedNode.value || !selectedNode.value.softwareEfforts) {
+    return [];
+  }
+
+  const efforts = selectedNode.value.softwareEfforts;
+  const map = {};
+  const roots = [];
+
+  // Shallow copy for tree construction
+  const nodes = efforts.map((e) => ({ ...e, children: [] }));
+
+  // Map by UUID
+  nodes.forEach((node) => {
+    if (node.uuid) {
+      map[node.uuid] = node;
+    }
+  });
+
+  // Build tree structure
+  nodes.forEach((node) => {
+    if (node.parent_uuid && map[node.parent_uuid]) {
+      map[node.parent_uuid].children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  return roots;
 });
 </script>
 
@@ -379,25 +412,13 @@ const currentEnvironment = computed(() => {
                 "
                 class="efforts-dropdown floating-dropdown"
               >
-                <div
-                  v-for="effort in selectedNode.softwareEfforts"
-                  :key="effort.id || effort.uuid"
-                  class="effort-card"
-                  @click="handleEffortClick(effort)"
-                >
-                  <div class="effort-card-content">
-                    <span class="effort-name">{{ effort.name }}</span>
-                    <span class="effort-id"
-                      ><span class="id-label">ID:</span>
-                      {{ effort.id || effort.uuid }}</span
-                    >
-                  </div>
-                  <BaseIcon
-                    :path="mdiChevronRight"
-                    :size="18"
-                    class="effort-arrow"
-                  />
-                </div>
+                <SoftwareEffortTreeItem
+                  v-for="rootNode in sidebarEffortsTree"
+                  :key="rootNode.id || rootNode.uuid"
+                  :effort="rootNode"
+                  :selected-id="null"
+                  @select="handleEffortClick"
+                />
               </div>
             </div>
           </div>
@@ -832,25 +853,16 @@ const currentEnvironment = computed(() => {
   left: 0;
   right: 0;
   z-index: 50;
-  background: #ffffff;
-  border: 1px solid #c4c7c5;
-  border-radius: 8px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
   max-height: 300px;
   overflow-y: auto;
   margin-top: 4px;
 }
 
-.efforts-dropdown {
-  display: flex;
-  flex-direction: column;
-  background: #ffffff;
-  border: 1px solid #e7e0ec;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 1rem;
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
-}
+/* Removed - now using flat tree item style */
 
 .effort-card {
   padding: 12px 16px;
