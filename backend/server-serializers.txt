@@ -75,6 +75,9 @@ class SoftwareEffortSerializer(serializers.ModelSerializer):
 
     # Read-only linked software efforts summary
     linked_software_efforts = serializers.SerializerMethodField(read_only=True)
+    
+    # Read-only incoming links (efforts that link to this one)
+    linked_from_efforts = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = SoftwareEffortModel
@@ -102,6 +105,51 @@ class SoftwareEffortSerializer(serializers.ModelSerializer):
 
         # If the relation is a manager/queryset, iterate the .all() result
         iterable = linked_qs.all() if hasattr(linked_qs, "all") else linked_qs
+        out = []
+        for linked in iterable:
+            # id/uuid
+            linked_uuid = getattr(linked, "uuid", None)
+            linked_pk = getattr(linked, "pk", getattr(linked, "id", None))
+            identifier = linked_uuid or linked_pk
+
+            # name
+            name = getattr(linked, "name", None) or ""
+
+            # program_catalog_info may be null
+            pci = getattr(linked, "program_catalog_info", None)
+            program_id = None
+            program_name = ""
+            if pci is not None:
+                # pci.program is a FK to ProgramCatalogModel; use its id if present
+                program_obj = getattr(pci, "program", None)
+                if program_obj is not None:
+                    program_id = getattr(program_obj, "id", None)
+                # pci.name is the program_name on that info record
+                program_name = getattr(pci, "name", "") or ""
+
+            out.append(
+                {
+                    "id": identifier,
+                    "uuid": linked_uuid,
+                    "name": name,
+                    "program_id": program_id,
+                    "program_name": program_name,
+                }
+            )
+        return out
+
+    def get_linked_from_efforts(self, obj: SoftwareEffortModel):
+        """
+        Return a list of dicts for efforts that link TO this effort (incoming links).
+        Uses the 'linked_from' related_name from the ManyToMany field.
+        Same structure as get_linked_software_efforts.
+        """
+        linked_from_qs = getattr(obj, "linked_from", None)
+        if not linked_from_qs:
+            return []
+
+        # If the relation is a manager/queryset, iterate the .all() result
+        iterable = linked_from_qs.all() if hasattr(linked_from_qs, "all") else linked_from_qs
         out = []
         for linked in iterable:
             # id/uuid

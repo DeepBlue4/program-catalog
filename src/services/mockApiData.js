@@ -234,6 +234,9 @@ export class MockApiData {
 
     // 2. Randomly assign links
     allEfforts.forEach((eff) => {
+      // Initialize linked_from_efforts as empty array
+      eff.linked_from_efforts = [];
+
       // 30% chance to have links
       if (random() > 0.7) {
         const numLinks = Math.floor(random() * 3) + 1; // 1-3 links
@@ -260,6 +263,28 @@ export class MockApiData {
           }
         }
       }
+    });
+
+    // 3. Populate linked_from_efforts (reverse relationships)
+    // For each effort that links TO another, add this effort to that target's linked_from
+    allEfforts.forEach((eff) => {
+      eff.linked_software_efforts.forEach((link) => {
+        const targetEffort = allEfforts.find((e) => e.id === link.id);
+        if (targetEffort) {
+          // Add this effort to the target's linked_from_efforts
+          if (!targetEffort.linked_from_efforts.find((l) => l.id === eff.id)) {
+            targetEffort.linked_from_efforts.push({
+              id: eff.id,
+              uuid: eff.uuid,
+              name: eff.name,
+              _programName: eff._programName,
+              _programId: eff._programId,
+              program_name: eff._programName,
+              program_id: eff._programId,
+            });
+          }
+        }
+      });
     });
 
     return root;
@@ -312,6 +337,7 @@ export class MockApiData {
 
         children: [],
         linked_software_efforts: [],
+        linked_from_efforts: [],
       });
     }
     return efforts;

@@ -205,6 +205,9 @@ class SoftwareEffort(BaseModel):
 
     # linked_software_efforts remains a list of small dicts for frontend
     linked_software_efforts: Optional[List[Dict[str, str]]] = []
+    
+    # linked_from_efforts - read-only, populated by serializer (incoming links)
+    linked_from_efforts: Optional[List[Dict[str, str]]] = []
 
     # Keep nested objects for frontend usage (optional). These will be used by the service
     # to create/update backing related objects if provided and inheritance is not requested.

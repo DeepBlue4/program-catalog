@@ -27,6 +27,8 @@ import {
   mdiMagnify,
   mdiSourceBranch,
   mdiClose,
+  mdiArrowRight,
+  mdiArrowLeft,
 } from "@mdi/js";
 
 const props = defineProps({
@@ -105,6 +107,7 @@ const tabs = [
 const store = useProgramCatalogStore();
 const allEffortCandidates = ref([]); // Everyone we can link to
 const linkSearchQuery = ref("");
+const activeLinkTab = ref("primary"); // 'primary' or 'incoming'
 
 // Helpful tooltips content
 const activeHelp = ref(null); // ID of currently open help section
@@ -221,6 +224,26 @@ const linkedEffortObjects = computed(() => {
   return formData.value.linked_software_efforts.map((link) => {
     if (typeof link === "string") {
       // Try matching by UUID first, then ID
+      return (
+        allEffortCandidates.value.find(
+          (e) => e.id === link || e.uuid === link,
+        ) || {
+          id: link,
+          name: "Unknown/External Effort",
+          _programName: "Unknown",
+        }
+      );
+    }
+    return link;
+  });
+});
+
+// Convert incoming links (linked_from_efforts) into full objects for display
+const linkedFromEffortObjects = computed(() => {
+  if (!formData.value.linked_from_efforts) return [];
+
+  return formData.value.linked_from_efforts.map((link) => {
+    if (typeof link === "string") {
       return (
         allEffortCandidates.value.find(
           (e) => e.uuid === link || e.id === link,
@@ -597,109 +620,202 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
             <div class="section-header-modern">
               <label class="section-label-lg">Linked Software Efforts</label>
               <p class="section-desc">
-                Connect this software to other components, dependent services,
-                or related libraries across the catalog.
+                View and manage relationships between this effort and other efforts.
               </p>
             </div>
 
-            <div class="link-manager link-card">
-              <!-- Search Header -->
-              <div class="link-manager-header">
-                <div class="link-search-wrapper">
-                  <BaseIcon :path="mdiMagnify" class="search-icon" />
-                  <input
-                    v-model="linkSearchQuery"
-                    type="text"
-                    class="std-input with-icon search-input-modern"
-                    placeholder="Add link..."
-                  />
+            <!-- Link Tabs -->
+            <div class="link-tabs">
+              <button
+                class="link-tab"
+                :class="{ active: activeLinkTab === 'primary' }"
+                @click="activeLinkTab = 'primary'"
+              >
+                <BaseIcon :path="mdiArrowRight" :size="16" class="tab-icon" />
+                <span class="tab-label">Primary Links</span>
+                <span class="link-badge-small primary">{{ linkedEffortObjects.length }}</span>
+              </button>
+              <button
+                class="link-tab"
+                :class="{ active: activeLinkTab === 'incoming' }"
+                @click="activeLinkTab = 'incoming'"
+              >
+                <BaseIcon :path="mdiArrowLeft" :size="16" class="tab-icon" />
+                <span class="tab-label">Linked From</span>
+                <span class="link-badge-small incoming">{{ linkedFromEffortObjects.length }}</span>
+              </button>
+            </div>
+
+            <!-- Primary Links (Outgoing) -->
+            <div v-show="activeLinkTab === 'primary'" class="link-tab-content">
+              <div class="tab-content-header">
+                <BaseIcon :path="mdiArrowRight" :size="18" class="subsection-icon primary" />
+                <div class="tab-content-info">
+                  <h4>Primary Links</h4>
+                  <span class="subsection-desc">Efforts this one depends on or links to</span>
                 </div>
-                <!-- Dropdown Results (Absolute) -->
-                <div
-                  v-if="filteredLinkCandidates.length > 0"
-                  class="search-dropdown m3-card elevated"
-                >
+                <span class="link-badge primary">Outgoing</span>
+              </div>
+
+              <div class="link-manager link-card">
+                <!-- Search Header -->
+                <div class="link-manager-header">
+                  <div class="link-search-wrapper">
+                    <BaseIcon :path="mdiMagnify" class="search-icon" />
+                    <input
+                      v-model="linkSearchQuery"
+                      type="text"
+                      class="std-input with-icon search-input-modern"
+                      placeholder="Add link..."
+                    />
+                  </div>
+                  <!-- Dropdown Results (Absolute) -->
                   <div
-                    v-for="cand in filteredLinkCandidates"
-                    :key="cand.id"
-                    class="dropdown-item"
-                    @click="addLink(cand)"
+                    v-if="filteredLinkCandidates.length > 0"
+                    class="search-dropdown m3-card elevated"
                   >
-                    <div class="item-icon">
-                      <BaseIcon :path="mdiSourceBranch" />
-                    </div>
-                    <div class="item-content">
-                      <div class="item-main">
-                        <span class="name">{{ cand.name }}</span>
-                        <span class="id-badge">ID: {{ cand.id }}</span>
+                    <div
+                      v-for="cand in filteredLinkCandidates"
+                      :key="cand.id"
+                      class="dropdown-item"
+                      @click="addLink(cand)"
+                    >
+                      <div class="item-icon">
+                        <BaseIcon :path="mdiSourceBranch" />
                       </div>
-                      <div class="item-sub-grid">
-                        <div class="sub-field">
-                          <span class="label">Program:</span>
-                          <span class="value">{{ cand._programName }}</span>
+                      <div class="item-content">
+                        <div class="item-main">
+                          <span class="name">{{ cand.name }}</span>
+                          <span class="id-badge">ID: {{ cand.id }}</span>
                         </div>
-                        <div class="sub-field">
-                          <span class="label">Prog ID:</span>
-                          <span class="value code">{{ cand._programId }}</span>
+                        <div class="item-sub-grid">
+                          <div class="sub-field">
+                            <span class="label">Program:</span>
+                            <span class="value">{{ cand._programName }}</span>
+                          </div>
+                          <div class="sub-field">
+                            <span class="label">Prog ID:</span>
+                            <span class="value code">{{ cand._programId }}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                <!-- Primary Links List -->
+                <div class="linked-items-list-modern">
+                  <div
+                    v-for="link in linkedEffortObjects"
+                    :key="link.id"
+                    class="link-item-row primary-link"
+                  >
+                    <div class="row-icon">
+                      <BaseIcon :path="mdiLinkVariant" :size="20" />
+                    </div>
+                    <div class="row-content">
+                      <div class="row-top">
+                        <span class="row-name">{{ link.name }}</span>
+                        <span class="row-id-badge"
+                          >ID: {{ link.uuid || link.id }}</span
+                        >
+                      </div>
+                      <div class="row-meta-grid">
+                        <div class="meta-pair">
+                          <span class="meta-label">Program:</span>
+                          <span class="meta-val">{{
+                            link.program_name || link._programName || "Unknown"
+                          }}</span>
+                        </div>
+                        <div class="meta-pair">
+                          <span class="meta-label">Prog ID:</span>
+                          <span class="meta-val code">{{
+                            link.program_id || link._programId || "N/A"
+                          }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      class="btn-icon-danger"
+                      @click.stop="removeLink(link.uuid || link.id)"
+                      title="Remove Link"
+                    >
+                      <BaseIcon :path="mdiClose" :size="18" />
+                    </button>
+                  </div>
+
+                  <div
+                    v-if="linkedEffortObjects.length === 0"
+                    class="empty-state-modern"
+                  >
+                    <div class="empty-icon-circle">
+                      <BaseIcon :path="mdiLinkVariant" :size="24" />
+                    </div>
+                    <span class="empty-text"
+                      >No primary links yet. Search above to add
+                      dependencies.</span
+                    >
                   </div>
                 </div>
               </div>
+            </div>
 
-              <!-- Selected Chips List -->
-              <div class="linked-items-list-modern">
-                <div
-                  v-for="link in linkedEffortObjects"
-                  :key="link.id"
-                  class="link-item-row"
-                >
-                  <div class="row-icon">
-                    <BaseIcon :path="mdiLinkVariant" :size="20" />
-                  </div>
-                  <div class="row-content">
-                    <div class="row-top">
-                      <span class="row-name">{{ link.name }}</span>
-                      <span class="row-id-badge"
-                        >ID: {{ link.uuid || link.id }}</span
-                      >
-                    </div>
-                    <div class="row-meta-grid">
-                      <div class="meta-pair">
-                        <span class="meta-label">Program:</span>
-                        <span class="meta-val">{{
-                          link.program_name || link._programName || "Unknown"
-                        }}</span>
-                      </div>
-                      <div class="meta-pair">
-                        <span class="meta-label">Prog ID:</span>
-                        <span class="meta-val code">{{
-                          link.program_id || link._programId || "N/A"
-                        }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    class="btn-icon-danger"
-                    @click.stop="removeLink(link.uuid || link.id)"
-                    title="Remove Link"
-                  >
-                    <BaseIcon :path="mdiClose" :size="18" />
-                  </button>
+            <!-- Incoming Links (Read-only) -->
+            <div v-show="activeLinkTab === 'incoming'" class="link-tab-content">
+              <div class="tab-content-header">
+                <BaseIcon :path="mdiArrowLeft" :size="18" class="subsection-icon incoming" />
+                <div class="tab-content-info">
+                  <h4>Linked From</h4>
+                  <span class="subsection-desc">Efforts that depend on this one (read-only)</span>
                 </div>
+                <span class="link-badge incoming">Incoming</span>
+              </div>
 
-                <div
-                  v-if="linkedEffortObjects.length === 0"
-                  class="empty-state-modern"
-                >
-                  <div class="empty-icon-circle">
-                    <BaseIcon :path="mdiLinkVariant" :size="24" />
-                  </div>
-                  <span class="empty-text"
-                    >No linked efforts yet. Search above to add
-                    dependencies.</span
+              <div class="link-card">
+                <div class="linked-items-list-modern">
+                  <div
+                    v-for="link in linkedFromEffortObjects"
+                    :key="link.id"
+                    class="link-item-row incoming-link"
                   >
+                    <div class="row-icon incoming">
+                      <BaseIcon :path="mdiSourceBranch" :size="20" />
+                    </div>
+                    <div class="row-content">
+                      <div class="row-top">
+                        <span class="row-name">{{ link.name }}</span>
+                        <span class="row-id-badge"
+                          >ID: {{ link.uuid || link.id }}</span
+                        >
+                      </div>
+                      <div class="row-meta-grid">
+                        <div class="meta-pair">
+                          <span class="meta-label">Program:</span>
+                          <span class="meta-val">{{
+                            link.program_name || link._programName || "Unknown"
+                          }}</span>
+                        </div>
+                        <div class="meta-pair">
+                          <span class="meta-label">Prog ID:</span>
+                          <span class="meta-val code">{{
+                            link.program_id || link._programId || "N/A"
+                          }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="linkedFromEffortObjects.length === 0"
+                    class="empty-state-modern"
+                  >
+                    <div class="empty-icon-circle">
+                      <BaseIcon :path="mdiArrowLeft" :size="24" />
+                    </div>
+                    <span class="empty-text"
+                      >No incoming links. Other efforts will appear here when they link to this one.</span
+                    >
+                  </div>
                 </div>
               </div>
             </div>
@@ -1093,6 +1209,26 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
             <div class="field-group span-2">
               <MultiSelectDropdown
                 :modelValue="
+                  sv('developer_setup', 'development_environments') || []
+                "
+                @update:modelValue="
+                  (val) =>
+                    updateLocal(
+                      'developer_setup',
+                      'development_environments',
+                      val,
+                    )
+                "
+                :options="ENVIRONMENT_OPTIONS"
+                label="Development Environments"
+                :disabled="formData.inherit_developer_setup"
+                placeholder="Select Environments..."
+              />
+            </div>
+
+            <div class="field-group span-2">
+              <MultiSelectDropdown
+                :modelValue="
                   sv('developer_setup', 'programming_languages') || []
                 "
                 @update:modelValue="
@@ -1116,26 +1252,6 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
                 label="Operating Systems"
                 :disabled="formData.inherit_developer_setup"
                 placeholder="Select Operating Systems..."
-              />
-            </div>
-
-            <div class="field-group span-2">
-              <MultiSelectDropdown
-                :modelValue="
-                  sv('developer_setup', 'development_environments') || []
-                "
-                @update:modelValue="
-                  (val) =>
-                    updateLocal(
-                      'developer_setup',
-                      'development_environments',
-                      val,
-                    )
-                "
-                :options="ENVIRONMENT_OPTIONS"
-                label="Development Environments"
-                :disabled="formData.inherit_developer_setup"
-                placeholder="Select Environments..."
               />
             </div>
 
@@ -2169,5 +2285,173 @@ const WORK_LOCATION_OPTIONS = locationOptionsAlphabetized;
     width: 100%;
     justify-content: space-between;
   }
+}
+
+/* Bidirectional Link Tabs */
+.link-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e8e8e8;
+}
+
+.link-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #49454f;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  bottom: -2px;
+}
+
+.link-tab:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #1d1b20;
+}
+
+.link-tab.active {
+  color: #005ac1;
+  border-bottom-color: #005ac1;
+  font-weight: 600;
+}
+
+.link-tab.active .tab-icon {
+  color: #005ac1;
+}
+
+.link-tab .tab-icon {
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.link-tab .tab-label {
+  flex: 1;
+}
+
+.link-badge-small {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 22px;
+  text-align: center;
+}
+
+.link-badge-small.primary {
+  background: #d8e2ff;
+  color: #001d35;
+}
+
+.link-badge-small.incoming {
+  background: #e8def8;
+  color: #1d192b;
+}
+
+/* Tab Content */
+.link-tab-content {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-content-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(0, 90, 193, 0.05) 0%, rgba(0, 90, 193, 0.02) 100%);
+  border-radius: 12px;
+  border-left: 4px solid #005ac1;
+}
+
+.link-tab-content[v-show] .tab-content-header {
+  border-left-color: #6750a4;
+  background: linear-gradient(135deg, rgba(103, 80, 164, 0.05) 0%, rgba(103, 80, 164, 0.02) 100%);
+}
+
+.tab-content-info {
+  flex: 1;
+}
+
+.tab-content-info h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1d1b20;
+}
+
+.subsection-icon {
+  flex-shrink: 0;
+}
+
+.subsection-icon.primary {
+  color: #005ac1;
+}
+
+.subsection-icon.incoming {
+  color: #6750a4;
+}
+
+.link-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.link-badge.primary {
+  background: #d8e2ff;
+  color: #001d35;
+  border-color: #005ac1;
+}
+
+.link-badge.incoming {
+  background: #e8def8;
+  color: #1d192b;
+  border-color: #6750a4;
+}
+
+.subsection-desc {
+  font-size: 13px;
+  color: #49454f;
+  font-style: italic;
+}
+
+/* Link row visual distinctions */
+.link-item-row.primary-link {
+  border-left: 3px solid #005ac1;
+  background: rgba(216, 226, 255, 0.1);
+}
+
+.link-item-row.incoming-link {
+  border-left: 3px solid #6750a4;
+  background: rgba(232, 222, 248, 0.1);
+  cursor: default;
+}
+
+.row-icon.incoming {
+  color: #6750a4;
 }
 </style>

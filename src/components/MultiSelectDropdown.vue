@@ -176,8 +176,8 @@ const removeOption = (option) => {
   background: #ffffff; /* surface-container-lowest */
   border: 1px solid #79747e; /* outline */
   border-radius: 8px; /* Consistent 8px */
-  padding: 6px 36px 6px 8px; /* Right padding for arrow */
-  min-height: 42px;
+  padding: 8px 40px 8px 10px; /* Increased padding for chips */
+  min-height: 48px; /* Increased to accommodate larger chips */
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -223,37 +223,52 @@ const removeOption = (option) => {
 .chips-wrapper {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
+  padding: 2px 0;
 }
 
 .select-chip {
   display: flex;
   align-items: center;
-  background: #dbe2f9; /* secondary-container */
-  color: #1d192b; /* on-secondary-container */
+  background: linear-gradient(135deg, #d8e2ff 0%, #dbe2f9 100%);
+  color: #1d192b;
   font-size: 13px;
   font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 12px;
-  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  gap: 8px;
+  border: 1px solid #c4c7c5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  cursor: default;
+  user-select: none;
+}
+
+.select-chip:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+  border-color: #005ac1;
 }
 
 .chip-remove {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.15);
   border: none;
   border-radius: 50%;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: inherit;
+  color: #1d192b;
   padding: 0;
+  transition: all 0.2s ease;
 }
 
 .chip-remove:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 90, 193, 0.8);
+  color: #ffffff;
+  transform: scale(1.1);
 }
 
 /* Dropdown */
