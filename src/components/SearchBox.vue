@@ -35,10 +35,18 @@ const filteredItems = computed(() => {
       if (activeFilter.value === "effort" && !item.isSoftwareEffort)
         return false;
 
-      // 2. Check Query
+      // 2. Check Query - search name and numeric IDs (exclude UUIDs)
+      const isNumericId = (val) => {
+        if (!val) return false;
+        const str = String(val);
+        // Exclude UUID format (contains hyphens)
+        return !str.includes('-');
+      };
+
       return (
         (item.name && item.name.toLowerCase().includes(lowerQuery)) ||
-        (item.value && String(item.value).toLowerCase().includes(lowerQuery))
+        (item.program_id && isNumericId(item.program_id) && String(item.program_id).toLowerCase().includes(lowerQuery)) ||
+        (item.id && isNumericId(item.id) && String(item.id).toLowerCase().includes(lowerQuery))
       );
     })
     .slice(0, 10); // Limit to 10 suggestions
