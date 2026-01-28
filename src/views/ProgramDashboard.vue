@@ -51,10 +51,7 @@ const ENV_DEFINITIONS = [
   { key: "Customer Environment", label: "Customer", color: "#00838F" }, // Teal
   { key: "Other", label: "Other", color: "#795548" }, // Brown
 ];
-const ENV_COLOR_MAP = ENV_DEFINITIONS.reduce((acc, def) => {
-  acc[def.key] = def.color;
-  return acc;
-}, {});
+
 
 const activeListTab = ref("missing"); // 'missing', 'anomaly', 'active'
 const activeEnvTab = ref(null); // Will default to first available env

@@ -19,14 +19,14 @@ const content = computed(() => {
 </script>
 
 <template>
-  <div class="modal-overlay" @click.self="$emit('close')">
+  <div class="modal-overlay" @click.self="emit('close')">
     <div class="info-modal-card m3-card elevated help-modal">
       <div class="info-header">
         <div class="header-text">
           <span class="overline">Status Details</span>
           <h2 v-if="content">{{ content.title }}</h2>
         </div>
-        <button class="btn-icon" @click="$emit('close')">
+        <button class="btn-icon" @click="emit('close')">
           <BaseIcon :path="mdiClose" />
         </button>
       </div>
@@ -57,7 +57,7 @@ const content = computed(() => {
         <p>No details available for this status.</p>
       </div>
       <div class="info-footer">
-        <button class="btn-filled" @click="$emit('close')">Got it</button>
+        <button class="btn-filled" @click="emit('close')">Got it</button>
       </div>
     </div>
   </div>

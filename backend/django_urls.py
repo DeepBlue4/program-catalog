@@ -1,4 +1,4 @@
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 from apps.swe_program_catalog.api import (
     CurrentUserEndpoint,
@@ -61,6 +61,8 @@ urlpatterns = [
                     EmailsEndpoint.as_view(),
                     name="emails",
                 ),
+                # Catch-all for Vue Router deep links
+                re_path(r"^.*$", views.vue_app_view, name="vue-app-catchall"),
             ],
         ),
     ),

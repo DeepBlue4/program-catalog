@@ -16,9 +16,9 @@
         {
             "label": "Open in Browser",
             "type": "shell",
-            "command": "start http://localhost:5173",
+            "command": "start http://localhost:8002/ui/program-catalog/",
             "windows": {
-                "command": "start http://localhost:5173"
+                "command": "start http://localhost:8002/ui/program-catalog/"
             },
             "group": "none",
             "problemMatcher": []

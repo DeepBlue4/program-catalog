@@ -103,8 +103,12 @@ const routes = [
     path: "/",
     name: "ProgramTree",
     component: ProgramTreeView,
-    // Don't require auth on localhost
-    meta: { requiresAuth: !window.location.hostname.includes("localhost") },
+    // Don't require initial auth on localhost or 0.0.0.0
+    meta: {
+      requiresAuth:
+        !window.location.hostname.includes("localhost") &&
+        !window.location.hostname.includes("0.0.0.0"),
+    },
   },
   {
     path: "/efforts/:programId",
